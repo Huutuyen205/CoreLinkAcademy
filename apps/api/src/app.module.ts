@@ -20,6 +20,7 @@ import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { ParentsProgressModule } from './modules/parents-progress/parents-progress.module';
 import { FinanceModule } from './modules/finance/finance.module';
 import { AdminSystemModule } from './modules/admin-system/admin-system.module';
+import { CompetencyModule } from './modules/competency/competency.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AdminSystemModule } from './modules/admin-system/admin-system.module';
     ParentsProgressModule,
     FinanceModule,
     AdminSystemModule,
+    CompetencyModule,
   ],
 })
 export class AppModule {}
