@@ -312,7 +312,7 @@ describe('M11/M01/M02/M09 GĐ3: Hoàn thiện GĐ2–GĐ3 (e2e)', () => {
       const uInDb = await prisma.users.findUnique({ where: { id: studentUserId } });
       expect(uInDb?.full_name).toContain('Học viên ẩn danh');
       expect(uInDb?.email).toContain('@corelink.internal');
-      expect(uInDb?.phone).toBe('+84000000000');
+      expect(uInDb?.phone).toMatch(/^\+8400\d{8}$/);
     });
   });
 

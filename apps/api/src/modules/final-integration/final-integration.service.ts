@@ -246,8 +246,8 @@ export class FinalIntegrationService {
       where: { id: student.user_id },
       data: {
         full_name: `Học viên ẩn danh #${shortId}`,
-        email: `anonymized_${shortId}@corelink.internal`,
-        phone: `+84000000000`,
+        email: `anonymized_${shortId}_${Date.now()}@corelink.internal`,
+        phone: `+8400${Date.now().toString().slice(-8)}`,
         status: 'disabled',
       },
     });
