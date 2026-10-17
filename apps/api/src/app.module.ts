@@ -23,6 +23,7 @@ import { AdminSystemModule } from './modules/admin-system/admin-system.module';
 import { CompetencyModule } from './modules/competency/competency.module';
 import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
 import { SmartCurriculumModule } from './modules/smart-curriculum/smart-curriculum.module';
+import { VideoCurriculumModule } from './modules/video-curriculum/video-curriculum.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SmartCurriculumModule } from './modules/smart-curriculum/smart-curricul
     CompetencyModule,
     AiGradingModule,
     SmartCurriculumModule,
+    VideoCurriculumModule,
   ],
 })
 export class AppModule {}
