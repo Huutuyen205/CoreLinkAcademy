@@ -18,6 +18,8 @@ import { CommunicationModule } from './modules/communication/communication.modul
 import { AssessmentModule } from './modules/assessment/assessment.module';
 import { CurriculumModule } from './modules/curriculum/curriculum.module';
 import { ParentsProgressModule } from './modules/parents-progress/parents-progress.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { AdminSystemModule } from './modules/admin-system/admin-system.module';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { ParentsProgressModule } from './modules/parents-progress/parents-progre
     AssessmentModule,
     CurriculumModule,
     ParentsProgressModule,
+    FinanceModule,
+    AdminSystemModule,
   ],
 })
 export class AppModule {}
