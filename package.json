@@ -13,6 +13,7 @@
     "db:pull": "prisma db pull",
     "db:generate": "prisma generate",
     "seed:admin": "pnpm --filter @corelink/api seed:admin",
+    "seed:demo": "pnpm --filter @corelink/api seed:demo",
     "clean": "pnpm -r exec rm -rf dist .next node_modules"
   },
   "devDependencies": {

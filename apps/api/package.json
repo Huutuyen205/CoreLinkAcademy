@@ -8,6 +8,7 @@
     "start": "nest start",
     "start:prod": "node dist/main",
     "seed:admin": "ts-node src/seed/seed-admin.ts",
+    "seed:demo": "ts-node src/seed/seed-demo.ts",
     "lint": "echo api-lint-ok",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",

@@ -207,6 +207,14 @@ describe('M02 Auth & RBAC (e2e)', () => {
       },
     });
 
+    // Đảm bảo trạng thái ban đầu sạch: chỉ giữ liên kết guardianId
+    await prisma.guardianships.deleteMany({
+      where: {
+        student_id: { in: [studentId, otherStudentId] },
+        guardian_id: { not: guardianId },
+      },
+    });
+
     // Tạo Class 1 (Teacher phụ trách) và Class 2 (Lớp khác)
     const level = await prisma.levels.findFirst();
     const program = await prisma.programs.findFirst({ where: { branch_id: branchId } }) ||

@@ -8,6 +8,9 @@ import { UsersModule } from './modules/users/users.module';
 import { PublicModule } from './modules/public/public.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
+import { AiModule } from './modules/ai/ai.module';
+import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.module';
+import { ChatbotModule } from './modules/chatbot/chatbot.module';
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { CampaignsModule } from './modules/campaigns/campaigns.module';
     PublicModule,
     LeadsModule,
     CampaignsModule,
+    AiModule,
+    KnowledgeBaseModule,
+    ChatbotModule,
   ],
 })
 export class AppModule {}

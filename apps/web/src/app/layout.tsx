@@ -19,6 +19,8 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+import ChatbotWidget from '../components/chatbot/ChatbotWidget';
+
 export default function RootLayout({
   children,
 }: {
@@ -31,6 +33,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased min-h-screen flex flex-col justify-between">
         {children}
+        <ChatbotWidget />
       </body>
     </html>
   );
