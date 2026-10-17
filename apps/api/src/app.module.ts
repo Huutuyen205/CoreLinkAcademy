@@ -12,6 +12,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { AcademicModule } from './modules/academic/academic.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AcademicModule } from './modules/academic/academic.module';
     KnowledgeBaseModule,
     ChatbotModule,
     AcademicModule,
+    AttendanceModule,
   ],
 })
 export class AppModule {}
