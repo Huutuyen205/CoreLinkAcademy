@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { RoleCode, UserStatus } from './enums';
+import { RoleCode, UserStatus, LeadStatus } from './enums';
 
 /**
  * RFC 7807 Problem Details
@@ -132,3 +132,59 @@ export const ConsentRequestSchema = z.object({
   subjectStudentId: z.string().uuid().optional(),
 });
 export type ConsentRequest = z.infer<typeof ConsentRequestSchema>;
+
+// ==========================================
+// M01: DTOs & Schemas cho Tuyển sinh & Public
+// ==========================================
+
+export const CreateLeadRequestSchema = z.object({
+  parentName: z.string().optional(),
+  phone: z.string().min(8, 'Số điện thoại không hợp lệ'),
+  childName: z.string().optional(),
+  childAge: z.number().min(3).max(25).optional(),
+  childGrade: z.number().min(0).max(12).optional(),
+  goal: z.string().optional(),
+  freeSlots: z.string().optional(),
+  source: z.string().default('website'),
+  utmSource: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  referrerUrl: z.string().optional(),
+  referralCode: z.string().optional(),
+  consentGiven: z.boolean().refine((val) => val === true, {
+    message: 'Bạn phải đồng ý với chính sách xử lý dữ liệu trước khi đăng ký',
+  }),
+});
+export type CreateLeadRequest = z.infer<typeof CreateLeadRequestSchema>;
+
+export const UpdateLeadStatusRequestSchema = z.object({
+  status: z.nativeEnum(LeadStatus),
+  lostReason: z.string().optional(),
+  ownerId: z.string().uuid().optional(),
+});
+export type UpdateLeadStatusRequest = z.infer<typeof UpdateLeadStatusRequestSchema>;
+
+export const ConvertLeadRequestSchema = z.object({
+  classId: z.string().uuid(),
+  feePlanId: z.string().uuid().optional(),
+  discountVnd: z.number().min(0).default(0),
+  discountReason: z.string().optional(),
+});
+export type ConvertLeadRequest = z.infer<typeof ConvertLeadRequestSchema>;
+
+export const SubmitPlacementTestRequestSchema = z.object({
+  answers: z.record(z.string(), z.string()), // questionId -> option key or text
+});
+export type SubmitPlacementTestRequest = z.infer<typeof SubmitPlacementTestRequestSchema>;
+
+export const CreateCampaignRequestSchema = z.object({
+  name: z.string().min(2, 'Tên chiến dịch là bắt buộc'),
+  utmCampaign: z.string().optional(),
+  channel: z.string().optional(),
+  costVnd: z.number().min(0).default(0),
+  discountCode: z.string().optional(),
+  discountPercent: z.number().min(0).max(100).optional(),
+  startsOn: z.string().optional(),
+  endsOn: z.string().optional(),
+});
+export type CreateCampaignRequest = z.infer<typeof CreateCampaignRequestSchema>;
