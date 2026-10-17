@@ -20,5 +20,5 @@ Cập nhật lần cuối: 17/10/2026
 | BƯỚC 12 | AI chấm bài & báo cáo cho phụ huynh | GĐ2 | **Hoàn thành** | 5/5 | step-12-ai-grading | [docs/walkthroughs/step-12.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-12.md) |
 | BƯỚC 13 | Giáo trình thông minh & học liệu AI | GĐ2 | **Hoàn thành** | 2/2 | step-13-smart-curriculum | [docs/walkthroughs/step-13.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-13.md) |
 | BƯỚC 14 | AI bổ sung giáo trình & video bài giảng | GĐ3 | **Hoàn thành** | 2/2 | step-14-video-curriculum | [docs/walkthroughs/step-14.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-14.md) |
-| BƯỚC 15 | Trợ lý điều hành AI | GĐ3 | Chưa bắt đầu | 0/2 | step-15-ai-assistant | [docs/walkthroughs/step-15.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-15.md) |
+| BƯỚC 15 | Trợ lý điều hành AI | GĐ3 | **Hoàn thành** | 2/2 | step-15-ai-assistant | [docs/walkthroughs/step-15.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-15.md) |
 | BƯỚC 16 | Hoàn thiện GĐ2–GĐ3 & tổng kết | GĐ3 | Chưa bắt đầu | 0/2 | step-16-final-polish | [docs/walkthroughs/step-16.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-16.md) |
