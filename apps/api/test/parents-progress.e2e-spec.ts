@@ -41,6 +41,10 @@ describe('M05, M07, M08 Phụ huynh, đánh giá, tiến độ, giáo trình & t
     try {
       await prisma.$executeRawUnsafe('DELETE FROM daily_summaries');
       await prisma.$executeRawUnsafe('DELETE FROM evaluations');
+      await prisma.$executeRawUnsafe('DELETE FROM attendance');
+      await prisma.$executeRawUnsafe('DELETE FROM enrollments WHERE student_id IN (SELECT id FROM students WHERE code LIKE "HS-S09-%")');
+      await prisma.$executeRawUnsafe('DELETE FROM class_sessions WHERE class_id IN (SELECT id FROM classes WHERE code LIKE "CLS-M01-%" OR code LIKE "CLS-F02-%")');
+      await prisma.$executeRawUnsafe('DELETE FROM classes WHERE code LIKE "CLS-M01-%" OR code LIKE "CLS-F02-%"');
       await prisma.$executeRawUnsafe('DELETE FROM materials');
       await prisma.$executeRawUnsafe('DELETE FROM lesson_plans');
       await prisma.$executeRawUnsafe('DELETE FROM curriculum_versions');
@@ -392,7 +396,9 @@ describe('M05, M07, M08 Phụ huynh, đánh giá, tiến độ, giáo trình & t
     const teacher1 = await prisma.teachers.findFirst({ where: { user_id: teacher1UserId } });
     for (let i = 1; i <= 24; i++) {
       const isCompleted = i <= 6;
-      const sessionDate = new Date(Date.now() + (i - 7) * 24 * 60 * 60 * 1000);
+      const sessionDate = isCompleted
+        ? new Date(Date.now() - (7 - i) * 24 * 60 * 60 * 1000)
+        : new Date(Date.now() + (i - 6) * 24 * 60 * 60 * 1000);
       await prisma.class_sessions.create({
         data: {
           branch_id: branchId,
