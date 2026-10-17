@@ -21,6 +21,7 @@ import { ParentsProgressModule } from './modules/parents-progress/parents-progre
 import { FinanceModule } from './modules/finance/finance.module';
 import { AdminSystemModule } from './modules/admin-system/admin-system.module';
 import { CompetencyModule } from './modules/competency/competency.module';
+import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CompetencyModule } from './modules/competency/competency.module';
     FinanceModule,
     AdminSystemModule,
     CompetencyModule,
+    AiGradingModule,
   ],
 })
 export class AppModule {}
