@@ -11,6 +11,7 @@ import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { AiModule } from './modules/ai/ai.module';
 import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.module';
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
+import { AcademicModule } from './modules/academic/academic.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ChatbotModule } from './modules/chatbot/chatbot.module';
     AiModule,
     KnowledgeBaseModule,
     ChatbotModule,
+    AcademicModule,
   ],
 })
 export class AppModule {}
