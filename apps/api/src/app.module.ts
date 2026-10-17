@@ -22,6 +22,7 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { AdminSystemModule } from './modules/admin-system/admin-system.module';
 import { CompetencyModule } from './modules/competency/competency.module';
 import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
+import { SmartCurriculumModule } from './modules/smart-curriculum/smart-curriculum.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
     AdminSystemModule,
     CompetencyModule,
     AiGradingModule,
+    SmartCurriculumModule,
   ],
 })
 export class AppModule {}
