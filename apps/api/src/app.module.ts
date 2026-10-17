@@ -24,6 +24,7 @@ import { CompetencyModule } from './modules/competency/competency.module';
 import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
 import { SmartCurriculumModule } from './modules/smart-curriculum/smart-curriculum.module';
 import { VideoCurriculumModule } from './modules/video-curriculum/video-curriculum.module';
+import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { VideoCurriculumModule } from './modules/video-curriculum/video-curricul
     AiGradingModule,
     SmartCurriculumModule,
     VideoCurriculumModule,
+    AiAssistantModule,
   ],
 })
 export class AppModule {}

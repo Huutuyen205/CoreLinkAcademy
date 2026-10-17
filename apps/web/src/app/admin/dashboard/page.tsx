@@ -114,12 +114,18 @@ export default function AdminDashboardPage() {
               <Database className="h-4 w-4 text-blue-600" />
               {backupChecking ? 'Đang kiểm tra...' : 'Kiểm tra sao lưu (TC-147)'}
             </button>
-            <button
-              onClick={handleExportZip}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800"
+            <Link
+              href="/admin/executive-assistant"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all"
             >
-              <Archive className="h-4 w-4" /> Xuất toàn bộ dữ liệu ZIP (TC-148)
-            </button>
+              <Sparkles className="h-4 w-4 text-amber-300" /> Trợ lý điều hành AI
+            </Link>
+            <Link
+              href="/admin/early-warning"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-3.5 py-2 text-xs font-bold text-white shadow-sm transition-all"
+            >
+              <AlertTriangle className="h-4 w-4" /> Cảnh báo sớm
+            </Link>
           </div>
         </div>
 
