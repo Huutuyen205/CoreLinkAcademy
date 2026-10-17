@@ -209,20 +209,20 @@ export default function TeacherCurriculumPage() {
             </p>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('roadmap')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'roadmap'
                   ? 'bg-white text-teal-900 shadow-md'
                   : 'bg-white/10 text-white hover:bg-white/20'
               }`}
             >
-              Cây giáo trình & Lộ trình 🗺️
+              Cây giáo trình 🗺️
             </button>
             <button
               onClick={() => setActiveTab('materials')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 activeTab === 'materials'
                   ? 'bg-white text-teal-900 shadow-md'
                   : 'bg-white/10 text-white hover:bg-white/20'
@@ -230,6 +230,18 @@ export default function TeacherCurriculumPage() {
             >
               Tạo học liệu AI 📑
             </button>
+            <Link
+              href="/teacher/curriculum/suggestions"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white/10 text-white hover:bg-white/20 flex items-center gap-1"
+            >
+              <span>🎯</span> Đề xuất chuẩn AI
+            </Link>
+            <Link
+              href="/teacher/curriculum/videos"
+              className="px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-white/10 text-white hover:bg-white/20 flex items-center gap-1"
+            >
+              <span>🎬</span> Video bài giảng
+            </Link>
           </div>
         </div>
 
