@@ -13,6 +13,8 @@ import { KnowledgeBaseModule } from './modules/knowledge-base/knowledge-base.mod
 import { ChatbotModule } from './modules/chatbot/chatbot.module';
 import { AcademicModule } from './modules/academic/academic.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CommunicationModule } from './modules/communication/communication.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { AttendanceModule } from './modules/attendance/attendance.module';
     ChatbotModule,
     AcademicModule,
     AttendanceModule,
+    NotificationsModule,
+    CommunicationModule,
   ],
 })
 export class AppModule {}
