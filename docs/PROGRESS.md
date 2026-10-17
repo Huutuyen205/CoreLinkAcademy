@@ -6,7 +6,7 @@ Cập nhật lần cuối: 17/10/2026
 
 | Bước | Tên bước | Giai đoạn | Trạng thái | TC đạt | Nhánh git | Walkthrough |
 |---|---|---|---|---|---|---|
-| BƯỚC 1 | Khung dự án & môi trường | GĐ1 | Đang khởi động | 0/1 | step-01-scaffold | [docs/walkthroughs/step-1.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-1.md) |
+| BƯỚC 1 | Khung dự án & môi trường | GĐ1 | **Hoàn thành** | 1/1 | step-01-scaffold | [docs/walkthroughs/step-1.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-1.md) |
 | BƯỚC 2 | Xác thực, tài khoản, phân quyền | GĐ1 | Chưa bắt đầu | 0/15 | step-02-auth-rbac | [docs/walkthroughs/step-2.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-2.md) |
 | BƯỚC 3 | Trang công khai & tuyển sinh | GĐ1 | Chưa bắt đầu | 0/16 | step-03-public-leads | [docs/walkthroughs/step-3.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-3.md) |
 | BƯỚC 4 | AiGateway & chatbot tư vấn | GĐ1 | Chưa bắt đầu | 0/6 | step-04-ai-chatbot | [docs/walkthroughs/step-4.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/step-4.md) |

@@ -1,0 +1,13 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@corelink/shared$": "<rootDir>/../../../packages/shared/dist/index.js",
+    "^@corelink/ai$": "<rootDir>/../../../packages/ai/dist/index.js"
+  }
+}
