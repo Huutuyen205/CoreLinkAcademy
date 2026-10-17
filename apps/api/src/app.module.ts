@@ -25,6 +25,7 @@ import { AiGradingModule } from './modules/ai-grading/ai-grading.module';
 import { SmartCurriculumModule } from './modules/smart-curriculum/smart-curriculum.module';
 import { VideoCurriculumModule } from './modules/video-curriculum/video-curriculum.module';
 import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
+import { FinalIntegrationModule } from './modules/final-integration/final-integration.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AiAssistantModule } from './modules/ai-assistant/ai-assistant.module';
     SmartCurriculumModule,
     VideoCurriculumModule,
     AiAssistantModule,
+    FinalIntegrationModule,
   ],
 })
 export class AppModule {}
