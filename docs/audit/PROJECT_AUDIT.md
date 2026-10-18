@@ -19,10 +19,10 @@ CoreLinkAcademy/
 │   ├── shared/       # DTOs, Enums, Interfaces, Helper Functions dùng chung
 │   └── ai/           # AI Gateway (Claude 3.5 Sonnet, Gemini 1.5 Flash, HeyGen, Embeddings, Budget Guard)
 ├── db/
-│   ├── 000_schema.sql # CSDL chuẩn 48 bảng (Database-First, MySQL 8.4, 3NF, Foreign Keys, UTF8MB4)
+│   ├── 000_schema.sql # CSDL chuẩn 84 bảng (Database-First, MySQL 8.4, 3NF, Foreign Keys, UTF8MB4)
 │   └── *.sql         # Các script trích xuất cấu trúc và phân quyền
 ├── prisma/
-│   └── schema.prisma # Prisma Client mapping 100% khớp với 48 bảng MySQL
+│   └── schema.prisma # Prisma Client mapping 100% khớp với 84 bảng MySQL
 ├── docs/             # Tài liệu đặc tả CORELINK_MASTER.md, TEAM_PROMPT.md, Walkthroughs B1-B16
 └── docker-compose.yml# MySQL 8.4, Redis 7, MinIO S3, Mailpit
 ```

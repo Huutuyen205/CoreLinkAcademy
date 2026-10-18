@@ -12,7 +12,7 @@
     "lint": "echo api-lint-ok",
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
     "@corelink/ai": "workspace:*",
