@@ -85,19 +85,19 @@ export const Navigation: React.FC<NavigationProps> = ({ role = 'public' }) => {
   return (
     <>
       {/* Desktop / Tablet Top Navigation Header */}
-      <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-xs">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-slate-100 shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
+          <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-slate-900 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
               <GraduationCap className="w-5 h-5" />
             </div>
-            <span>
-              CoreLink<span className="text-blue-500">.</span>Academy
+            <span className="tracking-tight">
+              CoreLink<span className="text-blue-600">.</span>Academy
             </span>
           </Link>
 
           {/* Desktop Nav Items */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
@@ -105,10 +105,10 @@ export const Navigation: React.FC<NavigationProps> = ({ role = 'public' }) => {
                   key={item.href}
                   href={item.href}
                   className={clsx(
-                    'px-3.5 py-2 text-xs font-medium rounded-xl transition-all duration-150 flex items-center gap-2',
+                    'px-3.5 py-2 text-xs font-semibold rounded-xl transition-all duration-150 flex items-center gap-2',
                     isActive
-                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-900'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs'
+                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'
                   )}
                 >
                   {item.label}
@@ -121,29 +121,29 @@ export const Navigation: React.FC<NavigationProps> = ({ role = 'public' }) => {
           <div className="flex items-center gap-2">
             <Link
               href="/messages"
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-900 transition-colors"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors"
               title="Tin nhắn"
             >
               <MessageSquare className="w-4 h-4" />
             </Link>
             <Link
               href="/notifications"
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-900 transition-colors relative"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors relative"
               title="Thông báo"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-slate-950" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
             </Link>
             <Link
               href="/profile"
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-900 transition-colors"
+              className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-colors"
               title="Tài khoản"
             >
               <User className="w-4 h-4" />
             </Link>
             <Link
               href="/login"
-              className="hidden sm:inline-flex items-center justify-center text-xs font-semibold px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all shadow-md shadow-blue-600/20"
+              className="hidden sm:inline-flex items-center justify-center text-xs font-semibold px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all shadow-sm"
             >
               Đăng nhập
             </Link>
@@ -152,7 +152,7 @@ export const Navigation: React.FC<NavigationProps> = ({ role = 'public' }) => {
       </header>
 
       {/* Mobile-first (360px+) Bottom Navigation Bar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-800 bg-slate-950/95 backdrop-blur-xl px-2 py-1.5">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur-md px-2 py-1.5 shadow-lg">
         <div className="flex items-center justify-around">
           {navItems.slice(0, 5).map((item) => {
             const isActive = pathname === item.href;
@@ -162,7 +162,7 @@ export const Navigation: React.FC<NavigationProps> = ({ role = 'public' }) => {
                 href={item.href}
                 className={clsx(
                   'flex flex-col items-center justify-center py-1 px-2 rounded-xl text-[10px] font-medium transition-colors select-none',
-                  isActive ? 'text-blue-400 font-semibold' : 'text-slate-400 hover:text-slate-200'
+                  isActive ? 'text-blue-600 font-bold' : 'text-slate-500 hover:text-slate-900'
                 )}
               >
                 {item.icon}

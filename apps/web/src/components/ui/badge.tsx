@@ -15,16 +15,16 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const baseClasses =
-    'inline-flex items-center font-medium rounded-full transition-colors select-none';
+    'inline-flex items-center font-semibold rounded-full transition-colors select-none';
 
   const variants = {
-    default: 'bg-slate-800 text-slate-300 border border-slate-700',
-    primary: 'bg-blue-600/15 text-blue-400 border border-blue-500/30',
-    success: 'bg-emerald-600/15 text-emerald-400 border border-emerald-500/30',
-    warning: 'bg-amber-600/15 text-amber-400 border border-amber-500/30',
-    destructive: 'bg-red-600/15 text-red-400 border border-red-500/30',
-    outline: 'border border-slate-600 text-slate-300 bg-transparent',
-    ai: 'bg-gradient-to-r from-purple-500/20 via-indigo-500/20 to-blue-500/20 text-purple-300 border border-purple-500/40 shadow-sm shadow-purple-500/10',
+    default: 'bg-slate-100 text-slate-700 border border-slate-200',
+    primary: 'bg-blue-50 text-blue-700 border border-blue-200',
+    success: 'bg-emerald-50 text-[#0F9D8A] border border-emerald-200',
+    warning: 'bg-amber-50 text-amber-700 border border-amber-200',
+    destructive: 'bg-red-50 text-red-700 border border-red-200',
+    outline: 'border border-slate-200 text-slate-700 bg-white',
+    ai: 'bg-blue-50 text-blue-700 border border-blue-200',
   };
 
   const sizes = {
@@ -34,7 +34,7 @@ export const Badge: React.FC<BadgeProps> = ({
 
   return (
     <span className={clsx(baseClasses, variants[variant], sizes[size], className)} {...props}>
-      {variant === 'ai' && <Sparkles className="w-3 h-3 text-purple-400 shrink-0" />}
+      {variant === 'ai' && <Sparkles className="w-3 h-3 text-blue-600 shrink-0" />}
       {children}
     </span>
   );

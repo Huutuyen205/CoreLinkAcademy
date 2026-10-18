@@ -29,11 +29,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className="dark">
+    <html lang="vi" className="scroll-smooth">
       <head>
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className="antialiased min-h-screen flex flex-col justify-between">
+      <body className="bg-[#F7F9FC] text-[#172033] antialiased min-h-screen flex flex-col justify-between selection:bg-blue-100 selection:text-blue-900">
         {children}
         <ChatbotWidget />
         <PwaRegister />

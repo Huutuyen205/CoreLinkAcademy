@@ -15,15 +15,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
-        'bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25 active:scale-[0.98]',
+        'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow active:scale-[0.98]',
       secondary:
-        'bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 active:scale-[0.98]',
+        'bg-[#0F9D8A] hover:bg-[#0D8272] text-white shadow-sm hover:shadow active:scale-[0.98]',
       outline:
-        'border border-slate-600 hover:border-slate-400 bg-transparent text-slate-200 hover:bg-slate-800/50 active:scale-[0.98]',
-      ghost: 'bg-transparent hover:bg-slate-800 text-slate-300 hover:text-white',
+        'border border-slate-200 hover:border-slate-300 bg-white text-slate-700 hover:bg-slate-50 active:scale-[0.98]',
+      ghost: 'bg-transparent hover:bg-slate-100 text-slate-600 hover:text-slate-900',
       destructive:
-        'bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/25 active:scale-[0.98]',
-      ai: 'bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white shadow-lg shadow-purple-600/25 active:scale-[0.98]',
+        'bg-red-600 hover:bg-red-700 text-white shadow-sm active:scale-[0.98]',
+      ai: 'bg-gradient-to-r from-blue-600 to-[#0F9D8A] hover:from-blue-700 hover:to-[#0D8272] text-white shadow-sm active:scale-[0.98]',
     };
 
     const sizes = {
