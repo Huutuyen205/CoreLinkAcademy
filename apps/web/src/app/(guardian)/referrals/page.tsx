@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Gift, Share2, Copy, CheckCircle2, Users, Award, DollarSign } from 'lucide-react';
 
 interface ReferralStats {
   referralCode: string;
@@ -10,7 +11,7 @@ interface ReferralStats {
   totalRewardVnd: number;
   referredLeads: Array<{
     id: string;
-    parent_name?: string;
+    parent_name: string;
     child_name?: string;
     status: string;
     created_at: string;
@@ -23,26 +24,24 @@ export default function GuardianReferralsPage() {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    fetchReferralStats();
+    fetchStats();
   }, []);
 
-  const fetchReferralStats = async () => {
+  const fetchStats = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('accessToken');
-      const res = await fetch('/api/v1/campaigns/referral-stats', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const res = await fetch('/api/v1/guardian/referrals', {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (res.ok) {
         const data = await res.json();
         setStats(data);
       } else {
-        // Mock fallback cho preview
+        // Fallback demo data
         setStats({
-          referralCode: 'REF-CL892F',
+          referralCode: 'REF-PH8829',
           totalReferred: 3,
           enrolledCount: 2,
           totalRewardVnd: 1000000,
@@ -69,200 +68,149 @@ export default function GuardianReferralsPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0A0F1D', color: '#F1F5F9', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
       {/* Header */}
-      <header style={{
-        padding: '1.25rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'rgba(10, 15, 29, 0.85)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '2.5rem',
-            height: '2.5rem',
-            borderRadius: '0.75rem',
-            background: 'linear-gradient(135deg, #10B981, #3B82F6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '1.25rem'
-          }}>CL</div>
-          <div>
-            <h1 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>Cổng Thông Tin Phụ Huynh</h1>
-            <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>Chương trình giới thiệu & Tích lũy học bổng (S25)</p>
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-4 shadow-xs">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-base shadow-sm">
+              CL
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-bold border border-emerald-200">
+                  Cổng Thông Tin Phụ Huynh
+                </span>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-xs font-semibold text-slate-500">Đồng Hành & Tích Lũy</span>
+              </div>
+              <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                Chương Trình Giới Thiệu & Học Bổng Đồng Hành
+              </h1>
+            </div>
           </div>
-        </div>
 
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <Link href="/profile" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.875rem' }}>Hồ sơ & Con</Link>
-          <Link href="/referrals" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.875rem' }}>Giới thiệu bạn bè</Link>
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = '/login';
-            }}
-            style={{
-              padding: '0.4rem 0.85rem',
-              backgroundColor: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.25)',
-              color: '#F87171',
-              borderRadius: '0.5rem',
-              fontSize: '0.85rem',
-              cursor: 'pointer'
-            }}
-          >
-            Đăng xuất
-          </button>
-        </nav>
+          <nav className="flex items-center gap-2 text-xs font-semibold">
+            <Link
+              href="/profile"
+              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Hồ sơ & Con
+            </Link>
+            <Link
+              href="/referrals"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-xs"
+            >
+              Giới thiệu bạn bè
+            </Link>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.href = '/login';
+              }}
+              className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
+            >
+              Đăng xuất
+            </button>
+          </nav>
+        </div>
       </header>
 
-      <main style={{ maxWidth: '880px', margin: '3rem auto', padding: '0 1.5rem' }}>
+      <main className="max-w-5xl mx-auto py-8 px-4 sm:px-6 space-y-6">
         {/* Banner giới thiệu */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(16, 185, 129, 0.15))',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: '1.25rem',
-          padding: '2.5rem',
-          marginBottom: '2rem',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <h2 style={{ fontSize: '1.875rem', fontWeight: 800, margin: '0 0 0.75rem 0' }}>
-            Lan Tỏa Tri Thức — Nhận Học Bổng Đồng Hành
-          </h2>
-          <p style={{ color: '#CBD5E1', fontSize: '0.95rem', maxWidth: '600px', lineHeight: 1.6, margin: '0 0 1.75rem 0' }}>
-            Mỗi khi phụ huynh người quen nhập học thành công qua mã giới thiệu của bạn, cả hai gia đình đều nhận được voucher học bổng <strong>500,000 VND</strong> khấu trừ trực tiếp vào kỳ học phí tiếp theo!
-          </p>
+        <div className="bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="flex items-start gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Gift className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
+                Lan Tỏa Tri Thức — Nhận Học Bổng Đồng Hành
+              </h2>
+              <p className="text-slate-600 text-xs sm:text-sm mt-1 leading-relaxed max-w-2xl">
+                Mỗi khi phụ huynh người quen nhập học thành công qua mã giới thiệu của bạn, cả hai gia đình đều nhận được voucher học bổng <strong className="text-emerald-700">500.000 VND</strong> khấu trừ trực tiếp vào kỳ học phí tiếp theo!
+              </p>
+            </div>
+          </div>
 
           {/* Referral Code Box */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            backgroundColor: 'rgba(10, 15, 29, 0.8)',
-            padding: '1rem 1.5rem',
-            borderRadius: '0.75rem',
-            border: '1px dashed #3B82F6',
-            width: 'fit-content'
-          }}>
+          <div className="mt-6 p-4 rounded-xl bg-white border border-blue-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 max-w-xl">
             <div>
-              <span style={{ fontSize: '0.75rem', color: '#94A3B8', display: 'block', textTransform: 'uppercase' }}>Mã giới thiệu của bạn:</span>
-              <strong style={{ fontSize: '1.5rem', color: '#F59E0B', letterSpacing: '0.1em' }}>
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Mã giới thiệu của bạn</span>
+              <strong className="text-xl sm:text-2xl text-blue-700 font-mono tracking-wider">
                 {stats?.referralCode || 'Đang tạo...'}
               </strong>
             </div>
 
             <button
               onClick={handleCopyLink}
-              style={{
-                padding: '0.65rem 1.25rem',
-                backgroundColor: copied ? '#10B981' : '#2563EB',
-                color: '#FFFFFF',
-                borderRadius: '0.5rem',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition-all shadow-xs cursor-pointer"
             >
-              {copied ? '✓ Đã sao chép link!' : 'Sao chép link đăng ký'}
+              {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Đã sao chép link!' : 'Sao chép link đăng ký'}
             </button>
           </div>
         </div>
 
-        {/* 3 Thẻ thống kê (Metrics) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '1rem',
-            padding: '1.5rem'
-          }}>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Tổng số lượt giới thiệu</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#38BDF8' }}>
+        {/* 3 Thẻ thống kê */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <span className="text-xs text-slate-500 font-medium block mb-1">Lượt giới thiệu gửi đăng ký</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-blue-600">
               {stats?.totalReferred || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>Gia đình đã gửi đăng ký</div>
+            <span className="text-[11px] text-slate-400 mt-1 block">Gia đình đã gửi form tư vấn</span>
           </div>
 
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '1rem',
-            padding: '1.5rem'
-          }}>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Đã nhập học thành công</div>
-            <div style={{ fontSize: '2rem', fontWeight: 800, color: '#10B981' }}>
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <span className="text-xs text-slate-500 font-medium block mb-1">Đã nhập học thành công</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600">
               {stats?.enrolledCount || 0}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>Học viên chính thức</div>
+            <span className="text-[11px] text-slate-400 mt-1 block">Học viên chính thức</span>
           </div>
 
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '1rem',
-            padding: '1.5rem'
-          }}>
-            <div style={{ fontSize: '0.85rem', color: '#94A3B8', marginBottom: '0.5rem' }}>Học bổng tích lũy</div>
-            <div style={{ fontSize: '1.875rem', fontWeight: 800, color: '#F59E0B' }}>
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+            <span className="text-xs text-slate-500 font-medium block mb-1">Học bổng tích lũy</span>
+            <div className="text-2xl sm:text-3xl font-extrabold text-amber-800">
               {stats?.totalRewardVnd ? `${stats.totalRewardVnd.toLocaleString('vi-VN')} đ` : '0 đ'}
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>Được trừ vào kỳ học phí tới</div>
+            <span className="text-[11px] text-slate-400 mt-1 block">Khấu trừ vào hóa đơn kỳ tới</span>
           </div>
         </div>
 
         {/* Bảng lịch sử giới thiệu */}
-        <section style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '1rem',
-          padding: '1.75rem'
-        }}>
-          <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <h3 className="text-base font-bold text-slate-900 mb-4 pb-3 border-b border-slate-100">
             Lịch Sử Lượt Giới Thiệu
           </h3>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#94A3B8' }}>Đang tải lịch sử...</div>
+            <div className="text-center py-8 text-xs text-slate-400">Đang tải lịch sử...</div>
           ) : stats?.referredLeads && stats.referredLeads.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}>
-                    <th style={{ padding: '0.75rem' }}>Phụ huynh</th>
-                    <th style={{ padding: '0.75rem' }}>Học sinh</th>
-                    <th style={{ padding: '0.75rem' }}>Ngày đăng ký</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Trạng thái</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold">
+                    <th className="py-3 px-4">Phụ huynh</th>
+                    <th className="py-3 px-4">Học sinh</th>
+                    <th className="py-3 px-4">Ngày đăng ký</th>
+                    <th className="py-3 px-4 text-right">Trạng thái</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {stats.referredLeads.map((item) => (
-                    <tr key={item.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <td style={{ padding: '0.75rem', fontWeight: 600, color: '#FFFFFF' }}>{item.parent_name || 'Phụ huynh'}</td>
-                      <td style={{ padding: '0.75rem', color: '#CBD5E1' }}>{item.child_name || '—'}</td>
-                      <td style={{ padding: '0.75rem', color: '#94A3B8' }}>{new Date(item.created_at).toLocaleDateString('vi-VN')}</td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                        <span style={{
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          backgroundColor: item.status === 'enrolled' ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.15)',
-                          color: item.status === 'enrolled' ? '#10B981' : '#60A5FA',
-                          border: item.status === 'enrolled' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(59,130,246,0.3)'
-                        }}>
-                          {item.status === 'enrolled' ? 'Đã nhập học (+500k)' : 'Đang tư vấn'}
+                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3 px-4 font-semibold text-slate-900">{item.parent_name || 'Phụ huynh'}</td>
+                      <td className="py-3 px-4 text-slate-600">{item.child_name || '—'}</td>
+                      <td className="py-3 px-4 text-slate-500">{new Date(item.created_at).toLocaleDateString('vi-VN')}</td>
+                      <td className="py-3 px-4 text-right">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                          item.status === 'enrolled'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                        }`}>
+                          {item.status === 'enrolled' ? '✓ Đã nhập học (+500k)' : 'Đang tư vấn'}
                         </span>
                       </td>
                     </tr>
@@ -271,7 +219,7 @@ export default function GuardianReferralsPage() {
               </table>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#64748B' }}>
+            <div className="text-center py-8 text-xs text-slate-400 italic">
               Chưa có lượt giới thiệu nào. Hãy chia sẻ link với người quen để nhận học bổng nhé!
             </div>
           )}

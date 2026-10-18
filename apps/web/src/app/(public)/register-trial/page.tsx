@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { CheckCircle2, AlertCircle, ArrowRight, BookOpen, Clock, Calendar, Sparkles } from 'lucide-react';
 
 export default function RegisterTrialPage() {
   const [parentName, setParentName] = useState('');
@@ -19,7 +20,7 @@ export default function RegisterTrialPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Bắt UTM parameters từ query string
+    // Capture UTM parameters from query string
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.get('utm_source')) setUtmSource(params.get('utm_source')!);
@@ -80,155 +81,95 @@ export default function RegisterTrialPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0A0F1D', color: '#F1F5F9', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
       {/* Header */}
-      <header style={{
-        padding: '1.25rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'rgba(10, 15, 29, 0.85)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '2.5rem',
-            height: '2.5rem',
-            borderRadius: '0.75rem',
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '1.25rem'
-          }}>CL</div>
-          <div>
-            <h1 style={{ fontSize: '1.125rem', fontWeight: 700, margin: 0 }}>CoreLink Academy</h1>
-            <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>Đăng ký trải nghiệm & Xếp lớp</p>
-          </div>
-        </div>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-lg shadow-sm">
+              CL
+            </div>
+            <div>
+              <span className="text-lg font-bold text-slate-900 tracking-tight">CoreLink Academy</span>
+              <p className="text-xs text-slate-500 font-medium">Học Viện Anh Ngữ & Luyện Thi Chuẩn Quốc Tế</p>
+            </div>
+          </Link>
 
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <Link href="/courses" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.875rem' }}>Khóa học</Link>
-          <Link href="/register-trial" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.875rem' }}>Đăng ký học thử</Link>
-          <Link href="/info" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.875rem' }}>Công khai pháp lý</Link>
-        </nav>
+          <nav className="flex items-center gap-6 text-sm font-medium">
+            <Link href="/courses" className="text-slate-600 hover:text-blue-600 transition-colors">Khóa học</Link>
+            <Link href="/register-trial" className="text-blue-600 font-semibold">Đăng ký học thử</Link>
+            <Link href="/info" className="text-slate-600 hover:text-blue-600 transition-colors">Công khai pháp lý</Link>
+            <Link href="/login" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors font-medium">
+              Đăng nhập
+            </Link>
+          </nav>
+        </div>
       </header>
 
-      <main style={{ maxWidth: '680px', margin: '3rem auto', padding: '0 1.5rem' }}>
+      {/* Main Content */}
+      <main className="max-w-2xl mx-auto py-12 px-4 sm:px-6">
         {successResult ? (
-          <div style={{
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
-            border: '1px solid rgba(16, 185, 129, 0.25)',
-            borderRadius: '1rem',
-            padding: '2.5rem',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              width: '4rem',
-              height: '4rem',
-              borderRadius: '9999px',
-              backgroundColor: '#10B981',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              margin: '0 auto 1.5rem auto'
-            }}>✓</div>
+          <div className="bg-white rounded-2xl border border-emerald-200 p-8 sm:p-10 text-center shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
 
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 700, margin: '0 0 0.75rem 0' }}>
-              Đăng ký thành công!
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-3">
+              Đăng Ký Học Thử Thành Công!
             </h2>
-            <p style={{ color: '#94A3B8', lineHeight: 1.6, marginBottom: '2rem' }}>
-              {successResult.message || 'Cảm ơn Quý phụ huynh. Đội ngũ tư vấn CoreLink sẽ liên hệ lại trong vòng 24 giờ làm việc để xếp lịch học thử phù hợp nhất.'}
+            <p className="text-slate-600 leading-relaxed max-w-lg mx-auto mb-6">
+              {successResult.message || 'Cảm ơn Quý phụ huynh. Đội ngũ cố vấn học vụ CoreLink sẽ liên hệ xác nhận trong vòng 24 giờ làm việc để xếp lịch học thử tối ưu nhất cho học viên.'}
             </p>
 
             {successResult.isDuplicateMerged && (
-              <div style={{
-                padding: '0.75rem 1rem',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
-                borderRadius: '0.5rem',
-                color: '#60A5FA',
-                fontSize: '0.85rem',
-                marginBottom: '1.5rem'
-              }}>
-                ℹ️ Số điện thoại này đã có trong hệ thống, nhu cầu mới của bạn đã được cập nhật thành công vào hồ sơ tư vấn!
+              <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
+                ℹ️ Số điện thoại này đã có trong hệ thống, nguyện vọng mới của quý phụ huynh đã được cập nhật thành công vào hồ sơ tư vấn!
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href={`/placement-test/sample?grade=${childGrade}`}
-                style={{
-                  padding: '0.85rem 1.75rem',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textDecoration: 'none'
-                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm transition-all text-sm"
               >
-                Làm bài Test đánh giá năng lực ngay
+                <Sparkles className="w-4 h-4" />
+                Làm bài đánh giá năng lực ngay (15 phút)
               </Link>
               <Link
                 href="/courses"
-                style={{
-                  padding: '0.85rem 1.5rem',
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  color: '#CBD5E1',
-                  borderRadius: '0.75rem',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textDecoration: 'none'
-                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all text-sm"
               >
-                Về danh mục khóa học
+                Khám phá lộ trình đào tạo
               </Link>
             </div>
           </div>
         ) : (
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '1.25rem',
-            padding: '2.5rem',
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)'
-          }}>
-            <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-              <h2 style={{ fontSize: '1.875rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>
-                Đăng ký Học thử Miễn phí
-              </h2>
-              <p style={{ color: '#94A3B8', fontSize: '0.95rem', margin: 0 }}>
-                Trải nghiệm 01 buổi học thực tế với giáo viên chuyên môn & nhận báo cáo đánh giá năng lực cá nhân.
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-10 shadow-sm">
+            <div className="text-center mb-8">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold mb-3">
+                <Sparkles className="w-3.5 h-3.5" />
+                Miễn Phí 100% • Cam Kết Không Chèo Kéo
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+                Đăng Ký Học Thử & Đánh Giá Năng Lực
+              </h1>
+              <p className="text-slate-600 text-sm max-w-lg mx-auto">
+                Trải nghiệm 01 buổi học trực tiếp cùng giảng viên chuyên môn & nhận báo cáo phân tích năng lực chi tiết theo khung chuẩn Châu Âu CEFR.
               </p>
             </div>
 
             {error && (
-              <div style={{
-                padding: '0.85rem 1.25rem',
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: '0.75rem',
-                color: '#F87171',
-                fontSize: '0.875rem',
-                marginBottom: '1.5rem'
-              }}>
-                {error}
+              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 text-red-500 mt-0.5" />
+                <div>{error}</div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
-                    Họ tên Phụ huynh *
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Họ tên Phụ huynh <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -236,22 +177,13 @@ export default function RegisterTrialPage() {
                     placeholder="VD: Nguyễn Văn An"
                     value={parentName}
                     onChange={(e) => setParentName(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.625rem',
-                      backgroundColor: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box'
-                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
-                    Số điện thoại liên hệ *
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Số điện thoại liên hệ <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -259,24 +191,15 @@ export default function RegisterTrialPage() {
                     placeholder="0912345678"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.625rem',
-                      backgroundColor: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box'
-                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
-                    Họ tên Học sinh *
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Họ tên Học sinh <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -284,36 +207,18 @@ export default function RegisterTrialPage() {
                     placeholder="VD: Nguyễn Hoàng Nam"
                     value={childName}
                     onChange={(e) => setChildName(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.625rem',
-                      backgroundColor: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box'
-                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
                     Lớp hiện tại
                   </label>
                   <select
                     value={childGrade}
                     onChange={(e) => setChildGrade(Number(e.target.value))}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.625rem',
-                      backgroundColor: '#1E293B',
-                      border: '1px solid rgba(255,255,255,0.12)',
-                      color: '#FFFFFF',
-                      fontSize: '0.9rem',
-                      boxSizing: 'border-box'
-                    }}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
                   >
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
                       <option key={g} value={g}>Lớp {g}</option>
@@ -323,32 +228,23 @@ export default function RegisterTrialPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
-                  Mục tiêu học tập mong muốn
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Mục tiêu học tập ưu tiên
                 </label>
                 <input
                   type="text"
-                  placeholder="VD: Lấy lại gốc tiếng Anh, luyện thi vào trường chuyên, chứng chỉ IELTS..."
+                  placeholder="VD: Luyện thi Chuyên Cấp 3, lấy chứng chỉ IELTS 6.5+, bồi dưỡng nền tảng..."
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '0.625rem',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    color: '#FFFFFF',
-                    fontSize: '0.9rem',
-                    boxSizing: 'border-box'
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-sm transition-all"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: '#CBD5E1' }}>
-                  Khung giờ gia đình có thể tham gia học thử:
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-2">
+                  Khung giờ gia đình có thể tham gia học thử (chọn nhiều)
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {slotOptions.map((slot) => {
                     const isChecked = selectedSlots.includes(slot);
                     return (
@@ -356,21 +252,17 @@ export default function RegisterTrialPage() {
                         type="button"
                         key={slot}
                         onClick={() => handleToggleSlot(slot)}
-                        style={{
-                          padding: '0.6rem 0.75rem',
-                          borderRadius: '0.5rem',
-                          textAlign: 'left',
-                          fontSize: '0.8rem',
-                          cursor: 'pointer',
-                          backgroundColor: isChecked ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255,255,255,0.03)',
-                          border: isChecked ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.08)',
-                          color: isChecked ? '#60A5FA' : '#94A3B8',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.5rem'
-                        }}
+                        className={`px-3.5 py-2.5 rounded-xl text-left text-xs font-medium border flex items-center gap-2.5 transition-all ${
+                          isChecked
+                            ? 'bg-blue-50 border-blue-500 text-blue-700 font-semibold shadow-xs'
+                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                        }`}
                       >
-                        <span>{isChecked ? '☑' : '☐'}</span>
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
+                          isChecked ? 'bg-blue-600 border-blue-600 text-white' : 'border-slate-300 bg-white'
+                        }`}>
+                          {isChecked ? '✓' : ''}
+                        </span>
                         <span>{slot}</span>
                       </button>
                     );
@@ -379,48 +271,37 @@ export default function RegisterTrialPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.4rem', color: '#CBD5E1' }}>
-                  Mã giới thiệu (nếu có người quen tại CoreLink)
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 mb-1.5">
+                  Mã giới thiệu (nếu có người quen học tại CoreLink)
                 </label>
                 <input
                   type="text"
                   placeholder="VD: REF-8A9F1B"
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    borderRadius: '0.625rem',
-                    backgroundColor: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    color: '#F59E0B',
-                    fontWeight: 600,
-                    fontSize: '0.9rem',
-                    boxSizing: 'border-box'
-                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-amber-800 font-semibold placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-sm transition-all"
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  marginTop: '1rem',
-                  padding: '0.875rem',
-                  borderRadius: '0.75rem',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  border: 'none',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.39)',
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                {loading ? 'Đang gửi thông tin...' : 'Gửi Đăng Ký Học Thử Miễn Phí'}
-              </button>
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm shadow-md hover:shadow-lg disabled:opacity-60 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {loading ? (
+                    'Đang xử lý thông tin đăng ký...'
+                  ) : (
+                    <>
+                      Gửi Đăng Ký Học Thử Miễn Phí
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+                <p className="text-center text-xs text-slate-500 mt-3">
+                  Thông tin của Quý phụ huynh được bảo mật tuyệt đối theo Nghị định 13/2023/NĐ-CP về Bảo vệ Dữ liệu Cá nhân.
+                </p>
+              </div>
             </form>
           </div>
         )}

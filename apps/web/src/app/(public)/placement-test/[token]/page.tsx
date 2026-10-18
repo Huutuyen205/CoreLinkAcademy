@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { Clock, CheckCircle2, AlertCircle, Sparkles, ArrowRight, Award } from 'lucide-react';
 
 interface Question {
   id: string;
@@ -58,40 +59,44 @@ export default function PlacementTestPage() {
         setTestData(data);
         setTimeLeft((data.durationMinutes || 20) * 60);
       } else {
-        // Fallback câu hỏi mẫu nếu backend chưa seed câu hỏi
+        // Fallback ngân hàng câu hỏi mẫu chuẩn CEFR
         setTestData({
           token,
           gradeLevel: 6,
-          durationMinutes: 15,
+          durationMinutes: 20,
           questions: [
             {
               id: 'q1',
-              stem: 'Choose the correct form: She _____ to school by bus every morning.',
-              options: { A: 'go', B: 'goes', C: 'going', D: 'is go' },
+              stem: 'Choose the correct word: "She usually _______ to school by bus every morning."',
+              options: { A: 'go', B: 'goes', C: 'going', D: 'went' },
             },
             {
               id: 'q2',
-              stem: 'Identify the synonym of "ANXIOUS":',
-              options: { A: 'Worried', B: 'Happy', C: 'Excited', D: 'Calm' },
+              stem: 'Identify the synonym of the word "ENORMOUS":',
+              options: { A: 'Tiny', B: 'Huge', C: 'Narrow', D: 'Weak' },
             },
             {
               id: 'q3',
-              stem: 'If it rains tomorrow, we _____ the outdoor picnic.',
-              options: { A: 'cancel', B: 'will cancel', C: 'would cancel', D: 'cancelled' },
+              stem: 'If it rains tomorrow, we _______ the outdoor picnic.',
+              options: { A: 'will cancel', B: 'cancelled', C: 'would cancel', D: 'canceling' },
             },
             {
               id: 'q4',
-              stem: 'Which word has the underlined part pronounced differently?',
-              options: { A: 'played', B: 'planned', C: 'wanted', D: 'lived' },
+              stem: '"Have you ever _______ to London before?" — "Yes, twice."',
+              options: { A: 'be', B: 'being', C: 'been', D: 'went' },
             },
             {
               id: 'q5',
-              stem: 'The new library is _____ than the old one in our town.',
-              options: { A: 'more modern', B: 'moderner', C: 'most modern', D: 'as modern' },
+              stem: 'Choose the best response: "Could you please show me the way to the library?"',
+              options: {
+                A: 'Yes, it is 5 o’clock.',
+                B: 'Go straight ahead and turn left at the corner.',
+                C: 'I love reading books.',
+                D: 'No, I didn’t buy it.',
+              },
             },
           ],
         });
-        setTimeLeft(15 * 60);
       }
     } catch (err) {
       console.error('Error fetching test:', err);
@@ -130,8 +135,8 @@ export default function PlacementTestPage() {
           score,
           totalQuestions: total,
           percentage: Math.round((score / total) * 100),
-          recommendedLevel: score >= 4 ? 'Level B1 - Intermediate (THCS Chuyên)' : 'Level A2 - Pre-Intermediate',
-          comment: 'Học sinh có phản xạ ngữ pháp căn bản tốt, cần củng cố thêm từ vựng học thuật nâng cao.',
+          recommendedLevel: score >= 4 ? 'Level B1 - Intermediate (THCS Chuyên & IELTS Foundation)' : 'Level A2 - Pre-Intermediate (Tiếng Anh Nền Tảng Toàn Diện)',
+          comment: 'Học sinh có phản xạ ngữ pháp và từ vựng căn bản tốt. Đề xuất tham gia khóa luyện chuyên sâu để phát triển kỹ năng Viết & Nói nâng cao.',
         });
       }
     } catch (err) {
@@ -149,214 +154,118 @@ export default function PlacementTestPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#0A0F1D', color: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        Đang tải đề kiểm tra năng lực...
+      <div className="min-h-screen bg-[#F7F9FC] flex items-center justify-center text-slate-600 font-medium text-sm">
+        Đang tải đề đánh giá năng lực ngôn ngữ...
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0A0F1D', color: '#F1F5F9', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
       {/* Header with Sticky Timer */}
-      <header style={{
-        padding: '1rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'rgba(10, 15, 29, 0.85)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '2.25rem',
-            height: '2.25rem',
-            borderRadius: '0.5rem',
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '1rem'
-          }}>CL</div>
-          <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Bài Kiểm Tra Đánh Giá Trình Độ (S05)</h1>
-            <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>Đề tự động theo khối lớp</p>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 px-6 py-4 shadow-xs">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-base shadow-sm">
+              CL
+            </div>
+            <div>
+              <h1 className="text-base font-bold text-slate-900 leading-tight">Đánh Giá Năng Lực Đầu Vào</h1>
+              <p className="text-xs text-slate-500 font-medium">Khảo sát phản xạ ngữ pháp & từ vựng theo khối lớp</p>
+            </div>
           </div>
-        </div>
 
-        {!result && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.4rem 1rem',
-            borderRadius: '0.5rem',
-            backgroundColor: timeLeft < 180 ? 'rgba(239, 68, 68, 0.15)' : 'rgba(59, 130, 246, 0.15)',
-            border: timeLeft < 180 ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(59, 130, 246, 0.3)',
-            color: timeLeft < 180 ? '#F87171' : '#60A5FA',
-            fontWeight: 700,
-            fontSize: '1.1rem'
-          }}>
-            ⏱ {formatTime(timeLeft)}
-          </div>
-        )}
+          {!result && (
+            <div className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border font-bold text-sm ${
+              timeLeft < 180
+                ? 'bg-red-50 border-red-200 text-red-600 animate-pulse'
+                : 'bg-blue-50 border-blue-200 text-blue-700'
+            }`}>
+              <Clock className="w-4 h-4" />
+              <span>{formatTime(timeLeft)}</span>
+            </div>
+          )}
+        </div>
       </header>
 
-      <main style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1.5rem 4rem 1.5rem' }}>
+      <main className="max-w-3xl mx-auto py-10 px-4 sm:px-6">
         {result ? (
           /* Kết quả bài test */
-          <div style={{
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '1.25rem',
-            padding: '2.5rem',
-            textAlign: 'center',
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)'
-          }}>
-            <div style={{
-              width: '5rem',
-              height: '5rem',
-              borderRadius: '9999px',
-              backgroundColor: '#3B82F6',
-              color: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '2rem',
-              fontWeight: 800,
-              margin: '0 auto 1.5rem auto'
-            }}>
+          <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-10 text-center shadow-sm">
+            <div className="w-20 h-20 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center mx-auto mb-6 text-2xl font-black shadow-inner">
               {result.percentage}%
             </div>
 
-            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, margin: '0 0 0.5rem 0' }}>
-              Kết Quả Đánh Giá Năng Lực
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold mb-2">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Đã Hoàn Thành Bài Kiểm Tra
+            </span>
+
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-2">
+              Báo Cáo Năng Lực Ngôn Ngữ
             </h2>
-            <p style={{ color: '#94A3B8', fontSize: '1rem', marginBottom: '2rem' }}>
-              Điểm đạt được: <strong style={{ color: '#10B981' }}>{result.score}</strong> / {result.totalQuestions} câu chính xác
+            <p className="text-slate-600 text-sm mb-6">
+              Kết quả trả lời đúng: <strong className="text-emerald-700 font-bold">{result.score}</strong> / {result.totalQuestions} câu hỏi
             </p>
 
-            <div style={{
-              backgroundColor: 'rgba(59, 130, 246, 0.08)',
-              border: '1px solid rgba(59, 130, 246, 0.2)',
-              borderRadius: '1rem',
-              padding: '1.5rem',
-              textAlign: 'left',
-              marginBottom: '2rem'
-            }}>
-              <div style={{ fontSize: '0.85rem', color: '#60A5FA', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-left mb-8 space-y-3">
+              <div className="text-xs font-bold text-blue-700 uppercase tracking-wider">
                 Lớp học & Trình độ đề xuất:
               </div>
-              <div style={{ fontSize: '1.35rem', fontWeight: 700, color: '#FFFFFF', marginBottom: '0.75rem' }}>
+              <div className="text-lg sm:text-xl font-bold text-slate-900">
                 {result.recommendedLevel}
               </div>
-              <p style={{ fontSize: '0.9rem', color: '#CBD5E1', margin: 0, lineHeight: 1.6 }}>
+              <p className="text-slate-600 text-sm leading-relaxed">
                 {result.comment}
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/register-trial"
-                style={{
-                  padding: '0.85rem 1.75rem',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textDecoration: 'none'
-                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-md transition-all text-sm"
               >
-                Đăng ký xếp lớp học thử ngay
+                Đăng ký xếp lớp học thử miễn phí
+                <ArrowRight className="w-4 h-4" />
               </Link>
               <Link
                 href="/courses"
-                style={{
-                  padding: '0.85rem 1.5rem',
-                  backgroundColor: 'rgba(255,255,255,0.06)',
-                  color: '#CBD5E1',
-                  borderRadius: '0.75rem',
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textDecoration: 'none'
-                }}
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all text-sm"
               >
-                Xem chi tiết khóa học
+                Xem chi tiết khung chương trình
               </Link>
             </div>
           </div>
         ) : (
-          /* Form làm bài thi trắc nghiệm */
-          <div>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem',
-              padding: '1rem 1.25rem',
-              backgroundColor: 'rgba(255,255,255,0.02)',
-              borderRadius: '0.75rem',
-              border: '1px solid rgba(255,255,255,0.06)'
-            }}>
-              <span style={{ fontSize: '0.9rem', color: '#94A3B8' }}>
-                Tiến độ: <strong style={{ color: '#60A5FA' }}>{Object.keys(answers).length}</strong> / {testData?.questions.length} câu đã trả lời
+          /* Danh sách câu hỏi trắc nghiệm */
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex items-center justify-between shadow-xs">
+              <span className="text-xs sm:text-sm text-slate-600 font-medium">
+                Đã trả lời: <strong className="text-blue-600 font-bold">{Object.keys(answers).length}</strong> / {testData?.questions.length} câu
               </span>
               <button
                 type="button"
                 onClick={handleSubmitAnswers}
                 disabled={submitting}
-                style={{
-                  padding: '0.5rem 1.25rem',
-                  backgroundColor: '#10B981',
-                  color: '#FFFFFF',
-                  borderRadius: '0.5rem',
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  border: 'none',
-                  cursor: submitting ? 'not-allowed' : 'pointer'
-                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm rounded-xl transition-all shadow-xs disabled:opacity-60 cursor-pointer"
               >
                 {submitting ? 'Đang nộp...' : 'Nộp bài ngay'}
               </button>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <div className="space-y-5">
               {testData?.questions.map((q, idx) => (
-                <div
-                  key={q.id}
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    borderRadius: '1rem',
-                    padding: '1.5rem'
-                  }}
-                >
-                  <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-                    <span style={{
-                      display: 'inline-block',
-                      width: '1.75rem',
-                      height: '1.75rem',
-                      borderRadius: '0.375rem',
-                      backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                      color: '#60A5FA',
-                      fontWeight: 700,
-                      textAlign: 'center',
-                      lineHeight: '1.75rem',
-                      fontSize: '0.85rem'
-                    }}>
+                <div key={q.id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                  <div className="flex items-start gap-3 mb-5">
+                    <span className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                       {idx + 1}
                     </span>
-                    <p style={{ margin: 0, fontWeight: 600, fontSize: '1rem', lineHeight: 1.5, color: '#F8FAFC' }}>
+                    <h3 className="text-sm sm:text-base font-semibold text-slate-900 leading-snug">
                       {q.stem}
-                    </p>
+                    </h3>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {Object.entries(q.options).map(([optKey, optVal]) => {
                       const isSelected = answers[q.id] === optKey;
                       return (
@@ -364,36 +273,18 @@ export default function PlacementTestPage() {
                           key={optKey}
                           type="button"
                           onClick={() => handleSelectOption(q.id, optKey)}
-                          style={{
-                            padding: '0.75rem 1rem',
-                            borderRadius: '0.5rem',
-                            textAlign: 'left',
-                            fontSize: '0.9rem',
-                            cursor: 'pointer',
-                            backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.25)' : 'rgba(255,255,255,0.02)',
-                            border: isSelected ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.06)',
-                            color: isSelected ? '#FFFFFF' : '#CBD5E1',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.75rem',
-                            transition: 'all 0.15s'
-                          }}
+                          className={`p-3.5 rounded-xl text-left text-sm border flex items-center gap-3 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-50 border-blue-600 text-blue-900 font-semibold shadow-xs'
+                              : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 hover:border-slate-300'
+                          }`}
                         >
-                          <span style={{
-                            width: '1.5rem',
-                            height: '1.5rem',
-                            borderRadius: '9999px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            backgroundColor: isSelected ? '#3B82F6' : 'rgba(255,255,255,0.08)',
-                            color: isSelected ? '#FFFFFF' : '#94A3B8'
-                          }}>
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                            isSelected ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-600'
+                          }`}>
                             {optKey}
                           </span>
-                          <span>{optVal}</span>
+                          <span className="leading-tight">{optVal}</span>
                         </button>
                       );
                     })}
@@ -402,24 +293,14 @@ export default function PlacementTestPage() {
               ))}
             </div>
 
-            <div style={{ textAlign: 'center', marginTop: '2.5rem' }}>
+            <div className="text-center pt-4">
               <button
                 type="button"
                 onClick={handleSubmitAnswers}
                 disabled={submitting}
-                style={{
-                  padding: '0.875rem 2.5rem',
-                  backgroundColor: '#2563EB',
-                  color: '#FFFFFF',
-                  borderRadius: '0.75rem',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  border: 'none',
-                  cursor: submitting ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 4px 14px 0 rgba(37, 99, 235, 0.39)'
-                }}
+                className="w-full sm:w-auto px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-60"
               >
-                {submitting ? 'Đang chấm điểm...' : 'Hoàn thành & Xem kết quả'}
+                {submitting ? 'Đang chấm điểm bài làm...' : 'Hoàn Thành & Xem Báo Cáo Năng Lực'}
               </button>
             </div>
           </div>

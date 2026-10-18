@@ -2,6 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  BookOpen,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  Plus,
+  FileText,
+  Search,
+  Filter,
+  Layers,
+  ArrowRight,
+  AlertCircle,
+} from 'lucide-react';
 
 interface KbDocument {
   id: string;
@@ -52,7 +65,7 @@ export default function AdminKnowledgeBasePage() {
         const data = await res.json();
         setDocuments(data);
       } else {
-        // Fallback mock preview
+        // Fallback demo data
         setDocuments([
           {
             id: 'kb1',
@@ -147,63 +160,66 @@ export default function AdminKnowledgeBasePage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#0A0F1D', color: '#F1F5F9', fontFamily: 'system-ui, sans-serif' }}>
+    <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
       {/* Header */}
-      <header style={{
-        padding: '1rem 2rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        backdropFilter: 'blur(12px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        backgroundColor: 'rgba(10, 15, 29, 0.85)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{
-            width: '2.25rem',
-            height: '2.25rem',
-            borderRadius: '0.5rem',
-            background: 'linear-gradient(135deg, #3B82F6, #8B5CF6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: '1rem'
-          }}>CL</div>
-          <div>
-            <h1 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>Kho Tri Thức RAG Chatbot (AI-12, FR-103)</h1>
-            <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>Quản lý & duyệt tài liệu sinh vector embedding cho trợ lý ảo</p>
+      <header className="sticky top-0 z-40 bg-white border-b border-slate-200 px-6 py-4 shadow-xs">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-base shadow-sm">
+              CL
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 text-[11px] font-bold border border-indigo-200">
+                  RAG Chatbot Tri Thức
+                </span>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-xs font-semibold text-slate-500">Vector Embeddings</span>
+              </div>
+              <h1 className="text-lg font-bold text-slate-900 leading-tight">
+                Quản Trị Kho Tri Thức Tư Vấn Tự Động
+              </h1>
+            </div>
           </div>
-        </div>
 
-        <nav style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
-          <Link href="/admin/knowledge-base" style={{ color: '#38BDF8', fontWeight: 600, textDecoration: 'none', fontSize: '0.875rem' }}>Kho Tri Thức RAG</Link>
-          <Link href="/admin/users" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.875rem' }}>Quản lý User</Link>
-          <Link href="/consultant/leads" style={{ color: '#94A3B8', textDecoration: 'none', fontSize: '0.875rem' }}>Tuyển sinh</Link>
-        </nav>
+          <nav className="flex items-center gap-2 text-xs font-semibold">
+            <Link
+              href="/admin/knowledge-base"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 text-white shadow-xs"
+            >
+              Kho Tri Thức
+            </Link>
+            <Link
+              href="/admin/dashboard"
+              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Tổng Quan Quản Trị
+            </Link>
+            <Link
+              href="/consultant/leads"
+              className="px-3.5 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors"
+            >
+              Tuyển Sinh
+            </Link>
+          </nav>
+        </div>
       </header>
 
-      <main style={{ maxWidth: '1100px', margin: '2.5rem auto', padding: '0 1.5rem' }}>
+      <main className="max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-6">
         {actionMsg && (
-          <div style={{
-            padding: '0.75rem 1.25rem',
-            borderRadius: '0.5rem',
-            backgroundColor: actionMsg.includes('Lỗi') ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
-            border: actionMsg.includes('Lỗi') ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(16,185,129,0.3)',
-            color: actionMsg.includes('Lỗi') ? '#F87171' : '#10B981',
-            marginBottom: '1.5rem',
-            fontSize: '0.875rem',
-          }}>
-            {actionMsg}
+          <div className={`p-4 rounded-xl border text-xs font-medium flex items-center gap-2 ${
+            actionMsg.includes('Lỗi')
+              ? 'bg-red-50 border-red-200 text-red-700'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-800'
+          }`}>
+            {actionMsg.includes('Lỗi') ? <AlertCircle className="w-4 h-4 shrink-0" /> : <CheckCircle2 className="w-4 h-4 shrink-0" />}
+            <span>{actionMsg}</span>
           </div>
         )}
 
         {/* Action bar & Filters */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-wrap gap-2">
             {[
               { id: 'all', label: 'Tất cả tài liệu' },
               { id: 'draft', label: 'Bản nháp (Draft)' },
@@ -212,16 +228,11 @@ export default function AdminKnowledgeBasePage() {
               <button
                 key={tab.id}
                 onClick={() => setSelectedStatus(tab.id)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  borderRadius: '0.5rem',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  border: selectedStatus === tab.id ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.08)',
-                  backgroundColor: selectedStatus === tab.id ? '#2563EB' : 'rgba(255,255,255,0.04)',
-                  color: selectedStatus === tab.id ? '#FFFFFF' : '#94A3B8',
-                }}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                  selectedStatus === tab.id
+                    ? 'bg-blue-600 border-blue-600 text-white shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
               >
                 {tab.label}
               </button>
@@ -230,101 +241,76 @@ export default function AdminKnowledgeBasePage() {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            style={{
-              padding: '0.65rem 1.25rem',
-              borderRadius: '0.5rem',
-              backgroundColor: '#2563EB',
-              color: '#FFFFFF',
-              fontWeight: 700,
-              fontSize: '0.875rem',
-              border: 'none',
-              cursor: 'pointer',
-            }}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer self-start sm:self-auto"
           >
-            + Soạn Tài Liệu Mới
+            <Plus className="w-4 h-4" />
+            Soạn Tài Liệu Mới
           </button>
         </div>
 
         {/* Document list table */}
-        <section style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.03)',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          borderRadius: '1rem',
-          padding: '1.75rem',
-          boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)',
-        }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: 700, margin: '0 0 1.25rem 0' }}>
-            Danh Mục Tài Liệu Tri Thức Hệ Thống
-          </h2>
+        <section className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Danh Mục Tài Liệu Tri Thức Hệ Thống</h2>
+              <p className="text-xs text-slate-500">Tài liệu sau khi duyệt sẽ được phân đoạn thành vectors để trợ lý ảo AI trích xuất</p>
+            </div>
+          </div>
 
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#94A3B8' }}>Đang tải danh sách tài liệu...</div>
+            <div className="text-center py-12 text-xs text-slate-400">Đang tải danh sách tài liệu...</div>
           ) : documents.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '3rem', color: '#64748B' }}>Chưa có tài liệu nào trong danh mục này.</div>
+            <div className="text-center py-12 text-xs text-slate-400 italic">Chưa có tài liệu nào trong danh mục này.</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs sm:text-sm border-collapse">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8' }}>
-                    <th style={{ padding: '0.75rem' }}>Tiêu đề tài liệu</th>
-                    <th style={{ padding: '0.75rem' }}>Thể loại</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Số đoạn Chunks</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'center' }}>Trạng thái</th>
-                    <th style={{ padding: '0.75rem', textAlign: 'right' }}>Thao tác</th>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-slate-600 text-xs font-semibold">
+                    <th className="py-3 px-4">Tiêu đề tài liệu</th>
+                    <th className="py-3 px-4">Thể loại</th>
+                    <th className="py-3 px-4 text-center">Số đoạn Chunks</th>
+                    <th className="py-3 px-4 text-center">Trạng thái</th>
+                    <th className="py-3 px-4 text-right">Thao tác</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {documents.map((doc) => (
-                    <tr key={doc.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <td style={{ padding: '0.75rem', fontWeight: 600, color: '#FFFFFF' }}>{doc.title}</td>
-                      <td style={{ padding: '0.75rem', color: '#38BDF8', textTransform: 'uppercase', fontSize: '0.75rem', fontWeight: 700 }}>
-                        {doc.category}
+                    <tr key={doc.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-slate-900 max-w-sm">
+                        {doc.title}
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center', color: '#CBD5E1' }}>
-                        {doc._count?.kb_chunks || 0} chunks
+                      <td className="py-3.5 px-4">
+                        <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-[11px] uppercase border border-blue-200">
+                          {doc.category}
+                        </span>
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'center' }}>
-                        <span style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '0.375rem',
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
-                          backgroundColor: doc.status === 'approved' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                          color: doc.status === 'approved' ? '#10B981' : '#F59E0B',
-                          border: doc.status === 'approved' ? '1px solid rgba(16,185,129,0.3)' : '1px solid rgba(245,158,11,0.3)',
-                        }}>
+                      <td className="py-3.5 px-4 text-center text-slate-600 font-medium">
+                        {doc._count?.kb_chunks || 0} đoạn
+                      </td>
+                      <td className="py-3.5 px-4 text-center">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
+                          doc.status === 'approved'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 text-amber-800 border-amber-200'
+                        }`}>
                           {doc.status === 'approved' ? '✓ Đã duyệt (Active)' : 'Bản nháp (Draft)'}
                         </span>
                       </td>
-                      <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleViewDetails(doc.id)}
-                            style={{
-                              padding: '0.35rem 0.65rem',
-                              borderRadius: '0.375rem',
-                              backgroundColor: 'rgba(255,255,255,0.06)',
-                              color: '#CBD5E1',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                            }}
+                            className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium cursor-pointer"
                           >
-                            Xem chi tiết
+                            Xem Chunks
                           </button>
                           {doc.status !== 'approved' && (
                             <button
                               onClick={() => handleApproveDocument(doc.id)}
-                              style={{
-                                padding: '0.35rem 0.75rem',
-                                borderRadius: '0.375rem',
-                                backgroundColor: '#10B981',
-                                color: '#FFFFFF',
-                                border: 'none',
-                                fontSize: '0.8rem',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer"
                             >
                               ⚡ Duyệt & Sinh Vector
                             </button>
@@ -342,51 +328,34 @@ export default function AdminKnowledgeBasePage() {
 
       {/* Modal Soạn tài liệu mới */}
       {isCreateOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 100,
-          padding: '1.5rem',
-        }}>
-          <div style={{
-            backgroundColor: '#1E293B',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '1rem',
-            maxWidth: '650px',
-            width: '100%',
-            padding: '2rem',
-          }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 1.25rem 0', color: '#FFFFFF' }}>
-              Soạn Tài Liệu Kho Tri Thức Mới
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 text-slate-800">
+            <h3 className="text-lg font-bold text-slate-900 mb-1">
+              Soạn Thảo Tài Liệu Tri Thức Mới
             </h3>
+            <p className="text-xs text-slate-500 mb-4">
+              Nội dung sẽ được hệ thống phân tách thành các đoạn ngữ nghĩa (chunks) phục vụ truy vấn RAG
+            </p>
 
-            <form onSubmit={handleCreateDocument} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleCreateDocument} className="space-y-4">
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '0.3rem' }}>Tiêu đề tài liệu *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Tiêu đề tài liệu *</label>
                 <input
                   type="text"
                   required
                   placeholder="VD: Chương trình đào tạo và lộ trình cam kết IELTS 7.5+"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  style={{ width: '100%', padding: '0.65rem', borderRadius: '0.5rem', backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.12)', color: '#FFF' }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '0.3rem' }}>Thể loại</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Thể loại</label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value as any)}
-                  style={{ width: '100%', padding: '0.65rem', borderRadius: '0.5rem', backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.12)', color: '#FFF' }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
                   <option value="course">Khóa học (Course)</option>
                   <option value="fee">Học phí & Ưu đãi (Fee)</option>
@@ -399,28 +368,28 @@ export default function AdminKnowledgeBasePage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', color: '#CBD5E1', marginBottom: '0.3rem' }}>Nội dung chi tiết (được AI cắt đoạn và trích nguồn RAG) *</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nội dung chi tiết *</label>
                 <textarea
                   required
-                  rows={8}
-                  placeholder="Nhập nội dung đầy đủ. Các đoạn văn cách nhau bằng dòng trắng sẽ được tự động phân đoạn thông minh..."
+                  rows={7}
+                  placeholder="Nhập nội dung tài liệu. Các đoạn cách nhau bằng dòng trống sẽ được tách chunk tự động..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  style={{ width: '100%', padding: '0.65rem', borderRadius: '0.5rem', backgroundColor: '#0F172A', border: '1px solid rgba(255,255,255,0.12)', color: '#FFF', fontSize: '0.85rem', lineHeight: 1.5 }}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-600 leading-relaxed"
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+              <div className="flex gap-2 justify-end pt-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  style={{ padding: '0.6rem 1rem', borderRadius: '0.5rem', backgroundColor: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#94A3B8', cursor: 'pointer' }}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '0.6rem 1.25rem', borderRadius: '0.5rem', backgroundColor: '#2563EB', color: '#FFF', fontWeight: 600, border: 'none', cursor: 'pointer' }}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer"
                 >
                   Lưu Bản Nháp
                 </button>
@@ -430,73 +399,41 @@ export default function AdminKnowledgeBasePage() {
         </div>
       )}
 
-      {/* Modal Xem chi tiết các đoạn Chunks */}
+      {/* Modal Xem chi tiết Chunks */}
       {selectedDoc && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          zIndex: 100,
-          padding: '1.5rem',
-        }}>
-          <div style={{
-            backgroundColor: '#1E293B',
-            border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '1rem',
-            maxWidth: '700px',
-            width: '100%',
-            maxHeight: '85vh',
-            overflowY: 'auto',
-            padding: '2rem',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem' }}>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-xl w-full max-h-[85vh] overflow-y-auto p-6 text-slate-800">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-100 mb-4">
               <div>
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 700, margin: '0 0 0.25rem 0', color: '#FFFFFF' }}>{selectedDoc.title}</h3>
-                <span style={{ fontSize: '0.75rem', color: '#38BDF8', textTransform: 'uppercase', fontWeight: 700 }}>{selectedDoc.category}</span>
+                <h3 className="text-base font-bold text-slate-900">{selectedDoc.title}</h3>
+                <span className="text-[11px] font-bold text-blue-600 uppercase">{selectedDoc.category}</span>
               </div>
               <button
                 onClick={() => setSelectedDoc(null)}
-                style={{ background: 'transparent', border: 'none', color: '#94A3B8', fontSize: '1.25rem', cursor: 'pointer' }}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
-            <h4 style={{ fontSize: '0.9rem', color: '#CBD5E1', marginBottom: '0.75rem' }}>
-              Danh sách các đoạn Chunks ({selectedDoc.kb_chunks?.length || 0}):
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3">
+              Các đoạn phân đoạn Chunks ({selectedDoc.kb_chunks?.length || 0}):
             </h4>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div className="space-y-3">
               {selectedDoc.kb_chunks && selectedDoc.kb_chunks.length > 0 ? (
                 selectedDoc.kb_chunks.map((chunk) => (
-                  <div
-                    key={chunk.id}
-                    style={{
-                      padding: '0.85rem 1rem',
-                      borderRadius: '0.5rem',
-                      backgroundColor: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      fontSize: '0.85rem',
-                      lineHeight: 1.5,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.75rem', color: '#60A5FA', fontWeight: 600 }}>
+                  <div key={chunk.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                    <div className="flex justify-between text-[11px] font-bold text-blue-700 mb-1">
                       <span>Đoạn #{chunk.chunk_index}</span>
-                      <span>Mã: {chunk.id}</span>
+                      <span className="text-slate-400 font-mono text-[10px]">ID: {chunk.id}</span>
                     </div>
-                    <p style={{ margin: 0, color: '#E2E8F0' }}>{chunk.content}</p>
+                    <p className="text-slate-700 leading-relaxed m-0">{chunk.content}</p>
                   </div>
                 ))
               ) : (
-                <div style={{ textAlign: 'center', padding: '1.5rem', color: '#64748B' }}>
-                  Tài liệu này chưa được duyệt để sinh vector embedding. Hãy bấm "Duyệt & Sinh Vector" ở danh sách ngoài!
+                <div className="text-center py-8 text-xs text-slate-400 italic">
+                  Tài liệu này chưa được duyệt để sinh vector embedding. Hãy bấm "Duyệt & Sinh Vector" ở danh mục bên ngoài!
                 </div>
               )}
             </div>

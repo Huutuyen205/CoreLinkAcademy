@@ -1,136 +1,112 @@
-# CoreLink Academy — Hệ Thống Quản Lý Đào Tạo Tiếng Anh Tích Hợp AI
+# CoreLink Academy — Hệ Thống Quản Lý Đào Tạo Tiếng Anh Chuẩn Quốc Tế Tích Hợp AI
 
-> **Dự án Quản lý đào tạo tiếng Anh thế hệ mới** dành cho các trung tâm ngoại ngữ từ tiền tiểu học đến luyện thi chứng chỉ quốc tế (Cambridge YLE, IELTS, TOEIC), tích hợp trợ lý AI thông minh, học tập thích ứng (adaptive learning), chấm điểm tự động và tự động hóa vận hành toàn diện.
+> **Nền tảng Quản trị & Đào tạo Tiếng Anh Toàn Diện** dành cho các trung tâm ngoại ngữ từ tiền tiểu học đến luyện thi chứng chỉ quốc tế (Cambridge YLE, IELTS, Giao tiếp), tích hợp công nghệ AI trợ lý luyện nói, chấm bài tự luận và bảng tóm tắt học tập lúc 20:00 hằng ngày cho phụ huynh.
 
 ---
 
-## 🌟 1. Tổng Quan Kiến Trúc & Công Nghệ
+## 🌟 1. Tổng Quan Kiến Trúc & Công Nghệ (v2.0)
 
-Hệ thống được phát triển theo kiến trúc **Monorepo (pnpm workspace)**, tuân thủ nghiêm ngặt nguyên tắc **Database-First** (MySQL 8.4 với 48 bảng chuẩn hóa 3NF) và kiến trúc Clean Architecture:
+Hệ thống được phát triển theo kiến trúc **Modular Monolith** trên nền tảng **Monorepo (pnpm workspace)**, tuân thủ nguyên tắc **Database-First** (MySQL 8.4 LTS với 84 bảng chuẩn hóa 3NF, 11 trigger, 4 view nghiệp vụ):
 
 - **Monorepo Workspace**:
-  - `apps/api`: NestJS 11 backend REST API (`/api/v1`), Swagger OpenAPI (`/api/docs`), Passport JWT + RBAC, Argon2id, Zod + class-validator.
-  - `apps/web`: Next.js 15 (App Router), TailwindCSS, TypeScript, PWA Manifest, hỗ trợ 52 routes giao diện (44 màn hình nghiệp vụ S01–S44).
-  - `apps/worker`: NestJS Background Worker xử lý hàng đợi BullMQ, thông báo đẩy WebPush, đồng bộ AI embeddings.
-  - `packages/shared`: Thư viện dùng chung chứa DTOs, Enums, Types, Constants và Helper utilities.
-  - `packages/ai`: AI Gateway đa mô hình (Claude 3.5 Sonnet, Google Gemini 1.5 Flash, HeyGen API, Deterministic 768-dim Embeddings), bộ kiểm soát ngân sách AI (`AiBudgetGuard`) và kiểm duyệt nội dung an toàn trẻ em (`AiSafetyFilter`).
+  - `apps/api`: NestJS 11 REST API (`/api/v1`), Swagger OpenAPI (`/api/docs`), Passport JWT + Two-Layer RBAC, Argon2id, Zod + class-validator.
+  - `apps/web`: Next.js 15 (App Router), React 19, Tailwind CSS 4, Design Tokens giáo dục chuẩn mực (#F7F9FC canvas, #FFFFFF card, #2563EB primary), 55 routes giao diện hoàn chỉnh.
+  - `apps/worker`: NestJS Background Worker xử lý hàng đợi BullMQ, thông báo đẩy WebPush, job tổng hợp báo cáo 20:00 hằng ngày.
+  - `packages/shared`: Schema DTO dùng chung, Enums, Types, Role-Permission constants.
+  - `packages/ai`: AI Gateway đa mô hình (Claude 3.5 Sonnet, Gemini 1.5 Flash), bộ lọc ẩn danh thông tin học sinh (`Anonymizer`) và hạn mức chi tiêu AI an toàn ($150/tháng).
 
 ---
 
-## 🚀 2. Các Giai Đoạn Đã Hoàn Thành (100% Hoàn Tất)
+## 📚 2. Hồ Sơ Kỹ Thuật & Đặc Tả Chuẩn Mực (`docs/spec/`)
 
-Dự án đã hoàn thành toàn diện **16 Bước** thuộc cả 3 giai đoạn theo chuẩn `docs/CORELINK_MASTER.md`:
+Hệ thống được thiết kế và đặc tả chi tiết qua 17 tài liệu kỹ thuật trong thư mục `docs/spec/`:
 
-| Giai Đoạn | Các Bước | Phạm Vi Triển Khai | Kết Quả Kiểm Thử |
-|---|---|---|---|
-| **Giai đoạn 1: Nền tảng & Vận hành Core** | Bước 1 → 10 | RBAC, Public CRM & Leads, Quản lý Lớp & Lịch học, Điểm danh QR động (HMAC SHA-256), Ngân hàng câu hỏi & Đề thi, Làm bài & Chống gian lận (AI-06), Chấm điểm tự động & AI hỗ trợ (AI-07), Cổng Phụ huynh & Báo cáo tháng (AI-08), Học phí & Lương giáo viên, Truyền thông & Khảo sát NPS (HMAC). | **136/136 Test Cases PASS** |
-| **Giai đoạn 2: Trợ lý AI & Học tập Thích ứng** | Bước 11 → 13 | Chatbot Tuyển sinh & CSKH RAG (AI-12, TC-011..016), Luyện tập Thích ứng & Gia sư AI (AI-09, TC-059..062), Khảo sát Năng lực & Khuyến nghị Lộ trình (AI-13, TC-068..073). | **16/16 Test Cases PASS** |
-| **Giai đoạn 3: Tự động hóa & Tích hợp Toàn diện** | Bước 14 → 16 | Sinh Giáo trình & Video Bài giảng AI (AI-10, AI-11, TC-074..075), Cảnh báo Rủi ro & Trợ lý Điều hành AI (AI-14, AI-15, TC-137..140), Tích hợp Toàn diện, Cổng Thanh toán & Báo cáo tổng thể (TC-132, TC-155..160). | **20/20 Test Cases PASS** |
-
-> **Tổng cộng**: 16/16 Test Suites, **186/186 automated E2E tests PASS** trên CI/CD, độ phủ 100% các tiêu chí nghiệm thu.
-
----
-
-## 🖥️ 3. Ma Trận 44 Màn Hình Nghiệp Vụ (S01 – S44)
-
-Tất cả 44 màn hình nghiệp vụ chuẩn theo Phần B, Mục 11 của tài liệu đặc tả đã được xây dựng hoàn thiện:
-
-- **Công khai & Tuyển sinh**: S01 (Trang chủ Landing), S02 (Chi tiết khóa học), S03 (Chatbot AI tuyển sinh nổi), S04 (Đăng ký học thử), S05 (Thi xếp lớp Online), S06 (Thông tin trung tâm).
-- **Xác thực & Chung**: S07 (Đăng nhập / Đổi mật khẩu), S08 (Hồ sơ cá nhân), S09 (Trung tâm thông báo), S10 (Hộp thư nội bộ).
-- **Cổng Học Sinh**: S11 (Dashboard học viên), S12 (Lịch học & Buổi học), S13 (Danh sách bài tập), S14 (Làm bài trực tuyến & Chống gian lận), S15 (Kết quả & Lời giải chi tiết), S16 (Kho tài liệu số), S17 (Gia sư AI 1-kèm-1), S18 (Bản đồ năng lực 4 kỹ năng), S19 (Quét mã QR điểm danh).
-- **Cổng Phụ Huynh**: S20 (Tổng quan học tập con), S21 (Theo dõi bài tập & Điểm số), S22 (Báo cáo tháng nhận xét AI), S23 (Học phí & Thanh toán VNPay/VietQR), S24 (Khảo sát độ hài lòng & NPS), S25 (Chương trình giới thiệu học viên).
-- **Cổng Giáo Viên**: S26 (Bàn làm việc giảng dạy), S27 (Lớp học phụ trách), S28 (Điểm danh & Nhận xét buổi học), S29 (Giáo trình & Đề xuất AI), S30 (Ngân hàng câu hỏi & Sinh đề AI), S31 (Giao bài tập), S32 (Chấm bài tự luận & AI hỗ trợ), S33 (Đánh giá học sinh định kỳ), S34 (Bảng lương & Thù lao).
-- **Cổng Tư Vấn & Giáo Vụ**: S35 (CRM Quản lý Leads), S36 (Chăm sóc & Cảnh báo nguy cơ thôi học), S37 (Phễu chuyển đổi tuyển sinh), S38 (Xếp lớp & Điều phối), S39 (Lịch học trung tâm).
-- **Cổng Kế Toán**: S40 (Quản lý thu học phí), S41 (Tính & Duyệt bảng lương GV).
-- **Cổng Quản Trị (Admin)**: S42 (Dashboard KPI & Doanh thu), S43 (Quản trị người dùng & Nhập liệu Excel/CSV), S44 (Cấu hình hệ thống & Kho tri thức RAG).
+1. [audit.md](docs/spec/audit.md) — Báo cáo kiểm toán toàn bộ repository và kết quả kiểm thử baseline.
+2. [assumptions-and-decisions.md](docs/spec/assumptions-and-decisions.md) — Các quyết định kiến trúc (ADR) và 8 điểm cấu hình chờ trung tâm xác nhận.
+3. [product-requirements.md](docs/spec/product-requirements.md) — Đặc tả yêu cầu sản phẩm, User Stories (Given/When/Then) và Non-goals.
+4. [feature-matrix.md](docs/spec/feature-matrix.md) — Ma trận 15 module nghiệp vụ, phân quyền 8 vai trò và trạng thái thực thi.
+5. [business-rules.md](docs/spec/business-rules.md) — Quy tắc nghiệp vụ chống trùng lặp, xung đột lịch 3 chiều và bảo vệ trẻ em.
+6. [state-machines.md](docs/spec/state-machines.md) — Vòng đời và quy tắc chuyển đổi trạng thái của Lead, Lớp học, Buổi học, Hóa đơn.
+7. [roles-permissions.md](docs/spec/roles-permissions.md) — Ma trận RBAC 2 lớp và kiểm soát phạm vi dữ liệu chống IDOR.
+8. [data-model-and-erd.md](docs/spec/data-model-and-erd.md) — Mô hình CSDL 84 bảng, sơ đồ Mermaid ERD và 11 triggers toàn vẹn.
+9. [api-contract.md](docs/spec/api-contract.md) — Hợp đồng REST API v1 RFC 7807 và WebSocket Gateway.
+10. [reporting-metrics.md](docs/spec/reporting-metrics.md) — Định nghĩa công thức tính KPI tuyển sinh, chuyên cần, công nợ và chi phí AI.
+11. [security-plan.md](docs/spec/security-and-privacy.md) — Kế hoạch bảo mật OWASP Top 10 và Nghị định 13/2023/NĐ-CP.
+12. [integrations-and-webhooks.md](docs/spec/integrations-and-webhooks.md) — Kiến trúc Adapter tích hợp cổng thanh toán VietQR và Webhook an toàn.
+13. [design-system.md](docs/spec/design-system.md) — Hệ thống thiết kế nhận diện thương hiệu giáo dục, typography và WCAG 2.2 AA.
+14. [test-plan.md](docs/spec/test-plan.md) — Chiến lược kiểm thử đa tầng và ma trận xử lý tình huống biên.
+15. [acceptance-criteria.md](docs/spec/acceptance-criteria.md) — Tiêu chí nghiệm thu chức năng và phi chức năng có thể kiểm chứng.
+16. [implementation-roadmap.md](docs/spec/implementation-roadmap.md) — Lộ trình thực thi 10 giai đoạn từ nền tảng đến vận hành.
+17. [deployment-and-operations.md](docs/spec/deployment-and-operations.md) — Hướng dẫn cài đặt, sao lưu, khôi phục CSDL và triển khai production.
 
 ---
 
-## 🛠️ 4. Hướng Dẫn Khởi Chạy Nhanh (Quick Start)
+## 🛠️ 3. Hướng Dẫn Khởi Chạy Nhanh (Quick Start)
 
 ### Yêu Cầu Môi Trường
-- **Node.js**: >= 20.x (Khuyên dùng v22.x LTS)
-- **pnpm**: >= 9.x (`npm install -g pnpm`)
-- **Docker & Docker Compose** (hoặc cài sẵn MySQL 8.4, Redis 7)
+- **Node.js**: v22.x hoặc v24.x LTS (Khuyên dùng v24)
+- **pnpm**: v9.x (`npm install -g pnpm`)
+- **MySQL**: 8.4 LTS đang chạy tại `localhost:3306`
 
-### Bước 1: Khởi động Hạ tầng Docker
-```bash
-docker compose up -d
-```
-Lệnh trên sẽ khởi tạo tự động:
-- **MySQL 8.4** (`localhost:3306`) — Tự nạp toàn bộ cấu trúc CSDL `db/000_schema.sql`
-- **Redis 7** (`localhost:6379`) — Hàng đợi BullMQ và cache
-- **MinIO S3** (`localhost:9000` / Console `localhost:9001`) — Lưu trữ media, video bài giảng
-- **Mailpit** (`localhost:1025` / Web UI `localhost:8025`) — Bắt email nội bộ môi trường dev
-
-### Bước 2: Cài Đặt Thư Viện & Sinh Prisma Client
-```bash
-# Cài đặt toàn bộ dependencies trong monorepo
+### Bước 1: Cài đặt Dependencies
+```powershell
 pnpm install
+```
 
-# Sinh Prisma Client từ schema
+### Bước 2: Cấu hình Biến Môi trường
+Sao chép tệp mẫu và cập nhật thông tin CSDL trong `.env`:
+```powershell
+Copy-Item .env.example .env
+```
+
+### Bước 3: Tạo Prisma Client & Seed dữ liệu
+```powershell
 pnpm db:generate
-```
-
-### Bước 3: Nạp Dữ Liệu Mẫu (Seed Demo Data)
-Hệ thống cung cấp sẵn script khởi tạo toàn bộ dữ liệu mẫu phục vụ kiểm thử và demo:
-```bash
-# Khởi tạo dữ liệu mẫu toàn diện (Cơ sở, Khóa học, 20 GV, 10 Lớp, 80 HS, 100 PH, Knowledge Base)
-pnpm seed:demo
-
-# (Tùy chọn) Chỉ tạo riêng tài khoản Admin tối cao
 pnpm seed:admin
+pnpm seed:demo
 ```
 
-### Bước 4: Khởi Động Ứng Dụng Môi Trường Dev
-```bash
-# Chạy đồng thời API và Web Client
-pnpm dev:all
+### Bước 4: Khởi chạy Ứng dụng
 
-# Hoặc chạy riêng lẻ từng ứng dụng:
-pnpm --filter @corelink/api dev   # API: http://localhost:4000 (Swagger: http://localhost:4000/api/docs)
-pnpm --filter @corelink/web dev   # Web: http://localhost:3000
+**Terminal 1 — Backend API (Port 4000)**:
+```powershell
+pnpm --filter @corelink/api dev
 ```
+- Swagger API Docs: `http://localhost:4000/api/docs`
+- Health check: `http://localhost:4000/api/v1/health`
+
+**Terminal 2 — Frontend Web (Port 3000)**:
+```powershell
+pnpm --filter @corelink/web dev
+```
+- Giao diện người dùng: `http://localhost:3000`
 
 ---
 
-## 🔑 5. Danh Sách Tài Khoản Mẫu (Demo Credentials)
+## 🧪 4. Bộ Lệnh Kiểm Thử Tự Động (Verification Commands)
 
-Sau khi chạy `pnpm seed:demo`, toàn bộ các tài khoản sau đã sẵn sàng đăng nhập:
+```powershell
+# 1. Kiểm tra tĩnh kiểu dữ liệu TypeScript (0 lỗi)
+pnpm --recursive typecheck
 
-| Vai Trò | Email Đăng Nhập | Mật Khẩu | Mô Tả Quyền Hạn |
-|---|---|---|---|
-| **Admin** | `admin@corelink.edu.vn` | `Admin@123456` | Quản trị viên hệ thống toàn quyền |
-| **Giáo vụ (Academic)** | `academic@corelink.edu.vn` | `Test@123456` | Xếp lớp, điều phối phòng học, lịch thi |
-| **Tư vấn viên (Consultant)** | `consultant@corelink.edu.vn` | `Test@123456` | Quản lý leads tuyển sinh, chăm sóc phụ huynh |
-| **Kế toán (Accountant)** | `accountant@corelink.edu.vn` | `Test@123456` | Quản lý học phí, duyệt bảng lương giáo viên |
-| **Giáo viên (Teacher)** | `teacher01@corelink.edu.vn` *(đến teacher20)* | `Test@123456` | Điểm danh, giao bài tập, chấm điểm AI, báo cáo |
-| **Học sinh (Student)** | `student001@corelink.edu.vn` *(đến student080)* | `Test@123456` | Làm bài, luyện tập thích ứng, gia sư AI |
-| **Phụ huynh (Guardian)** | `guardian001@corelink.edu.vn` *(đến guardian100)* | `Test@123456` | Xem điểm, đóng học phí, khảo sát NPS |
+# 2. Chạy bài kiểm thử đơn vị
+pnpm --recursive test
 
----
+# 3. Chạy bài kiểm thử tích hợp E2E kết nối MySQL thật
+pnpm --filter @corelink/api test:e2e -- health.e2e-spec.ts
+pnpm --filter @corelink/api test:e2e -- auth-rbac.e2e-spec.ts
 
-## 🧪 6. Kiểm Thử Toàn Diện (Testing & Quality Assurance)
-
-```bash
-# Kiểm tra tĩnh lỗi kiểu dữ liệu TypeScript toàn repo (Zero errors)
-pnpm typecheck
-
-# Đóng gói Production Build (Xác thực 52/52 Next.js routes và NestJS bundles)
-pnpm build
-
-# Chạy toàn bộ 16 bộ test E2E tích hợp
-pnpm --filter @corelink/api test:e2e --runInBand
+# 4. Kiểm tra khả năng build production (55/55 routes prerendered sạch sẽ)
+pnpm --recursive build
 ```
 
 ---
 
-## 📑 7. Tài Liệu Nghiệm Thu Chi Tiết
+## 🔒 5. Quy Tắc Quản Trị Git & Đẩy Code (Git Remote Policy)
+Hệ thống tuân thủ nghiêm ngặt quy tắc người dùng:
+> **Tuyệt đối KHÔNG tự động thực thi lệnh `git push`. Toàn bộ việc push code lên remote do người dùng tự thực hiện sau mỗi phiên làm việc.**
 
-- **Tài liệu bàn giao tổng kết**: [docs/walkthroughs/TONG_KET_DU_AN.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/walkthroughs/TONG_KET_DU_AN.md)
-- **Tài liệu kiến trúc chuẩn**: [docs/CORELINK_MASTER.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/CORELINK_MASTER.md)
-- **Kịch bản kiểm thử GĐ2 & GĐ3**: [docs/test-cases-gd2-gd3.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/test-cases-gd2-gd3.md)
-- **Nhật ký các bước thực hiện**: Thư mục `docs/walkthroughs/step-01.md` đến `step-16.md`.
-
----
-*Bản quyền phát triển © 2026 CoreLink Academy. Được xây dựng chuẩn hóa theo tài liệu kiến trúc CORELINK_MASTER.*
+Khi bạn muốn cập nhật code lên GitHub / Remote:
+```powershell
+git push origin main
+```
