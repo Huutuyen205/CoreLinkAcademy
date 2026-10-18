@@ -13,7 +13,7 @@ export default function BlogDetailPage() {
 
   useEffect(() => {
     if (!slug) return;
-    fetch(`http://localhost:4000/api/v1/public/blog/${slug}`)
+    fetch(`/api/v1/public/blog/${slug}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) setPost(data);

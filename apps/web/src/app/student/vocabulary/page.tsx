@@ -42,7 +42,7 @@ export default function AiVocabularyPage() {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const url = `http://localhost:4000/api/v1/competency/vocabulary/flashcards${
+      const url = `/api/v1/competency/vocabulary/flashcards${
         cat !== 'All' ? `?category=${encodeURIComponent(cat)}` : ''
       }`;
       const res = await fetch(url, {
@@ -136,7 +136,7 @@ export default function AiVocabularyPage() {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch('http://localhost:4000/api/v1/competency/vocabulary/review', {
+      const res = await fetch('/api/v1/competency/vocabulary/review', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

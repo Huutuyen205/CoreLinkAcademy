@@ -72,7 +72,7 @@ export default function HomePage() {
     e.preventDefault();
     setLeadLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/public/leads', {
+      const res = await fetch('/api/v1/public/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -88,7 +88,7 @@ export default function AiSpeakingCoachPage() {
 
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch('http://localhost:4000/api/v1/competency/speaking-coach/analyze', {
+      const res = await fetch('/api/v1/competency/speaking-coach/analyze', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

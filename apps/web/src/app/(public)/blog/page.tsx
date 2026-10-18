@@ -22,7 +22,7 @@ export default function BlogListPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch('http://localhost:4000/api/v1/public/blog')
+    fetch('/api/v1/public/blog')
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setPosts(data);
