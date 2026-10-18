@@ -58,18 +58,18 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Dialog */}
       <div
         className={clsx(
-          'relative w-full rounded-2xl border border-slate-700/80 bg-slate-900/95 backdrop-blur-xl p-6 shadow-2xl transition-all duration-200 z-10',
+          'relative w-full rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl transition-all duration-200 z-10',
           maxWidths[maxWidth]
         )}
       >
-        <div className="flex items-start justify-between pb-4 border-b border-slate-800/80">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div>
-            {title && <h3 className="text-lg font-semibold text-slate-100">{title}</h3>}
-            {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
+            {title && <h3 className="text-lg font-bold text-slate-900">{title}</h3>}
+            {description && <p className="text-xs text-slate-500 mt-1">{description}</p>}
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

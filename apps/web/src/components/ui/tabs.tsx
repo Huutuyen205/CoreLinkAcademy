@@ -46,7 +46,7 @@ export const TabsList: React.FC<{ className?: string; children: React.ReactNode 
 }) => (
   <div
     className={clsx(
-      'inline-flex items-center gap-1.5 p-1 bg-slate-900/80 rounded-xl border border-slate-800 overflow-x-auto max-w-full',
+      'inline-flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200 overflow-x-auto max-w-full',
       className
     )}
   >
@@ -69,10 +69,10 @@ export const TabsTrigger: React.FC<{
       type="button"
       onClick={() => context.setActiveTab(value)}
       className={clsx(
-        'px-4 py-2 text-xs font-medium rounded-lg transition-all duration-150 whitespace-nowrap cursor-pointer select-none',
+        'px-4 py-2 text-xs font-semibold rounded-lg transition-all duration-150 whitespace-nowrap cursor-pointer select-none',
         isActive
-          ? 'bg-blue-600 text-white shadow-sm'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60',
+          ? 'bg-white text-blue-700 shadow-sm border border-slate-200/80 font-bold'
+          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50',
         className
       )}
     >

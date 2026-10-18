@@ -72,26 +72,26 @@ export default function PwaRegister() {
     <>
       {/* 1. Android / Desktop Chrome Install Banner */}
       {installPrompt && (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-50 p-4 rounded-2xl bg-slate-900/95 border border-blue-500/30 backdrop-blur-md shadow-2xl flex items-center justify-between gap-3 animate-fade-in">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-50 p-4 rounded-2xl bg-white border border-slate-200 shadow-2xl flex items-center justify-between gap-3 animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center font-bold text-white shadow-md">
               CL
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Cài đặt CoreLink App</p>
-              <p className="text-xs text-slate-400">Trải nghiệm mượt mà, nhận thông báo tức thì</p>
+              <p className="text-sm font-bold text-slate-900">Cài đặt CoreLink App</p>
+              <p className="text-xs text-slate-500">Trải nghiệm mượt mà, nhận thông báo tức thì</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleInstallClick}
-              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-md transition"
+              className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white shadow-sm transition cursor-pointer"
             >
               Cài Đặt
             </button>
             <button
               onClick={() => setInstallPrompt(null)}
-              className="p-1.5 text-slate-400 hover:text-white text-xs"
+              className="p-1.5 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
               title="Đóng"
             >
               ✕
@@ -102,32 +102,32 @@ export default function PwaRegister() {
 
       {/* 2. iOS Safari Add to Home Screen Modal Guide (FR-1004) */}
       {showIosGuide && (
-        <div className="fixed bottom-4 left-4 right-4 sm:max-w-md sm:mx-auto z-50 p-4 rounded-2xl bg-slate-900/95 border border-indigo-500/30 backdrop-blur-md shadow-2xl text-slate-200 text-sm">
+        <div className="fixed bottom-4 left-4 right-4 sm:max-w-md sm:mx-auto z-50 p-5 rounded-2xl bg-white border border-slate-200 shadow-2xl text-slate-800 text-sm">
           <div className="flex items-start justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="text-base">📱</span>
-              <p className="font-bold text-white">Thêm CoreLink vào Màn hình chính</p>
+              <p className="font-bold text-slate-900">Thêm CoreLink vào Màn hình chính</p>
             </div>
-            <button onClick={handleDismissIos} className="text-slate-400 hover:text-white text-sm">
+            <button onClick={handleDismissIos} className="text-slate-400 hover:text-slate-600 text-sm cursor-pointer">
               ✕
             </button>
           </div>
-          <p className="text-xs text-slate-300 mb-3">
+          <p className="text-xs text-slate-600 mb-3">
             Để nhận thông báo điểm danh và bài tập trên iOS Safari:
           </p>
-          <ol className="text-xs text-slate-300 space-y-1.5 list-decimal list-inside bg-slate-950/60 p-3 rounded-xl border border-slate-800">
+          <ol className="text-xs text-slate-700 space-y-1.5 list-decimal list-inside bg-slate-50 p-3 rounded-xl border border-slate-200">
             <li>
-              Bấm nút <span className="text-blue-400 font-semibold">Chia sẻ (Share) ⎙</span> ở thanh dưới Safari
+              Bấm nút <span className="text-blue-600 font-semibold">Chia sẻ (Share) ⎙</span> ở thanh dưới Safari
             </li>
             <li>
-              Cuộn xuống và chọn <span className="text-blue-400 font-semibold">"Thêm vào MH chính" (Add to Home Screen)</span>
+              Cuộn xuống và chọn <span className="text-blue-600 font-semibold">"Thêm vào MH chính" (Add to Home Screen)</span>
             </li>
-            <li>Bấm <span className="text-blue-400 font-semibold">Thêm (Add)</span> ở góc trên phải</li>
+            <li>Bấm <span className="text-blue-600 font-semibold">Thêm (Add)</span> ở góc trên phải</li>
           </ol>
           <div className="mt-3 flex justify-end">
             <button
               onClick={handleDismissIos}
-              className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 transition"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer"
             >
               Đã hiểu
             </button>

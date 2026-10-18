@@ -20,7 +20,7 @@
 | **Phase 5: Role Portals** | Cổng Giảng viên (QR + GPS), Cổng Học viên, Cổng Phụ huynh | **Hoàn thành** | `attendance.e2e-spec.ts`, `parents-progress.e2e-spec.ts` |
 | **Phase 6: Finance & Daily Reports**| Hóa đơn, biên nhận không trùng qua khóa dòng bi quan, báo cáo 20h | **Hoàn thành** | `finance-admin.e2e-spec.ts`, [accounting/tuition](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/apps/web/src/app/accounting/tuition/page.tsx) |
 | **Phase 7: Reports & AI Learning Hub**| Dashboard quản trị, AI Speaking Coach, Flashcard từ vựng | **Hoàn thành** | [speaking/page.tsx](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/apps/web/src/app/student/speaking/page.tsx), [vocabulary/page.tsx](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/apps/web/src/app/student/vocabulary/page.tsx) |
-| **Phase 8: Hardening & Multi-Layer QA**| Typecheck, Unit, E2E (Health, Auth/RBAC), Build Production | **Hoàn thành** | 55/55 routes Next.js prerendered sạch sẽ (10.0s) |
+| **Phase 8: Hardening & Multi-Layer QA**| Typecheck, Unit, E2E (Health, Auth/RBAC), Build Production | **Hoàn thành** | 55/55 routes Next.js prerendered sạch sẽ (5.1s), 0 CSS & lockfile warnings |
 | **Phase 9: Delivery & Operations** | Hướng dẫn vận hành, tài liệu triển khai, cập nhật README | **Hoàn thành** | [README.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/README.md), [deployment-and-operations.md](file:///c:/Users/TUYEN/Desktop/CoreLinkAcademy/CoreLinkAcademy/docs/spec/deployment-and-operations.md) |
 
 ---
@@ -58,6 +58,6 @@ pnpm --filter @corelink/api test:e2e -- health.e2e-spec.ts
 # 4. E2E Auth & RBAC test: 15/15 PASS
 pnpm --filter @corelink/api test:e2e -- auth-rbac.e2e-spec.ts
 
-# 5. Production Build: 55/55 routes prerendered sạch sẽ (10.0s), 0 CSS warnings
+# 5. Production Build: 55/55 routes prerendered sạch sẽ (5.1s), 0 CSS & lockfile warnings
 pnpm --filter @corelink/web build
 ```

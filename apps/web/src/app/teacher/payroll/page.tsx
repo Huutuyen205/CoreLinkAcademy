@@ -303,7 +303,7 @@ export default function TeacherPayrollPage() {
               />
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 cursor-pointer transition-colors"
               >
                 <Send className="h-3.5 w-3.5" /> Gửi phản hồi
               </button>

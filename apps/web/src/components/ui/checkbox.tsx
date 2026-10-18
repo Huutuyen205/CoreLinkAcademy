@@ -21,19 +21,19 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
               id={checkId}
               checked={checked}
               className={clsx(
-                'peer appearance-none w-5 h-5 rounded-lg border transition-all duration-150 outline-none',
-                'bg-slate-900 border-slate-700 checked:bg-blue-600 checked:border-blue-600',
-                'focus:ring-2 focus:ring-blue-500/20 group-hover:border-slate-500',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
+                'peer appearance-none w-5 h-5 rounded-lg border transition-all duration-150 outline-none cursor-pointer',
+                'bg-white border-slate-300 checked:bg-blue-600 checked:border-blue-600',
+                'focus:ring-2 focus:ring-blue-100 group-hover:border-slate-400',
+                'disabled:opacity-50 disabled:bg-slate-100 disabled:cursor-not-allowed',
                 className
               )}
               {...props}
             />
             <Check className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 transition-opacity duration-150 pointer-events-none stroke-[2.5]" />
           </div>
-          {label && <span className="text-xs text-slate-300 group-hover:text-slate-100">{label}</span>}
+          {label && <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">{label}</span>}
         </label>
-        {error && <span className="text-xs text-red-400 font-medium ml-7">{error}</span>}
+        {error && <span className="text-xs text-red-600 font-medium ml-7">{error}</span>}
       </div>
     );
   }

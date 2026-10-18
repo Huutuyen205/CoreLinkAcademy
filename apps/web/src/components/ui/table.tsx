@@ -3,7 +3,7 @@ import { clsx } from 'clsx';
 
 export const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-2xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-xl">
+    <div className="relative w-full overflow-auto rounded-2xl border border-slate-200 bg-white shadow-xs">
       <table ref={ref} className={clsx('w-full caption-bottom text-sm', className)} {...props} />
     </div>
   )
@@ -14,7 +14,7 @@ export const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={clsx('border-b border-slate-800 bg-slate-900/90 text-slate-400', className)} {...props} />
+  <thead ref={ref} className={clsx('border-b border-slate-200 bg-slate-50 text-slate-700', className)} {...props} />
 ));
 TableHeader.displayName = 'TableHeader';
 
@@ -31,7 +31,7 @@ export const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttribut
     <tr
       ref={ref}
       className={clsx(
-        'border-b border-slate-800/60 transition-colors hover:bg-slate-800/40 data-[state=selected]:bg-slate-800',
+        'border-b border-slate-100 transition-colors hover:bg-slate-50/80 data-[state=selected]:bg-blue-50/50',
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ export const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={clsx(
-      'h-11 px-4 text-left align-middle font-medium text-xs text-slate-400 [&:has([role=checkbox])]:pr-0',
+      'h-11 px-4 text-left align-middle font-semibold text-xs text-slate-600 [&:has([role=checkbox])]:pr-0',
       className
     )}
     {...props}
@@ -61,7 +61,7 @@ export const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={clsx('p-4 align-middle text-xs text-slate-200 [&:has([role=checkbox])]:pr-0', className)}
+    className={clsx('p-4 align-middle text-xs text-slate-800 [&:has([role=checkbox])]:pr-0', className)}
     {...props}
   />
 ));

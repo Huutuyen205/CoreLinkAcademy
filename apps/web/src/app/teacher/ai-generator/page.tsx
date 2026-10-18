@@ -278,7 +278,7 @@ export default function TeacherAiGeneratorPage() {
                     onClick={() => setFilterTab(tab)}
                     className={`px-3 py-1.5 rounded-xl font-medium transition-all ${
                       filterTab === tab
-                        ? 'bg-slate-900 text-white font-semibold shadow-sm'
+                        ? 'bg-blue-600 text-white font-semibold shadow-sm'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
