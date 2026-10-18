@@ -15,3 +15,8 @@ export * from './skeleton';
 export * from './error-state';
 export * from './toast';
 export * from './navigation';
+export * from './avatar';
+export * from './stat-card';
+export * from './progress-bar';
+export * from './status-pill';
+export * from './rating-stars';

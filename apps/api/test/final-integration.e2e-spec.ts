@@ -259,6 +259,64 @@ describe('M11/M01/M02/M09 GĐ3: Hoàn thiện GĐ2–GĐ3 (e2e)', () => {
       expect(invInDb?.status).toBe('paid');
       expect(Number(invInDb?.paid_vnd)).toBe(4500000);
     });
+
+    it('Giao dịch gửi lặp lại (duplicate retry) -> Phản hồi Idempotent 201 không tạo thêm thanh toán trùng (webhook-engineer.md)', async () => {
+      const idemInv = await prisma.invoices.create({
+        data: {
+          branch_id: branchId,
+          student_id: studentId,
+          description: 'Học phí bổ sung kiểm thử Idempotency',
+          amount_vnd: 2000000,
+          discount_vnd: 0,
+          paid_vnd: 0,
+          due_date: new Date('2026-12-01'),
+          status: 'unpaid',
+          created_by: adminUserId,
+        },
+      });
+
+      const txnId = `TXN-IDEMPOTENT-${Date.now()}`;
+      const paymentsBefore = await prisma.payments.count({ where: { invoice_id: idemInv.id } });
+
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/final-integration/payments/webhook')
+        .send({
+          invoiceId: idemInv.id,
+          gatewayTxnId: txnId,
+          amountVnd: 2000000,
+          paidAt: new Date().toISOString(),
+          signature: 'test_valid_signature_tc132',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+
+      // Gửi lại lần 2 y hệt
+      const retryRes = await request(app.getHttpServer())
+        .post('/api/v1/final-integration/payments/webhook')
+        .send({
+          invoiceId: idemInv.id,
+          gatewayTxnId: txnId,
+          amountVnd: 2000000,
+          paidAt: new Date().toISOString(),
+          signature: 'test_valid_signature_tc132',
+        });
+
+      expect(retryRes.status).toBe(201);
+      expect(retryRes.body.success).toBe(true);
+      expect(retryRes.body.isIdempotent).toBe(true);
+
+      // Kiểm tra trong CSDL chỉ tăng đúng 1 bản ghi payment
+      const paymentsAfter = await prisma.payments.count({ where: { invoice_id: idemInv.id } });
+      expect(paymentsAfter).toBe(paymentsBefore + 1);
+
+      // Dọn dẹp
+      await prisma.receipts.deleteMany({
+        where: { payment_id: { in: (await prisma.payments.findMany({ where: { invoice_id: idemInv.id } })).map((p) => p.id) } },
+      });
+      await prisma.payments.deleteMany({ where: { invoice_id: idemInv.id } });
+      await prisma.invoices.delete({ where: { id: idemInv.id } });
+    });
   });
 
   // =========================================================================

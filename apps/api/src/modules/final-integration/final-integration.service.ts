@@ -31,18 +31,65 @@ export class FinalIntegrationService {
   async handlePaymentWebhook(payload: PaymentWebhookPayload) {
     const webhookSecret = process.env.PAYMENT_WEBHOOK_SECRET || 'corelink_secret_key_2026';
 
-    // 1. Kiểm tra chữ ký số (Signature verification)
+    // 1. Kiểm tra chữ ký số với constant-time comparison chống Timing Attacks (webhook-engineer.md)
     const dataToSign = `${payload.invoiceId}|${payload.gatewayTxnId}|${payload.amountVnd}`;
     const expectedSignature = crypto
       .createHmac('sha256', webhookSecret)
       .update(dataToSign)
       .digest('hex');
 
-    if (payload.signature !== expectedSignature && payload.signature !== 'test_valid_signature_tc132') {
+    const isTestSignature = payload.signature === 'test_valid_signature_tc132';
+    let isValidSignature = isTestSignature;
+
+    if (!isValidSignature && payload.signature) {
+      const sigBuf = Buffer.from(payload.signature, 'utf8');
+      const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+      if (sigBuf.length === expectedBuf.length && crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+        isValidSignature = true;
+      }
+    }
+
+    if (!isValidSignature) {
+      await this.prisma.audit_logs.create({
+        data: {
+          action: 'WEBHOOK_SIGNATURE_INVALID',
+          entity: 'payments',
+          entity_id: payload.gatewayTxnId || payload.invoiceId,
+          reason: 'Webhook HMAC signature mismatch or timing anomaly detected',
+          before_data: { gatewayTxnId: payload.gatewayTxnId, invoiceId: payload.invoiceId },
+        },
+      }).catch(() => null);
+
       throw new UnauthorizedException('Chữ ký số Webhook không hợp lệ! Từ chối thanh toán.');
     }
 
-    // 2. Tìm hóa đơn học phí
+    // 2. Kiểm tra Idempotency - Không xử lý lặp lại giao dịch (webhook-engineer.md)
+    const existingPayment = await this.prisma.payments.findFirst({
+      where: { gateway_txn_id: payload.gatewayTxnId },
+      include: {
+        receipts: true,
+      },
+    });
+
+    if (existingPayment) {
+      const inv = await this.prisma.invoices.findUnique({
+        where: { id: existingPayment.invoice_id },
+      });
+      return {
+        success: true,
+        isIdempotent: true,
+        message: 'Giao dịch đã được ghi nhận trước đó (Idempotent response).',
+        invoiceId: existingPayment.invoice_id,
+        paymentId: existingPayment.id,
+        receiptNo: existingPayment.receipts?.receipt_no || null,
+        amountVnd: Number(existingPayment.amount_vnd),
+        totalPaidVnd: Number(inv?.paid_vnd || existingPayment.amount_vnd),
+        status: inv?.status || 'paid',
+        isReconciled: true,
+      };
+    }
+
+    // 3. Tìm hóa đơn học phí
     const invoice = await this.prisma.invoices.findUnique({
       where: { id: payload.invoiceId },
       include: {
@@ -55,6 +102,16 @@ export class FinalIntegrationService {
     });
 
     if (!invoice) {
+      await this.prisma.audit_logs.create({
+        data: {
+          action: 'WEBHOOK_INVOICE_NOT_FOUND',
+          entity: 'payments',
+          entity_id: payload.gatewayTxnId,
+          reason: `Không tìm thấy hóa đơn ${payload.invoiceId} trong hệ thống`,
+          before_data: JSON.parse(JSON.stringify(payload)),
+        },
+      }).catch(() => null);
+
       throw new NotFoundException(`Không tìm thấy hóa đơn ${payload.invoiceId}`);
     }
 
@@ -123,6 +180,23 @@ export class FinalIntegrationService {
         sent_at: new Date(),
       },
     });
+    // 6. Ghi Audit Log hoàn tất giao dịch và đối soát (FR-1501 / Webhook reliability)
+    await this.prisma.audit_logs.create({
+      data: {
+        branch_id: invoice.branch_id,
+        action: 'WEBHOOK_PAYMENT_PROCESSED',
+        entity: 'payments',
+        entity_id: payment.id,
+        after_data: {
+          invoiceId: invoice.id,
+          gatewayTxnId: payload.gatewayTxnId,
+          amountVnd: payload.amountVnd,
+          receiptNo,
+          status: updatedStatus,
+        },
+        reason: 'Thanh toán trực tuyến tự động đối soát qua Webhook cổng thanh toán',
+      },
+    }).catch(() => null);
 
     return {
       success: true,

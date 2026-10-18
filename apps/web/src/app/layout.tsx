@@ -20,6 +20,8 @@ export const viewport: Viewport = {
 };
 
 import ChatbotWidget from '../components/chatbot/ChatbotWidget';
+import PwaRegister from '../components/pwa/PwaRegister';
+import MobileBottomNav from '../components/mobile/MobileBottomNav';
 
 export default function RootLayout({
   children,
@@ -34,6 +36,8 @@ export default function RootLayout({
       <body className="antialiased min-h-screen flex flex-col justify-between">
         {children}
         <ChatbotWidget />
+        <PwaRegister />
+        <MobileBottomNav />
       </body>
     </html>
   );

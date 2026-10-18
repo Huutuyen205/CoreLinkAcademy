@@ -4,6 +4,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import helmet from 'helmet';
 
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -19,6 +21,9 @@ async function bootstrap() {
 
   // Global prefix /api/v1 theo A5
   app.setGlobalPrefix('api/v1');
+
+  // Global exception filter cho cấu trúc lỗi chuẩn hóa & correlation ID (backend-developer.md)
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global validation pipe
   app.useGlobalPipes(
