@@ -82,7 +82,47 @@ async function main() {
       create: { user_id: consultantUser.id, role_id: roleMap.get('consultant')! },
     });
   }
-  console.log('[2] Đã tạo Admin (admin@corelink.edu.vn) & Consultant (consultant@corelink.edu.vn)');
+
+  const academicUser = await prisma.users.upsert({
+    where: { email: 'academic@corelink.edu.vn' },
+    update: { password_hash: passwordHash, status: 'active' },
+    create: {
+      branch_id: branch.id,
+      full_name: 'Trần Văn Giáo Vụ (Quản lý Đào tạo)',
+      email: 'academic@corelink.edu.vn',
+      phone: '+84988333444',
+      password_hash: passwordHash,
+      status: 'active',
+    },
+  });
+  if (roleMap.has('academic')) {
+    await prisma.user_roles.upsert({
+      where: { user_id_role_id: { user_id: academicUser.id, role_id: roleMap.get('academic')! } },
+      update: {},
+      create: { user_id: academicUser.id, role_id: roleMap.get('academic')! },
+    });
+  }
+
+  const accountantUser = await prisma.users.upsert({
+    where: { email: 'accountant@corelink.edu.vn' },
+    update: { password_hash: passwordHash, status: 'active' },
+    create: {
+      branch_id: branch.id,
+      full_name: 'Lê Thị Mai (Kế toán Trưởng)',
+      email: 'accountant@corelink.edu.vn',
+      phone: '+84988555666',
+      password_hash: passwordHash,
+      status: 'active',
+    },
+  });
+  if (roleMap.has('accountant')) {
+    await prisma.user_roles.upsert({
+      where: { user_id_role_id: { user_id: accountantUser.id, role_id: roleMap.get('accountant')! } },
+      update: {},
+      create: { user_id: accountantUser.id, role_id: roleMap.get('accountant')! },
+    });
+  }
+  console.log('[2] Đã tạo Admin, Consultant, Academic & Accountant demo accounts');
 
   // 4. Phòng học
   const roomNames = ['Phòng 101 (Lab)', 'Phòng 102 (Smart)', 'Phòng 201', 'Phòng 202'];
