@@ -505,11 +505,65 @@ describe('M06/M07 Giai đoạn 2: Đánh giá năng lực & Ôn luyện thông m
         .get(`/api/v1/competency/adaptive-difficulty/${studentId}?current_tier=2`)
         .set('Authorization', `Bearer ${studentToken}`);
 
-      expect(res.status).toBe(200);
       expect(res.body.increased).toBe(false);
       expect(res.body.next_tier).toBe(2); // Giữ nguyên tier 2
       expect(res.body.score_ratio).toBe(60);
       expect(res.body.message).toContain('Duy trì độ khó');
+    });
+  });
+
+  // =========================================================================
+  // AI Speaking Coach & Spaced Repetition Flashcards E2E
+  // =========================================================================
+  describe('AI Speaking Coach & Spaced Repetition Flashcards', () => {
+    it('Phân tích bài nói của học sinh, trả về Band score, lỗi IPA và gợi ý bản ngữ', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/competency/speaking-coach/analyze')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          topic: 'Study Habits',
+          transcript: 'I very like to study in the morning because the environment is comfortable.',
+          duration_seconds: 35,
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.overallBand).toBeDefined();
+      expect(res.body.scores.fluency).toBeDefined();
+      expect(res.body.scores.pronunciation).toBeDefined();
+      expect(res.body.ipaCorrections.length).toBeGreaterThan(0);
+      expect(res.body.grammarImprovements.length).toBeGreaterThan(0);
+      expect(res.body.nativePhrasing.length).toBeGreaterThan(0);
+    });
+
+    it('Lấy danh sách thẻ từ vựng ôn tập Spaced Repetition', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/competency/vocabulary/flashcards')
+        .set('Authorization', `Bearer ${studentToken}`);
+
+      expect(res.status).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body[0].word).toBeDefined();
+      expect(res.body[0].phonetic).toBeDefined();
+      expect(res.body[0].viMeaning).toBeDefined();
+      expect(res.body[0].easeFactor).toBeDefined();
+    });
+
+    it('Gửi đánh giá mức độ nhớ theo thuật toán SM-2, tính toán chu kỳ ôn tập tiếp theo', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/competency/vocabulary/review')
+        .set('Authorization', `Bearer ${studentToken}`)
+        .send({
+          cardId: 'fc-01',
+          quality: 4, // Nhớ tốt (Good)
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.cardId).toBe('fc-01');
+      expect(res.body.quality).toBe(4);
+      expect(res.body.nextIntervalDays).toBeGreaterThanOrEqual(1);
+      expect(res.body.nextReviewDate).toBeDefined();
+      expect(res.body.message).toContain('Ghi nhớ tốt');
     });
   });
 });

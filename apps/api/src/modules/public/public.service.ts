@@ -365,4 +365,133 @@ export class PublicService {
       referralCode: guardian.referral_code,
     };
   }
+
+  /**
+   * Danh sách bài viết Blog & Mẹo học tiếng Anh (FR-PUB-05)
+   */
+  async getBlogPosts(category?: string) {
+    const posts = [
+      {
+        slug: 'chien-thuat-tang-1-band-ielts-speaking-trong-3-thang',
+        title: 'Chiến thuật bứt phá 1.0 Band IELTS Speaking trong 3 tháng cùng AI và Shadowing',
+        summary: 'Khám phá phương pháp luyện phản xạ tự nhiên, sửa phát âm IPA chuẩn xác và xây dựng thói quen tự sửa lỗi với trợ lý AI.',
+        category: 'IELTS Preparation',
+        readTime: '6 phút đọc',
+        publishedAt: '2026-10-15',
+        author: 'Thầy David Miller (Giám khảo Khảo thí Quốc tế)',
+        coverImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
+        tags: ['IELTS Speaking', 'Phương pháp AI', 'Shadowing'],
+      },
+      {
+        slug: 'bi-quyet-chinh-phuc-cambridge-flyers-cho-hoc-sinh-tieu-hoc',
+        title: 'Bí quyết giúp học sinh tiểu học đạt 15 khiên Cambridge Flyers nhẹ nhàng không áp lực',
+        summary: 'Lộ trình phát triển 4 kỹ năng tự nhiên qua dự án thực tế và học tương tác chuẩn khung châu Âu CEFR A2.',
+        category: 'Cambridge Kids',
+        readTime: '5 phút đọc',
+        publishedAt: '2026-10-12',
+        author: 'Cô Nguyễn Hồng Hạnh (Chuyên gia Đào tạo Cambridge)',
+        coverImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
+        tags: ['Cambridge YLE', 'Flyers', 'Tiểu học'],
+      },
+      {
+        slug: 'phuong-phap-hoc-tu-vung-spaced-repetition-sm2',
+        title: 'Phương pháp học từ vựng nhớ lâu gấp 3 lần với thuật toán lặp lại ngắt quãng (SM-2)',
+        summary: 'Giải mã đường cong quên lãng của Ebbinghaus và cách áp dụng Flashcard thông minh để làm chủ 3.000 từ vựng Oxford.',
+        category: 'Học tập thông minh',
+        readTime: '7 phút đọc',
+        publishedAt: '2026-10-08',
+        author: 'Đội ngũ R&D EdTech CoreLink',
+        coverImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
+        tags: ['Từ vựng', 'Spaced Repetition', 'EdTech'],
+      },
+      {
+        slug: '5-loi-ngu-phap-kinh-dien-trong-ielts-writing-task-2',
+        title: '5 lỗi ngữ pháp kinh điển khiến bài thi IELTS Writing Task 2 bị kẹt ở Band 5.5',
+        summary: 'Phân tích các lỗi cấu trúc câu phức, mạo từ và sự hòa hợp chủ vị - động từ kèm lời giải chi tiết và bài tập thực hành.',
+        category: 'IELTS Preparation',
+        readTime: '8 phút đọc',
+        publishedAt: '2026-10-02',
+        author: 'Thầy Trần Minh Quân (IELTS 8.5 Overall)',
+        coverImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80',
+        tags: ['IELTS Writing', 'Ngữ pháp', 'Task 2'],
+      },
+    ];
+
+    if (category) {
+      return posts.filter((p) => p.category.toLowerCase().includes(category.toLowerCase()));
+    }
+    return posts;
+  }
+
+  /**
+   * Chi tiết bài viết Blog (FR-PUB-05)
+   */
+  async getBlogPostBySlug(slug: string) {
+    const posts = await this.getBlogPosts();
+    const post = posts.find((p) => p.slug === slug);
+    if (!post) {
+      throw new NotFoundException(`Bài viết '${slug}' không tồn tại`);
+    }
+
+    return {
+      ...post,
+      content: `
+### Giới thiệu vấn đề
+Trong quá trình học và luyện thi chứng chỉ tiếng Anh quốc tế, nhiều học viên gặp tình trạng dù học rất nhiều từ vựng và ngữ pháp nhưng khi bước vào phòng thi hoặc giao tiếp thực tế lại bị ngập ngừng, thiếu phản xạ hoặc mắc các lỗi ngữ pháp cơ bản.
+
+### 3 Trụ Cột Đột Phá Tại CoreLink Academy
+1. **Luyện tập lặp lại ngắt quãng (Spaced Repetition)**: Ôn tập đúng vào thời điểm não bộ sắp quên từ vựng để chuyển kiến thức vào bộ nhớ dài hạn.
+2. **AI Speaking Coach phản hồi tức thì**: Ghi âm và so sánh biểu đồ phát âm với người bản xứ, phân tích chuẩn xác từng âm vị IPA.
+3. **Thực hành viết có giáo viên và AI song hành**: AI chỉ ra bẫy ngữ pháp và giáo viên định hướng phong cách viết học thuật tự nhiên.
+
+### Lời khuyên từ chuyên gia
+Hãy duy trì thói quen luyện tập tối thiểu 20 phút mỗi ngày trên hệ thống CoreLink Academy thay vì học dồn vào cuối tuần. Chúc các bạn sớm đạt được band điểm mục tiêu!
+      `,
+      relatedPrograms: [
+        { code: 'IELTS-65', name: 'Luyện thi IELTS Bứt phá Target 6.5', target: '6.5' },
+        { code: 'ENG-FLYERS', name: 'Tiếng Anh Thiếu Nhi Flyers (A2)', target: 'A2' },
+      ],
+    };
+  }
+
+  /**
+   * Đề kiểm tra nhanh 3 câu chuẩn đoán trình độ tại trang chủ (FR-PUB-02)
+   */
+  async getQuickPlacementSample() {
+    return {
+      title: 'Bài Kiểm Tra Nhanh Trình Độ Tiếng Anh 3 Phút',
+      description: 'Chẩn đoán sơ bộ năng lực ngữ pháp, từ vựng và phản xạ chuẩn CEFR',
+      questions: [
+        {
+          id: 1,
+          question: 'If I ______ enough money, I would travel around the world next summer.',
+          options: ['have', 'had', 'will have', 'have had'],
+          correctIndex: 1,
+          explanation: 'Câu điều kiện loại 2 diễn tả giả định không có thật ở hiện tại: If + S + V2/ed, S + would + V-inf.',
+          skill: 'Grammar',
+        },
+        {
+          id: 2,
+          question: 'The government has implemented new policies to ______ environmental pollution in urban areas.',
+          options: ['curb', 'expand', 'neglect', 'stimulate'],
+          correctIndex: 0,
+          explanation: "'curb' có nghĩa là kiềm chế, hạn chế (curb pollution). Các từ còn lại mang nghĩa mở rộng, lơ là hoặc kích thích.",
+          skill: 'Vocabulary',
+        },
+        {
+          id: 3,
+          question: "Sarah: 'Could you tell me how to get to the nearest station?' - Mark: '______'",
+          options: [
+            'Yes, I could.',
+            'Go straight for two blocks and it is on your left.',
+            'I am very well, thank you.',
+            'It was delicious.',
+          ],
+          correctIndex: 1,
+          explanation: 'Hỏi đường lịch sự cần câu trả lời chỉ dẫn phương hướng cụ thể.',
+          skill: 'Communication',
+        },
+      ],
+    };
+  }
 }

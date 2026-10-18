@@ -56,4 +56,22 @@ export class PublicController {
   async checkReferral(@Param('code') code: string) {
     return this.publicService.checkReferral(code);
   }
+
+  @Get('blog')
+  @ApiOperation({ summary: 'Danh sách bài viết Blog & Mẹo thi tiếng Anh (FR-PUB-05)' })
+  async getBlogPosts() {
+    return this.publicService.getBlogPosts();
+  }
+
+  @Get('blog/:slug')
+  @ApiOperation({ summary: 'Chi tiết bài viết Blog (FR-PUB-05)' })
+  async getBlogPostBySlug(@Param('slug') slug: string) {
+    return this.publicService.getBlogPostBySlug(slug);
+  }
+
+  @Get('placement-tests/quick/sample')
+  @ApiOperation({ summary: 'Đề kiểm tra nhanh 3 phút chẩn đoán tại trang chủ (FR-PUB-02)' })
+  async getQuickPlacementSample() {
+    return this.publicService.getQuickPlacementSample();
+  }
 }

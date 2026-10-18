@@ -206,32 +206,64 @@ export default function StudentDashboardPage() {
             <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span>💡</span> Gợi ý ôn luyện thông minh
+                  <span>💡</span> Trợ Lý AI & Luyện Tập Cá Nhân Hóa
                 </h2>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 font-medium">
-                  Trợ lý AI
+                  AI Hub
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🎧</span>
+                <Link
+                  href="/student/speaking"
+                  className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-emerald-300 hover:bg-emerald-50/30 transition-all cursor-pointer block"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🎙️</span>
                     <div>
-                      <h4 className="font-semibold text-slate-800 text-sm">Luyện nghe hội thoại Unit 4</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">5 câu trắc nghiệm • 10 phút</p>
+                      <h4 className="font-semibold text-slate-800 text-sm">Phòng Luyện Nói AI (Speaking Coach)</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Thu âm • Nhận diện phát âm IPA & Lưu loát</p>
                     </div>
                   </div>
-                </div>
+                </Link>
 
-                <div className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🔤</span>
+                <Link
+                  href="/student/vocabulary"
+                  className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-purple-300 hover:bg-purple-50/30 transition-all cursor-pointer block"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🧠</span>
                     <div>
-                      <h4 className="font-semibold text-slate-800 text-sm">Flashcard từ vựng Family & Hobbies</h4>
-                      <p className="text-xs text-slate-500 mt-0.5">15 từ vựng • Chuẩn YLE Movers</p>
+                      <h4 className="font-semibold text-slate-800 text-sm">Sổ Tay Từ Vựng Flashcards (SM-2)</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Lặp lại ngắt quãng • Nhớ lâu gấp 3 lần</p>
                     </div>
                   </div>
-                </div>
+                </Link>
+
+                <Link
+                  href="/student/tutor"
+                  className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-blue-300 hover:bg-blue-50/30 transition-all cursor-pointer block"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🤖</span>
+                    <div>
+                      <h4 className="font-semibold text-slate-800 text-sm">Gia Sư AI 1-Kèm-1 (AI Tutor)</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Giải đáp ngữ pháp & Bài tập khó 24/7</p>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/student/competency"
+                  className="p-4 rounded-xl border border-slate-100 bg-slate-50 hover:border-amber-300 hover:bg-amber-50/30 transition-all cursor-pointer block"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">📊</span>
+                    <div>
+                      <h4 className="font-semibold text-slate-800 text-sm">Bản Đồ Năng Lực 4 Kỹ Năng</h4>
+                      <p className="text-xs text-slate-500 mt-0.5">Radar CEFR • Bài luyện thích ứng</p>
+                    </div>
+                  </div>
+                </Link>
               </div>
             </div>
           </div>

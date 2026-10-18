@@ -461,5 +461,40 @@ describe('M01 Public & Admissions (e2e)', () => {
       expect(res.body).toHaveProperty('enrolledCount');
       expect(res.body).toHaveProperty('totalRewardVnd');
     });
+
+    it('FR-PUB-05: Lấy danh sách bài viết Blog & Mẹo thi (GET /api/v1/public/blog)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/public/blog')
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBeGreaterThan(0);
+      expect(res.body[0]).toHaveProperty('slug');
+      expect(res.body[0]).toHaveProperty('title');
+      expect(res.body[0]).toHaveProperty('category');
+    });
+
+    it('FR-PUB-05: Lấy chi tiết bài viết Blog theo slug (GET /api/v1/public/blog/:slug)', async () => {
+      const slug = 'chien-thuat-tang-1-band-ielts-speaking-trong-3-thang';
+      const res = await request(app.getHttpServer())
+        .get(`/api/v1/public/blog/${slug}`)
+        .expect(200);
+
+      expect(res.body.slug).toBe(slug);
+      expect(res.body).toHaveProperty('content');
+      expect(res.body).toHaveProperty('author');
+    });
+
+    it('FR-PUB-02: Lấy đề kiểm tra nhanh 3 phút chẩn đoán tại trang chủ (GET /api/v1/public/placement-tests/quick/sample)', async () => {
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/public/placement-tests/quick/sample')
+        .expect(200);
+
+      expect(res.body).toHaveProperty('questions');
+      expect(res.body.questions.length).toBe(3);
+      expect(res.body.questions[0]).toHaveProperty('question');
+      expect(res.body.questions[0]).toHaveProperty('options');
+      expect(res.body.questions[0]).toHaveProperty('correctIndex');
+    });
   });
 });

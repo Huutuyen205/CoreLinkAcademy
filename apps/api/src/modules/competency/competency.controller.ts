@@ -116,4 +116,33 @@ export class CompetencyController {
       currentTier ? parseInt(currentTier, 10) : 2,
     );
   }
+
+  // =========================================================================
+  // 8. AI SPEAKING COACH (PHÂN TÍCH LUYỆN NÓI TRỰC TIẾP)
+  // =========================================================================
+
+  @Post('speaking-coach/analyze')
+  @Roles(RoleCode.STUDENT, RoleCode.TEACHER, RoleCode.ADMIN)
+  async analyzeSpeakingCoach(
+    @Req() req: any,
+    @Body() body: { topic: string; transcript: string; duration_seconds?: number },
+  ) {
+    return this.competencyService.analyzeSpeakingCoach(body, req.user.id);
+  }
+
+  // =========================================================================
+  // 9. SỔ TAY TỪ VỰNG FLASHCARD (SPACED REPETITION SM-2)
+  // =========================================================================
+
+  @Get('vocabulary/flashcards')
+  @Roles(RoleCode.STUDENT, RoleCode.TEACHER, RoleCode.ADMIN)
+  async getSpacedRepetitionFlashcards(@Query('category') category?: string) {
+    return this.competencyService.getSpacedRepetitionFlashcards(category);
+  }
+
+  @Post('vocabulary/review')
+  @Roles(RoleCode.STUDENT, RoleCode.TEACHER, RoleCode.ADMIN)
+  async reviewFlashcard(@Body() body: { cardId: string; quality: number }) {
+    return this.competencyService.reviewFlashcard(body.cardId, body.quality);
+  }
 }
