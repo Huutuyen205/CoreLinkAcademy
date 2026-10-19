@@ -17,68 +17,60 @@ interface BlogPost {
 }
 
 export default function BlogListPage() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const INITIAL_POSTS: BlogPost[] = [
+    {
+      slug: 'chien-thuat-tang-1-band-ielts-speaking-trong-3-thang',
+      title: 'Chiến thuật bứt phá 1.0 Band IELTS Speaking trong 3 tháng cùng AI và Shadowing',
+      summary: 'Khám phá phương pháp luyện phản xạ tự nhiên, sửa phát âm IPA chuẩn xác và xây dựng thói quen tự sửa lỗi với trợ lý AI.',
+      category: 'IELTS Preparation',
+      readTime: '6 phút đọc',
+      publishedAt: '2026-10-15',
+      author: 'Thầy David Miller (Giám khảo Khảo thí Quốc tế)',
+      coverImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
+      tags: ['IELTS Speaking', 'Phương pháp AI', 'Shadowing'],
+    },
+    {
+      slug: 'bi-quyet-chinh-phuc-cambridge-flyers-cho-hoc-sinh-tieu-hoc',
+      title: 'Bí quyết giúp học sinh tiểu học đạt 15 khiên Cambridge Flyers nhẹ nhàng không áp lực',
+      summary: 'Lộ trình phát triển 4 kỹ năng tự nhiên qua dự án thực tế và học tương tác chuẩn khung châu Âu CEFR A2.',
+      category: 'Cambridge Kids',
+      readTime: '5 phút đọc',
+      publishedAt: '2026-10-12',
+      author: 'Cô Nguyễn Hồng Hạnh (Chuyên gia Đào tạo Cambridge)',
+      coverImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
+      tags: ['Cambridge YLE', 'Flyers', 'Tiểu học'],
+    },
+    {
+      slug: 'phuong-phap-hoc-tu-vung-spaced-repetition-sm2',
+      title: 'Phương pháp học từ vựng nhớ lâu gấp 3 lần với thuật toán lặp lại ngắt quãng (SM-2)',
+      summary: 'Giải mã đường cong quên lãng của Ebbinghaus và cách áp dụng Flashcard thông minh để làm chủ 3.000 từ vựng Oxford.',
+      category: 'Học tập thông minh',
+      readTime: '7 phút đọc',
+      publishedAt: '2026-10-08',
+      author: 'Đội ngũ R&D EdTech CoreLink',
+      coverImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
+      tags: ['Từ vựng', 'Spaced Repetition', 'EdTech'],
+    },
+    {
+      slug: '5-loi-ngu-phap-kinh-dien-trong-ielts-writing-task-2',
+      title: '5 lỗi ngữ pháp kinh điển khiến bài thi IELTS Writing Task 2 bị kẹt ở Band 5.5',
+      summary: 'Phân tích các lỗi cấu trúc câu phức, mạo từ và sự hòa hợp chủ vị - động từ kèm lời giải chi tiết và bài tập thực hành.',
+      category: 'IELTS Preparation',
+      readTime: '8 phút đọc',
+      publishedAt: '2026-10-02',
+      author: 'Thầy Trần Minh Quân (IELTS 8.5 Overall)',
+      coverImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80',
+      tags: ['IELTS Writing', 'Ngữ pháp', 'Task 2'],
+    },
+  ];
+
+  const [posts, setPosts] = useState<BlogPost[]>(INITIAL_POSTS);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    fetch('/api/v1/public/blog')
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        setPosts(data);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        // Fallback demo posts if API is offline
-        setPosts([
-          {
-            slug: 'chien-thuat-tang-1-band-ielts-speaking-trong-3-thang',
-            title: 'Chiến thuật bứt phá 1.0 Band IELTS Speaking trong 3 tháng cùng AI và Shadowing',
-            summary: 'Khám phá phương pháp luyện phản xạ tự nhiên, sửa phát âm IPA chuẩn xác và xây dựng thói quen tự sửa lỗi với trợ lý AI.',
-            category: 'IELTS Preparation',
-            readTime: '6 phút đọc',
-            publishedAt: '2026-10-15',
-            author: 'Thầy David Miller (Giám khảo Khảo thí Quốc tế)',
-            coverImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80',
-            tags: ['IELTS Speaking', 'Phương pháp AI', 'Shadowing'],
-          },
-          {
-            slug: 'bi-quyet-chinh-phuc-cambridge-flyers-cho-hoc-sinh-tieu-hoc',
-            title: 'Bí quyết giúp học sinh tiểu học đạt 15 khiên Cambridge Flyers nhẹ nhàng không áp lực',
-            summary: 'Lộ trình phát triển 4 kỹ năng tự nhiên qua dự án thực tế và học tương tác chuẩn khung châu Âu CEFR A2.',
-            category: 'Cambridge Kids',
-            readTime: '5 phút đọc',
-            publishedAt: '2026-10-12',
-            author: 'Cô Nguyễn Hồng Hạnh (Chuyên gia Đào tạo Cambridge)',
-            coverImage: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80',
-            tags: ['Cambridge YLE', 'Flyers', 'Tiểu học'],
-          },
-          {
-            slug: 'phuong-phap-hoc-tu-vung-spaced-repetition-sm2',
-            title: 'Phương pháp học từ vựng nhớ lâu gấp 3 lần với thuật toán lặp lại ngắt quãng (SM-2)',
-            summary: 'Giải mã đường cong quên lãng của Ebbinghaus và cách áp dụng Flashcard thông minh để làm chủ 3.000 từ vựng Oxford.',
-            category: 'Học tập thông minh',
-            readTime: '7 phút đọc',
-            publishedAt: '2026-10-08',
-            author: 'Đội ngũ R&D EdTech CoreLink',
-            coverImage: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80',
-            tags: ['Từ vựng', 'Spaced Repetition', 'EdTech'],
-          },
-          {
-            slug: '5-loi-ngu-phap-kinh-dien-trong-ielts-writing-task-2',
-            title: '5 lỗi ngữ pháp kinh điển khiến bài thi IELTS Writing Task 2 bị kẹt ở Band 5.5',
-            summary: 'Phân tích các lỗi cấu trúc câu phức, mạo từ và sự hòa hợp chủ vị - động từ kèm lời giải chi tiết và bài tập thực hành.',
-            category: 'IELTS Preparation',
-            readTime: '8 phút đọc',
-            publishedAt: '2026-10-02',
-            author: 'Thầy Trần Minh Quân (IELTS 8.5 Overall)',
-            coverImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=800&q=80',
-            tags: ['IELTS Writing', 'Ngữ pháp', 'Task 2'],
-          },
-        ]);
-        setIsLoading(false);
-      });
+    setIsLoading(false);
   }, []);
 
   const categories = ['All', 'IELTS Preparation', 'Cambridge Kids', 'Học tập thông minh'];

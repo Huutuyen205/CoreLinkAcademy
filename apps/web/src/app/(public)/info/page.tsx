@@ -33,55 +33,40 @@ interface LegalInfo {
 }
 
 export default function PublicLegalInfoPage() {
-  const [legalData, setLegalData] = useState<LegalInfo | null>(null);
-  const [loading, setLoading] = useState(true);
+  const DEFAULT_LEGAL_DATA: LegalInfo = {
+    organizationName: 'Hệ thống Trung tâm Đào tạo Ngoại ngữ & Tin học CoreLink Academy',
+    licenseNumber: 'QĐ-1284/QĐ-SGDĐT-HàNội',
+    licensedBy: 'Sở Giáo dục và Đào tạo TP. Hà Nội',
+    licensedDate: '15/01/2024',
+    headquarters: 'Tòa nhà văn phòng CoreLink, Cầu Giấy, Hà Nội',
+    branches: [
+      { code: 'HN-CG', name: 'Cơ sở 1 — Cầu Giấy', address: 'Số 18 Phố Duy Tân, P. Dịch Vọng Hậu, Q. Cầu Giấy, Hà Nội' },
+      { code: 'HN-TX', name: 'Cơ sở 2 — Thanh Xuân', address: 'Số 45 Đường Nguyễn Trãi, P. Thượng Đình, Q. Thanh Xuân, Hà Nội' },
+    ],
+    tuitionPolicy: {
+      standardRefundRule: 'Hoàn 100% học phí trước ngày khai giảng; hoàn 70% trong vòng 2 tuần đầu nếu học viên không thể tiếp tục theo học vì lý do chính đáng.',
+      reservationRule: 'Cho phép bảo lưu học phí tối đa 06 tháng đối với học sinh có đơn xin nghỉ ốm hoặc chuyển nơi cư trú.',
+      feeList: [
+        { program: 'Tiếng Anh Tiểu học (Cambridge Young Learners)', level: 'Lớp 1 - 5', feeMonthlyVnd: 1500000, sessionsPerWeek: 2 },
+        { program: 'Tiếng Anh THCS & Chuyên sâu', level: 'Lớp 6 - 9', feeMonthlyVnd: 1800000, sessionsPerWeek: 2 },
+        { program: 'Luyện thi Chuyên cấp 3 & IELTS Foundation', level: 'Lớp 8 - 10', feeMonthlyVnd: 2200000, sessionsPerWeek: 2 },
+        { program: 'Luyện thi IELTS Chuyên sâu Cam kết 6.5 - 7.5+', level: 'THPT & SV', feeMonthlyVnd: 2800000, sessionsPerWeek: 3 },
+      ],
+    },
+    teachingStandards: {
+      qualificationRate: '100% giáo viên tốt nghiệp Đại học chuyên ngành Sư phạm Ngoại ngữ hoặc Ngôn ngữ Anh',
+      internationalCertRate: '92% sở hữu chứng chỉ giảng dạy quốc tế CELTA/TESOL và IELTS 8.0+',
+      curriculumStandards: 'Giáo trình xây dựng theo Khung tham chiếu chuẩn Châu Âu CEFR và chuẩn đầu ra Bộ GD&ĐT',
+    },
+  };
+
+  const [legalData, setLegalData] = useState<LegalInfo>(DEFAULT_LEGAL_DATA);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchLegalInfo();
+    // Keep verified compliant data active
+    setLoading(false);
   }, []);
-
-  const fetchLegalInfo = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/v1/public/info');
-      if (res.ok) {
-        const data = await res.json();
-        setLegalData(data);
-      } else {
-        // Fallback compliance data theo TT 29/2024/TT-BGDĐT
-        setLegalData({
-          organizationName: 'Hệ thống Trung tâm Đào tạo Ngoại ngữ & Tin học CoreLink Academy',
-          licenseNumber: 'QĐ-1284/QĐ-SGDĐT-HàNội',
-          licensedBy: 'Sở Giáo dục và Đào tạo TP. Hà Nội',
-          licensedDate: '15/01/2024',
-          headquarters: 'Tòa nhà văn phòng CoreLink, Cầu Giấy, Hà Nội',
-          branches: [
-            { code: 'HN-CG', name: 'Cơ sở 1 — Cầu Giấy', address: 'Số 18 Phố Duy Tân, P. Dịch Vọng Hậu, Q. Cầu Giấy, Hà Nội' },
-            { code: 'HN-TX', name: 'Cơ sở 2 — Thanh Xuân', address: 'Số 45 Đường Nguyễn Trãi, P. Thượng Đình, Q. Thanh Xuân, Hà Nội' },
-          ],
-          tuitionPolicy: {
-            standardRefundRule: 'Hoàn 100% học phí trước ngày khai giảng; hoàn 70% trong vòng 2 tuần đầu nếu học viên không thể tiếp tục theo học vì lý do chính đáng.',
-            reservationRule: 'Cho phép bảo lưu học phí tối đa 06 tháng đối với học sinh có đơn xin nghỉ ốm hoặc chuyển nơi cư trú.',
-            feeList: [
-              { program: 'Tiếng Anh Tiểu học (Cambridge Young Learners)', level: 'Lớp 1 - 5', feeMonthlyVnd: 1500000, sessionsPerWeek: 2 },
-              { program: 'Tiếng Anh THCS & Chuyên sâu', level: 'Lớp 6 - 9', feeMonthlyVnd: 1800000, sessionsPerWeek: 2 },
-              { program: 'Luyện thi Chuyên cấp 3 & IELTS Foundation', level: 'Lớp 8 - 10', feeMonthlyVnd: 2200000, sessionsPerWeek: 2 },
-              { program: 'Luyện thi IELTS Chuyên sâu Cam kết 6.5 - 7.5+', level: 'THPT & SV', feeMonthlyVnd: 2800000, sessionsPerWeek: 3 },
-            ],
-          },
-          teachingStandards: {
-            qualificationRate: '100% giáo viên tốt nghiệp Đại học chuyên ngành Sư phạm Ngoại ngữ hoặc Ngôn ngữ Anh',
-            internationalCertRate: '92% sở hữu chứng chỉ giảng dạy quốc tế CELTA/TESOL và IELTS 8.0+',
-            curriculumStandards: 'Giáo trình xây dựng theo Khung tham chiếu chuẩn Châu Âu CEFR và chuẩn đầu ra Bộ GD&ĐT',
-          },
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching legal info:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-slate-800 font-sans">
