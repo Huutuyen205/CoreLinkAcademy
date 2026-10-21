@@ -28,6 +28,13 @@ function describeRequest(input: TrialRequestInput, subjectName: string, courseTi
     .join("\n");
 }
 
+/** Môn theo slug, theo đúng thứ tự `slugs` — dùng cho form học thử trên trang chủ (chọn nhiều môn). */
+export async function findSubjectsBySlugs(slugs: string[]): Promise<{ id: string; slug: string; name: string }[]> {
+  if (slugs.length === 0) return [];
+  const rows = await db.subject.findMany({ where: { slug: { in: slugs } }, select: { id: true, slug: true, name: true } });
+  return slugs.flatMap((slug) => rows.filter((r) => r.slug === slug));
+}
+
 /** UC-001: tạo lead mới hoặc thêm hoạt động vào lead đang mở trùng SĐT (FR-004). */
 export async function submitTrialRequest(input: TrialRequestInput): Promise<{ leadId: string; resubmitted: boolean }> {
   const subject = await db.subject.findUnique({ where: { id: input.subjectId }, select: { id: true, name: true } });

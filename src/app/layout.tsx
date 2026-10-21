@@ -1,19 +1,19 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro, Source_Serif_4 } from "next/font/google";
+import { Be_Vietnam_Pro, Lora } from "next/font/google";
 import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-be-vietnam",
   display: "swap",
 });
 
 // Chỉ dùng cho wordmark "CORE LINK" (logo dùng chữ có chân).
-const serif = Source_Serif_4({
+const serif = Lora({
   subsets: ["latin", "vietnamese"],
   weight: ["600", "700"],
-  variable: "--font-source-serif",
+  variable: "--font-lora",
   display: "swap",
 });
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "Core Link Academy đào tạo Toán, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Tin học cho học sinh phổ thông. Đăng ký học thử miễn phí.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1C2D95" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1F2F98" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

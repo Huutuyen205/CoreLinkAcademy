@@ -33,7 +33,7 @@ ID cố định, không đánh số lại. Ưu tiên: **P0** = không có thì s
 
 | ID | Yêu cầu | Tiêu chí chấp nhận | Ưu tiên | UC |
 |---|---|---|---|---|
-| FR-001 | Trang chủ giới thiệu học viện, các môn, khóa nổi bật, lời kêu gọi đăng ký học thử | Chỉ hiển thị môn có ≥ 1 khóa đã xuất bản và khóa đã xuất bản + nổi bật (tối đa 3); không có khóa ẩn; có nút "Đăng ký học thử" | P0 | UC-013 |
+| FR-001 | Trang chủ giới thiệu học viện, chương trình theo môn và cấp học, đội ngũ, tin tức, lời kêu gọi đăng ký học thử | Nội dung giới thiệu là dữ liệu tĩnh (D22, `src/data/home.ts`); có form đăng ký học thử ngay trên trang (FR-004/005) và nút "Đăng ký học thử"; danh mục khóa thật (chỉ khóa đã xuất bản) ở FR-002 | P0 | UC-013 |
 | FR-002 | Danh mục khóa học lọc theo môn và khối lớp | `?mon=toan&khoi=9` chỉ trả khóa đã xuất bản của môn đó có `gradeFrom ≤ 9 ≤ gradeTo`; tham số sai bị bỏ qua; dùng được không cần JavaScript | P0 | UC-013 |
 | FR-003 | Chi tiết khóa học: mô tả, đối tượng, số buổi, học phí tham khảo, mục tiêu, lộ trình, các lớp đang tuyển | Khóa chưa xuất bản/không tồn tại trả 404; lớp đang tuyển = lớp OPEN, hiện số chỗ còn lại | P0 | UC-013 |
 | FR-004 | Form học thử: tên phụ huynh, SĐT (bắt buộc), email (tùy chọn), tên học sinh, khối lớp, môn quan tâm, khóa (tùy chọn), ghi chú, đồng ý liên hệ (bắt buộc) | SĐT chuẩn hóa về `+84…` (BR-001); trùng SĐT với lead đang mở → thêm hoạt động RESUBMITTED vào lead cũ, không tạo lead mới; lưu thời điểm đồng ý | P0 | UC-001 |

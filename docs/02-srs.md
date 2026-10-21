@@ -57,7 +57,7 @@ flowchart LR
   G --> P
 ```
 
-Phụ thuộc: MySQL 8 sẵn sàng; font Google (Be Vietnam Pro, Source Serif 4) tải lúc build (`next/font`).
+Phụ thuộc: MySQL 8 sẵn sàng; font Google (Be Vietnam Pro, Lora) tải lúc build (`next/font`).
 
 ## 5. Functional requirements
 

@@ -29,6 +29,7 @@ Khả năng tiếp cận: WCAG 2.1 AA (NFR-003); thiết bị ưu tiên: điện
 - **Tính cách thương hiệu:** điềm tĩnh, chính xác, ấm áp vừa phải. Tone viết: lịch sự ("quý phụ huynh"), câu ngắn, động từ rõ, không cảm thán, không biệt ngữ kỹ thuật.
 - **Tham khảo tinh thần (không sao chép):** trang khoa của trường đại học, tạp chí học thuật — hierarchy bằng typography và khoảng trắng, không bằng màu.
 - **Tránh (DESIGN_QUALITY_NOT_AI):** gradient tím/xanh, glassmorphism, glow, emoji làm icon, floating blobs, card lồng card, bóng đổ dày, hero + 3 card giống nhau vô nghĩa, số liệu bịa ("10.000+ học viên"), badge "AI" trang trí, ảnh stock học sinh cười giả tạo, animation trang trí.
+- **Ngoại lệ trang chủ (DECISION-D22):** theo yêu cầu của PO, riêng trang chủ `/` dùng thẻ kính mờ (`backdrop-blur`) ở khối "Vì sao chọn", bộ icon `lucide-react` (không emoji) và animation `framer-motion` (menu, banner Ken Burns, hiện dần khi cuộn, đếm số, tab, dải chữ chạy, vòng sóng nút, modal). Mọi animation tắt khi `prefers-reduced-motion` (`MotionConfig reducedMotion="user"` + CSS). Các trang khác giữ nguyên quy tắc ở trên.
 - **Hình ảnh/biểu tượng:** Pha 1 không dùng ảnh (chưa có ảnh thật — QUESTION-Q01); không dùng bộ icon. Trạng thái truyền đạt bằng nhãn chữ (Badge). Nếu Pha 2 có ảnh: ảnh thật của lớp học, tỷ lệ cố định, có `alt` mô tả.
 
 ## 3. Sitemap and screen inventory
@@ -37,7 +38,7 @@ Sitemap: [07 §1](07-user-flows-and-logic-diagrams.md#1-sitemap). Trạng thái 
 
 | Screen | Route | Actor | Mục tiêu | Vào từ | Thành phần chính | Trạng thái | FR / UC |
 |---|---|---|---|---|---|---|---|
-| SCREEN-001 | `/` | Khách | Hiểu học viện, đi tới học thử | Trực tiếp, tìm kiếm | Giới thiệu + 2 CTA, lưới môn, khóa nổi bật (CourseCard), 3 bước | E (ẩn khối rỗng) | FR-001 / UC-013 |
+| SCREEN-001 | `/` | Khách | Hiểu học viện, đi tới học thử | Trực tiếp, tìm kiếm | 13 khối (D22): thanh trên + header mega-menu, banner, 4 thẻ truy cập nhanh, số liệu đếm, chương trình 3 môn × 4 cấp (tab), vì sao chọn, giáo viên, dải chữ chạy, tin tức + học viên tiêu biểu (modal), form học thử nội tuyến, chân trang, nút nổi. Dữ liệu tĩnh `src/data/*.ts` | V, D (rate limit), S (màn hình cảm ơn tại chỗ) | FR-001, 004, 005 / UC-013, 001 |
 | SCREEN-002 | `/khoa-hoc` | Khách | Lọc khóa theo môn/khối | Header, trang chủ | Form GET (2 Select + Lọc/Bỏ lọc), đếm kết quả `aria-live`, lưới CourseCard | E (2 thông điệp), L | FR-002 / UC-013 |
 | SCREEN-003 | `/khoa-hoc/[slug]` | Khách | Quyết định học thử | Danh mục | Breadcrumb, CTA, `dl` thông tin, mục tiêu, lộ trình đánh số, lớp đang tuyển | E (chưa có lớp), P (404 khóa ẩn) | FR-003 / UC-013 |
 | SCREEN-004 | `/dang-ky-hoc-thu` | Khách | Để lại thông tin | Header, CTA | Form 2 fieldset, honeypot, Checkbox đồng ý, SubmitButton | V, D (rate limit), S → 005 | FR-004, 005 / UC-001 |
@@ -83,16 +84,16 @@ Sitemap: [07 §1](07-user-flows-and-logic-diagrams.md#1-sitemap). Trạng thái 
 
 | Token | Giá trị | Vai trò | Tương phản (đo 2026-10-21) |
 |---|---|---|---|
-| `--color-paper` | `#F5F7FC` | Nền trang (trắng ngả xanh) | — |
+| `--color-paper` | `#F5F7FE` | Nền trang / nền phụ (trắng ngả xanh) | — |
 | `--color-surface` | `#FFFFFF` | Bề mặt card/bảng/form | — |
-| `--color-ink` | `#141B3D` | Chữ chính | 15,63:1 trên paper · 16,75:1 trên surface |
-| `--color-muted` | `#4E5874` | Chữ phụ, nhãn bảng, gợi ý | 6,59:1 paper · 7,07:1 surface · 5,99:1 trên primary-soft |
+| `--color-ink` | `#0E1433` | Chữ chính | 16,82:1 trên paper |
+| `--color-muted` | `#4A5274` | Chữ phụ, nhãn bảng, gợi ý | 7,13:1 paper · 7,64:1 surface |
 | `--color-line` | `#DDE3F0` | Đường kẻ, viền card (trang trí) | 1,29:1 surface — **không dùng cho ranh giới điều khiển** |
 | `--color-line-strong` | `#7D87A3` | Viền ô nhập/chọn/textarea (WCAG 1.4.11) | 3,58:1 surface · 3,34:1 paper |
-| `--color-primary` | `#1C2D95` | **Xanh thương hiệu (logo).** Nút chính, liên kết, tiêu đề trang, sidebar, khối giới thiệu, focus ring | 10,54:1 paper · 11,30:1 surface · chữ trắng 11,30:1 |
-| `--color-primary-strong` | `#142170` | Hover nút chính, nền chân trang | chữ trắng 14,18:1 |
+| `--color-primary` | `#1F2F98` | **Xanh thương hiệu.** Nút chính, liên kết, tiêu đề, sidebar, khối giới thiệu, focus ring | 10,23:1 paper · chữ trắng 10,95:1 |
+| `--color-primary-strong` | `#121C5E` | Thanh trên cùng, hover nút chính, nền khối tối | chữ trắng 15,52:1 |
 | `--color-primary-soft` | `#E6ECFF` | Nền nhấn nhẹ (Alert info, nút phụ khi hover) | primary trên nó 9,58:1 |
-| `--color-accent` | `#1D46D4` | **Xanh sáng của banner.** Ô từ khóa, viền nhấn, "404" | 6,81:1 paper · 7,29:1 surface · chữ trắng 7,29:1 |
+| `--color-accent` | `#2F6BFF` | **Xanh nhấn.** Nền nút phụ/nút nổi, gạch chân menu, vòng sóng. **Không dùng làm chữ nhỏ trên nền sáng** | 4,20:1 paper (chỉ chữ lớn/đồ họa) · chữ trắng trên nó 4,50:1 |
 | `--color-brand-tint` | `#D7E6FF` | Nền nhãn môn, số bước (như ô "Cam kết" trên banner) | primary trên nó 8,96:1 |
 | `--color-on-brand-muted` | `#C9D4FF` | Chữ phụ trên nền xanh thương hiệu | 7,72:1 trên primary |
 | `--color-success` / `-soft` | `#2F6B47` / `#E7F1EA` | Có mặt, đạt, đã xuất bản | 5,48:1 trên soft · 6,33:1 surface |
@@ -105,12 +106,12 @@ Mọi cặp chữ/nền đang dùng ≥ 4,5:1 (AA chữ thường). Trạng thá
 
 | Vai trò | Font | Cỡ (token) | Weight | Dùng cho |
 |---|---|---|---|---|
-| Wordmark "CORE LINK" | Source Serif 4 (`--font-serif`), chữ hoa | 18px | 700 | `Brand` (header, sidebar, chân trang) — giống logo |
+| Wordmark "CORE LINK" | Lora (`--font-serif`), chữ hoa | 18px | 700 | `Brand` (header, sidebar, chân trang) — giống logo |
 | Tiêu đề trang (h1) | Be Vietnam Pro (`--font-heading`), màu primary | 28px (`2xl`) → 36px (`3xl`) ≥ 640px | 700 | PageHeader — giống tiêu đề banner |
 | Tiêu đề khối (h2) | Be Vietnam Pro | 18–28px | 700 | Card, section |
 | Body | Be Vietnam Pro (`--font-sans`) | 16px, line-height 1,6 | 400 | Nội dung |
 | Nhãn, phụ | Be Vietnam Pro | 14px (`sm`) | 500 (nhãn) / 400 | Label, hint, bảng |
-| Số liệu dashboard | Source Serif 4 | 36px | 600 | Ô số liệu |
+| Số liệu dashboard | Lora | 36px | 600 | Ô số liệu |
 
 Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2xl`, `3xl`, `4xl`). Cả hai font có subset `vietnamese`, tải bằng `next/font` (self-host lúc build, `display: swap`). Tiêu đề `text-wrap: balance`.
 

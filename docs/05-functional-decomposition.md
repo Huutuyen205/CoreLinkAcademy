@@ -158,6 +158,9 @@ CoreLink Academy v3
 | P2-20 | App di động + REST `/api/v1` | Kênh | ADR-001 | ADR mới |
 | P2-21 | Ảnh minh họa khóa học | Công khai | UC-014 | Upload file |
 | P2-22 | Audit đăng nhập, giám sát lỗi (Sentry…) | Vận hành | QUESTION-Q05 | Hosting |
+| P2-23 | Trang riêng cho các mục menu (Giới thiệu, Tuyển sinh, Đào tạo, Tin tức – Hoạt động): thư ngỏ, lịch sử, cơ sở vật chất, đối tác, thời khóa biểu công khai… (hiện trỏ về khối trên trang chủ) | Công khai | Trang chủ D22 | Nội dung từ PO |
+| P2-24 | Quản trị tin tức, giáo viên, học viên tiêu biểu trong cổng quản lý (hiện sửa file `src/data/home.ts`) | Công khai | Trang chủ D22 | P2-21 (upload ảnh) |
+| P2-25 | Tìm kiếm toàn site, tra cứu kết quả công khai bằng mã (hiện nút tìm dẫn tới `/khoa-hoc`, "Tra cứu kết quả" dẫn tới đăng nhập) | Công khai | Trang chủ D22 | — |
 
 ## 6. Coverage check
 

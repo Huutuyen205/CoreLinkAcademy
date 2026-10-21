@@ -2,21 +2,22 @@
 
 /*
  * Design tokens — nguồn sự thật, xem docs/08-ui-ux-and-design-system.md §4.
- * Bảng màu lấy từ logo + banner chính thức của Core Link Academy (DECISION-D21):
- *   xanh thương hiệu #1C2D95 (nền logo/banner), xanh sáng #1D46D4 (ô nhấn trên banner), xanh nhạt #D7E6FF.
- * Tương phản đã đo theo WCAG 2.1 (docs/08 §4.1).
+ * Bảng màu thương hiệu Core Link Academy:
+ * Bảng màu theo yêu cầu trang chủ mới (DECISION-D22, thay D21): xanh thương hiệu #1F2F98, xanh đậm #121C5E,
+ * xanh nhấn #2F6BFF, nền phụ #F5F7FE, chữ #0E1433, chữ phụ #4A5274. Tương phản đã đo theo WCAG 2.1 (docs/08 §4.1).
+ * Lưu ý: #2F6BFF trên nền sáng chỉ đạt 4,20:1 → chỉ dùng cho nền/gạch chân/chữ lớn; chữ nhỏ trên nền sáng dùng primary.
  */
 @theme {
-  --color-paper: #f5f7fc; /* nền trang — trắng ngả xanh, hợp tông thương hiệu */
+  --color-paper: #f5f7fe; /* nền trang/nền phụ — trắng ngả xanh */
   --color-surface: #ffffff;
-  --color-ink: #141b3d; /* 15,63:1 trên paper */
-  --color-muted: #4e5874; /* 6,59:1 trên paper */
+  --color-ink: #0e1433; /* 16,82:1 trên paper */
+  --color-muted: #4a5274; /* 7,13:1 trên paper, 7,64:1 trên trắng */
   --color-line: #dde3f0; /* đường kẻ trang trí — không dùng làm viền ô nhập */
   --color-line-strong: #7d87a3; /* viền ô nhập/chọn — 3,58:1 trên surface (WCAG 1.4.11) */
-  --color-primary: #1c2d95; /* xanh thương hiệu — 11,30:1 với chữ trắng */
-  --color-primary-strong: #142170; /* hover/active, nền chân trang */
+  --color-primary: #1f2f98; /* xanh thương hiệu — 10,95:1 với chữ trắng */
+  --color-primary-strong: #121c5e; /* hover/active, thanh trên cùng, nền khối tối */
   --color-primary-soft: #e6ecff; /* nền mục đang chọn, Alert info */
-  --color-accent: #1d46d4; /* xanh sáng của banner — điểm nhấn, số bước; 6,81:1 trên paper */
+  --color-accent: #2f6bff; /* xanh nhấn — nền/gạch chân; chữ trắng trên nền này 4,50:1; KHÔNG làm chữ nhỏ trên nền sáng (4,20:1) */
   --color-brand-tint: #d7e6ff; /* nền ô nhấn kiểu banner */
   --color-on-brand-muted: #c9d4ff; /* chữ phụ trên nền xanh thương hiệu — 7,72:1 */
   --color-success: #2f6b47;
@@ -27,7 +28,7 @@
   --color-danger-soft: #f8e6e3;
 
   --font-heading: var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif; /* tiêu đề đậm như banner */
-  --font-serif: var(--font-source-serif), "Georgia", serif; /* chỉ cho wordmark "CORE LINK" như logo */
+  --font-serif: var(--font-lora), "Georgia", serif; /* chỉ cho wordmark "CORE LINK" như logo */
   --font-sans: var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif;
 
   --text-sm: 0.875rem;
@@ -197,6 +198,61 @@
 
   .banner-glow-frame:hover::before {
     opacity: 1;
+  }
+
+  /* Vòng sóng lan tỏa quanh nút (Đăng ký học thử, Zalo). */
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    100% {
+      transform: scale(1.55);
+      opacity: 0;
+    }
+  }
+
+  .pulse-ring {
+    position: relative;
+  }
+
+  .pulse-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    color: var(--color-accent);
+    z-index: -1;
+    animation: pulse-ring 2s ease-out infinite;
+    pointer-events: none;
+  }
+
+  /* Vòng sóng lan tỏa quanh nút (Đăng ký học thử, Zalo). */
+  @keyframes pulse-ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    100% {
+      transform: scale(1.55);
+      opacity: 0;
+    }
+  }
+
+  .pulse-ring {
+    position: relative;
+  }
+
+  .pulse-ring::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--color-accent);
+    z-index: -1;
+    animation: pulse-ring 2s ease-out infinite;
+    pointer-events: none;
   }
 
   @media (prefers-reduced-motion: reduce) {

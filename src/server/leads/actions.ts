@@ -16,6 +16,7 @@ import {
   convertLead,
   createManualLead,
   DuplicateOpenLeadError,
+  findSubjectsBySlugs,
   submitTrialRequest,
   type IssuedCredential,
 } from "./service";
@@ -38,6 +39,57 @@ export async function submitTrialRequestAction(_prev: ActionState, formData: For
   const result = await runAction(() => submitTrialRequest(parsed.data), fields);
   if (!result.ok) return result.state;
   redirect(THANK_YOU);
+}
+
+const HOME_SUBJECT_SLUGS = ["toan", "ngu-van", "tieng-anh"];
+const PRESCHOOL_NOTE = "Học sinh ở bậc tiền tiểu học (5–6 tuổi), chưa vào lớp 1.";
+
+/**
+ * API-001 (biến thể form trang chủ) — FR-004, FR-005. Cho chọn nhiều môn và bậc tiền tiểu học; không chuyển trang
+ * mà trả `ok: true` để form hiện màn hình cảm ơn. Môn đầu tiên là môn chính của lead, các môn còn lại ghi vào ghi chú.
+ */
+export async function submitHomeTrialAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  // Honeypot: bot điền ô ẩn → báo thành công giả, không lưu.
+  const honeypot = formData.get("website");
+  if (typeof honeypot === "string" && honeypot.trim() !== "") return { ok: true };
+
+  const fields = formFields(formData, ["parentName", "phone", "studentName", "gradeLevel", "note"]);
+  const slugs = formData
+    .getAll("subjects")
+    .filter((v): v is string => typeof v === "string" && HOME_SUBJECT_SLUGS.includes(v));
+  const values = { ...fields, subjects: slugs.join(",") };
+
+  if (!(await hitRateLimit(`trial:${await clientIp()}`))) {
+    return { ok: false, message: "Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau 10 phút.", values };
+  }
+
+  const subjects = await findSubjectsBySlugs(slugs);
+  const preschool = fields.gradeLevel === "0";
+  const noteParts = [
+    preschool ? PRESCHOOL_NOTE : null,
+    subjects.length > 1 ? `Các môn quan tâm: ${subjects.map((s) => s.name).join(", ")}.` : null,
+    fields.note?.trim() || null,
+  ].filter(Boolean);
+
+  const parsed = parseForm(trialRequestSchema, {
+    parentName: fields.parentName,
+    phone: fields.phone,
+    email: "",
+    studentName: fields.studentName,
+    gradeLevel: preschool ? "1" : fields.gradeLevel,
+    subjectId: subjects[0]?.id ?? "",
+    courseSlug: "",
+    note: noteParts.join("\n"),
+    consent: formData.get("consent") ?? undefined,
+  });
+  if (!parsed.ok) {
+    // Trả lại giá trị người dùng đã nhập (không phải giá trị đã biến đổi) để điền lại form.
+    return { ...parsed.state, values };
+  }
+
+  const result = await runAction(() => submitTrialRequest(parsed.data), values);
+  if (!result.ok) return result.state;
+  return { ok: true };
 }
 
 export type CreateLeadState = ActionState & { existingLeadId?: string };

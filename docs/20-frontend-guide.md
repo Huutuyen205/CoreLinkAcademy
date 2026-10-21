@@ -10,7 +10,7 @@
 Cách xây màn hình mới đúng design system, đúng trạng thái và không phá vỡ phân quyền. Logic nghiệp vụ không nằm ở FE (NFR-012) — xem [21](21-backend-guide.md).
 
 ## 2. Toolchain
-Next.js 15 App Router · React 19 (`useActionState`, `useFormStatus`) · TypeScript strict · Tailwind CSS 4 (`@theme` trong `globals.css`) · `next/font` (Be Vietnam Pro, Source Serif 4) · không dùng thư viện UI ngoài, không icon font.
+Next.js 15 App Router · React 19 (`useActionState`, `useFormStatus`) · TypeScript strict · Tailwind CSS 4 (`@theme` trong `globals.css`) · `next/font` (Be Vietnam Pro, Lora) · ngoài ra dùng `framer-motion` (animation trang chủ) và `lucide-react` (icon), không dùng thư viện UI khác, không icon font.
 
 ## 3. Routing và khu vực
 

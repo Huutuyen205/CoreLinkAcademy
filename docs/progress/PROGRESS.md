@@ -2,6 +2,35 @@
 
 Ghi theo phiên, mới nhất ở trên. Kết quả lệnh là output thực tế, không ước lượng.
 
+## 2026-10-21 (phiên 3, tiếp) — Làm lại trang chủ theo mô tả của PO (DECISION-D22)
+
+### Đã làm
+- **Phụ thuộc mới:** `framer-motion`, `lucide-react` (`pnpm add`).
+- **Token/font:** `globals.css` đổi sang `#1F2F98` / `#121C5E` / `#2F6BFF` / `#F5F7FE` / `#0E1433` / `#4A5274`; font wordmark chuyển Source Serif 4 → Lora; thêm keyframes `pulse-ring`. `#2F6BFF` trên nền sáng chỉ 4,20:1 nên chỉ dùng cho nền/gạch chân (docs/08 §4.1).
+- **Khung công khai:** `PublicShell` dựng lại (TopBar, Header mega-menu + panel di động, Footer có bản đồ, nút nổi Zalo/Gọi/Lên đầu trang), `MotionConfig reducedMotion="user"`. Trang chủ chuyển sang route group `src/app/(home)/` dùng `PublicShell bare` để các khối tràn viền; các trang công khai khác giữ khung 1120px.
+- **Component** `src/components/home/*`: top-bar, header, hero-banner (Ken Burns), quick-access, stats (đếm số), programs (tab `layoutId` + `AnimatePresence`), why-us, teachers, marquee, news-and-stars (modal Esc/click ngoài/focus), register-form, footer, floating-buttons, motion (Reveal/Stagger/CountUp).
+- **Dữ liệu tách riêng:** `src/data/home.ts`, `nav.ts`, `site.ts` (thông tin liên hệ placeholder).
+- **Form học thử trang chủ:** `submitHomeTrialAction` (`src/server/leads/actions.ts`) dùng lại `trialRequestSchema`, rate limit, honeypot, `submitTrialRequest`; cho chọn nhiều môn (môn đầu là môn chính, còn lại vào ghi chú), "Tiền tiểu học" lưu là lớp 1 + ghi chú; trả `ok: true` để hiện màn hình cảm ơn tại chỗ. Giữ ô đồng ý liên hệ (bắt buộc theo FR-004) dù mô tả không liệt kê.
+- **Tài liệu:** D22 + cập nhật Q12 (docs/17), FR-001 (docs/01), docs/08 (token, ngoại lệ, SCREEN-001), P2-23..25 (docs/05), font (docs/02, 20).
+
+### Lệch so với mô tả — cần PO biết
+- Ảnh thật là `/brand/logo.png` (1000×1000) và `/brand/banner.png` (**1024×390**, không phải 1640×626) nên banner sẽ hơi mờ trên màn hình rộng; cần ảnh gốc lớn hơn.
+- Các mục menu chưa có trang riêng trỏ về khối trên trang chủ hoặc `/khoa-hoc` (không liên kết chết); nút tìm kiếm dẫn tới `/khoa-hoc`; "Tra cứu kết quả", "Cổng học viên/phụ huynh" dẫn tới `/dang-nhap`.
+- Tin tức, giáo viên, học viên tiêu biểu là dữ liệu mẫu/placeholder trong `src/data/home.ts`; ngày tin là mẫu.
+- Trang chủ không còn đọc DB (khóa nổi bật) — FR-001 đã điều chỉnh.
+
+### Kết quả (chạy thật)
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm typecheck` | Pass |
+| `pnpm lint` | Pass, 0 lỗi |
+| `pnpm test` | 14 file, **76/76** pass |
+| `pnpm build` | Pass |
+| Smoke `next start`: `/`, `/khoa-hoc`, `/dang-ky-hoc-thu`, `/dang-nhap` | HTTP 200; HTML trang chủ có đủ các khối chính |
+| Kiểm tra bằng mắt (trình duyệt, 360px/desktop), gửi form thật vào DB | **Chưa làm** — cần người dùng chạy `pnpm dev` xem thử |
+
+---
+
 ## 2026-10-21 (phiên 3, tiếp) — Redesign giao diện trang web với Banner & Logo chính thức + Animation động
 
 ### Đã làm
