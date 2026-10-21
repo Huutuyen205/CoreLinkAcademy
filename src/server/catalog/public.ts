@@ -1,5 +1,6 @@
 // Đọc dữ liệu công khai: chỉ môn và khóa đã xuất bản (FR-001..FR-003). Không cần đăng nhập.
 import type { Prisma } from "@prisma/client";
+import { cached, CACHE_TAGS } from "@/server/cache";
 import { db } from "@/server/db";
 
 export type CatalogFilter = { subjectSlug?: string; grade?: number };
@@ -37,9 +38,12 @@ const courseCard = {
 
 export type CourseCardData = Prisma.CourseGetPayload<{ select: typeof courseCard }>;
 
-export function listSubjects() {
+export function querySubjects() {
   return db.subject.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
 }
+
+/** Danh sách môn dùng ở bộ lọc công khai và quản lý — cache, vô hiệu khi lưu/xóa môn/khóa (CACHE_TAGS.subjects). */
+export const listSubjects = cached(querySubjects, "subjects:list", { tags: [CACHE_TAGS.subjects], revalidate: 3600 });
 
 /** Môn có ít nhất một khóa đã xuất bản. */
 export function listSubjectsWithCourses() {

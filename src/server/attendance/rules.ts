@@ -40,6 +40,30 @@ export function formatRate(rate: number | null): string {
   return rate === null ? "Chưa có dữ liệu" : `${Math.round(rate * 100)}%`;
 }
 
+export type AttendanceWrite = { studentId: string; status: AttendanceStatus; note: string | null };
+
+/**
+ * Kế hoạch ghi điểm danh theo lô: bản ghi mới → `toCreate`; bản ghi đã có → `updateGroups` gộp theo (trạng thái, ghi chú)
+ * để mỗi nhóm là một `updateMany`. Trùng studentId trong cùng lần gửi: lấy lần cuối (như vòng upsert tuần tự).
+ */
+export function planAttendanceWrites(entries: AttendanceWrite[], existingStudentIds: Iterable<string>) {
+  const existing = new Set(existingStudentIds);
+  const latest = new Map(entries.map((e) => [e.studentId, e]));
+  const toCreate: AttendanceWrite[] = [];
+  const groups = new Map<string, { status: AttendanceStatus; note: string | null; studentIds: string[] }>();
+  for (const e of latest.values()) {
+    if (!existing.has(e.studentId)) {
+      toCreate.push(e);
+      continue;
+    }
+    const key = JSON.stringify([e.status, e.note]);
+    const group = groups.get(key) ?? { status: e.status, note: e.note, studentIds: [] };
+    group.studentIds.push(e.studentId);
+    groups.set(key, group);
+  }
+  return { toCreate, updateGroups: [...groups.values()] };
+}
+
 /**
  * BR-033: học sinh có 2 buổi đã điểm danh gần nhất (không hủy) của cùng lớp đều ABSENT.
  * `sessions` là các buổi đã điểm danh của MỘT lớp, mới nhất trước.

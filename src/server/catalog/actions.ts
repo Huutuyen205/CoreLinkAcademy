@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
+import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
 import { deleteCourse, deleteRoom, deleteSubject, saveCourse, saveRoom, saveSubject } from "./admin";
 
@@ -21,6 +22,7 @@ const int = (min: number, max: number, label: string) =>
 
 function revalidateCatalog() {
   revalidatePath("/", "layout");
+  invalidate(CACHE_TAGS.subjects);
 }
 
 const subjectSchema = z.object({

@@ -46,6 +46,16 @@ export function isUniqueViolation(error: unknown, field?: string): boolean {
   return Array.isArray(target) ? target.some((t) => String(t).includes(field)) : String(target ?? "").includes(field);
 }
 
+/** P2025: bản ghi cần cập nhật/xóa không tồn tại. */
+export function isRecordNotFound(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
+}
+
+/** P2003: vi phạm khóa ngoại — bản ghi vừa được tham chiếu bởi dữ liệu khác (xóa đồng thời). */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";
+}
+
 /** Chạy lại tối đa 3 lần khi va chạm mã học sinh (docs/06 §3). */
 export async function withStudentCodeRetry<T>(fn: () => Promise<T>): Promise<T> {
   for (let attempt = 1; ; attempt++) {

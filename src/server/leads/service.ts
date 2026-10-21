@@ -1,16 +1,17 @@
 // Tuyển sinh: form học thử (UC-001), xử lý lead (UC-002), chuyển học viên (UC-003).
-import type { LeadStatus, Prisma } from "@prisma/client";
+import { Prisma, type LeadStatus } from "@prisma/client";
 import { enrollInTx } from "@/server/academic/enrollment";
 import { writeAudit } from "@/server/audit/log";
 import { hashPassword } from "@/server/auth/password";
 import { assertCan } from "@/server/auth/policy";
+import { cached, CACHE_TAGS } from "@/server/cache";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
 import { LEAD_SOURCE_LABELS } from "@/lib/labels";
 import { normalizePhone } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
-import { generateTempPassword, nextStudentCode, withStudentCodeRetry } from "@/server/users/credentials";
+import { generateTempPassword, isRecordNotFound, nextStudentCode, withStudentCodeRetry } from "@/server/users/credentials";
 import { checkLeadTransition, CONVERTIBLE_STATUSES, overdueCutoff } from "./rules";
 import type { ConvertLeadInput, ManualLeadInput, TrialRequestInput } from "./schemas";
 
@@ -53,10 +54,12 @@ export async function submitTrialRequest(input: TrialRequestInput): Promise<{ le
       select: { id: true },
     });
     if (open) {
-      await tx.leadActivity.create({
-        data: { leadId: open.id, type: "RESUBMITTED", content: `Gửi lại form học thử.\n${content}` },
+      // Một lệnh lồng (thêm hoạt động + chạm updatedAt) thay cho hai lệnh tuần tự.
+      await tx.lead.update({
+        where: { id: open.id },
+        data: { updatedAt: now, activities: { create: { type: "RESUBMITTED", content: `Gửi lại form học thử.\n${content}` } } },
+        select: { id: true },
       });
-      await tx.lead.update({ where: { id: open.id }, data: { updatedAt: now } });
       return { leadId: open.id, resubmitted: true };
     }
 
@@ -192,13 +195,20 @@ export async function getLead(actor: Actor, id: string) {
   return lead;
 }
 
+/** Hai số liệu lead trong MỘT query (trước: 2 query). */
+export async function leadCountsQuery(): Promise<{ newCount: number; overdueCount: number }> {
+  const [row] = await db.$queryRaw<{ newCount: bigint; overdueCount: bigint }[]>(Prisma.sql`
+    SELECT count(*) AS "newCount", count(*) FILTER (WHERE "createdAt" < ${overdueCutoff(new Date())}) AS "overdueCount"
+    FROM "leads" WHERE "status" = 'NEW'`);
+  return { newCount: Number(row?.newCount ?? 0), overdueCount: Number(row?.overdueCount ?? 0) };
+}
+
+// TTL 60 giây: "quá 24 giờ" đổi theo thời gian dù không có thao tác ghi; ghi lead thì vô hiệu ngay (CACHE_TAGS.dashboard).
+const cachedLeadCounts = cached(leadCountsQuery, "dashboard:lead-counts", { tags: [CACHE_TAGS.dashboard], revalidate: 60 });
+
 export async function leadCounts(actor: Actor) {
   assertCan(actor, "lead.manage");
-  const [newCount, overdueCount] = await Promise.all([
-    db.lead.count({ where: { status: "NEW" } }),
-    db.lead.count({ where: { status: "NEW", createdAt: { lt: overdueCutoff(new Date()) } } }),
-  ]);
-  return { newCount, overdueCount };
+  return cachedLeadCounts();
 }
 
 const TRANSITION_MESSAGES = {
@@ -236,10 +246,17 @@ export async function changeLeadStatus(actor: Actor, leadId: string, to: LeadSta
 /** API-003 — FR-008. */
 export async function addLeadNote(actor: Actor, leadId: string, content: string) {
   assertCan(actor, "lead.manage");
-  const lead = await db.lead.findUnique({ where: { id: leadId }, select: { id: true } });
-  if (!lead) throw new ForbiddenError();
-  await db.leadActivity.create({ data: { leadId, actorId: actor.id, type: "NOTE", content } });
-  await db.lead.update({ where: { id: leadId }, data: { updatedAt: new Date() } });
+  // Một lệnh lồng, nguyên tử (trước: kiểm tra + tạo + cập nhật = 3 query không cùng transaction).
+  try {
+    await db.lead.update({
+      where: { id: leadId },
+      data: { updatedAt: new Date(), activities: { create: { actorId: actor.id, type: "NOTE", content } } },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (isRecordNotFound(error)) throw new ForbiddenError();
+    throw error;
+  }
 }
 
 export type IssuedCredential = { role: "STUDENT" | "PARENT"; fullName: string; login: string; password: string };
@@ -265,8 +282,23 @@ export async function convertLead(actor: Actor, input: ConvertLeadInput & { clas
 
       const credentials: IssuedCredential[] = [];
 
+      // Một query cho mọi kiểm tra trùng SĐT/email (trước: tối đa 4 query tuần tự trong transaction).
+      const taken = await tx.user.findMany({
+        where: {
+          OR: [
+            { phone: input.parentPhone },
+            ...(input.parentEmail ? [{ email: input.parentEmail }] : []),
+            ...(input.studentPhone ? [{ phone: input.studentPhone }] : []),
+            ...(input.studentEmail ? [{ email: input.studentEmail }] : []),
+          ],
+        },
+        select: { id: true, role: true, fullName: true, phone: true, email: true },
+      });
+      const phoneTaken = (phone: string) => taken.some((u) => u.phone === phone);
+      const emailTaken = (email: string) => taken.some((u) => u.email === email);
+
       // Phụ huynh: dùng lại theo SĐT nếu là tài khoản PARENT.
-      const byPhone = await tx.user.findUnique({ where: { phone: input.parentPhone }, select: { id: true, role: true, fullName: true } });
+      const byPhone = taken.find((u) => u.phone === input.parentPhone) ?? null;
       let parentId: string;
       if (byPhone) {
         if (byPhone.role !== "PARENT") {
@@ -276,7 +308,7 @@ export async function convertLead(actor: Actor, input: ConvertLeadInput & { clas
         }
         parentId = byPhone.id;
       } else {
-        if (input.parentEmail && (await tx.user.findUnique({ where: { email: input.parentEmail }, select: { id: true } }))) {
+        if (input.parentEmail && emailTaken(input.parentEmail)) {
           throw new DomainError("DUPLICATE_EMAIL", "Email phụ huynh đã được dùng.", { parentEmail: "Email này đã được dùng." });
         }
         const parent = await tx.user.create({
@@ -293,10 +325,11 @@ export async function convertLead(actor: Actor, input: ConvertLeadInput & { clas
         credentials.push({ role: "PARENT", fullName: parent.fullName, login: input.parentPhone, password: parentPassword });
       }
 
-      if (input.studentPhone && (await tx.user.findUnique({ where: { phone: input.studentPhone }, select: { id: true } }))) {
+      // SĐT/email trùng với phụ huynh vừa tạo/dùng lại trong chính giao dịch này cũng tính là đã dùng.
+      if (input.studentPhone && (phoneTaken(input.studentPhone) || input.studentPhone === input.parentPhone)) {
         throw new DomainError("DUPLICATE_PHONE", "SĐT học sinh đã được dùng.", { studentPhone: "SĐT này đã được dùng." });
       }
-      if (input.studentEmail && (await tx.user.findUnique({ where: { email: input.studentEmail }, select: { id: true } }))) {
+      if (input.studentEmail && (emailTaken(input.studentEmail) || (!byPhone && input.studentEmail === input.parentEmail))) {
         throw new DomainError("DUPLICATE_EMAIL", "Email học sinh đã được dùng.", { studentEmail: "Email này đã được dùng." });
       }
 

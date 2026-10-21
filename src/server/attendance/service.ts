@@ -1,11 +1,11 @@
 // Điểm danh (UC-007) và chuyên cần (FR-025, FR-026).
-import type { AttendanceStatus, Prisma } from "@prisma/client";
+import { Prisma, type AttendanceStatus } from "@prisma/client";
 import { writeAudit } from "@/server/audit/log";
 import { assertCanViewStudent, canTeacherAccessClass, isManager } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
-import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow } from "./rules";
+import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
 
 export type AttendanceEntry = { studentId: string; status: AttendanceStatus; note: string | null };
 
@@ -70,14 +70,33 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
   const valid = entries.filter((e) => allowedIds.has(e.studentId));
   if (valid.length === 0) throw new DomainError("EMPTY", "Không có học sinh nào để điểm danh.");
 
+  // Ghi theo lô thay cho một upsert/học sinh (16 HS = 16 round-trip trong transaction trước đây):
+  // thường chỉ còn 1 createMany (lần đầu) hoặc 1–2 updateMany (sửa lại).
+  const { toCreate, updateGroups } = planAttendanceWrites(valid, session.attendances.map((a) => a.studentId));
+
   const before = session.attendances.map((a) => ({ studentId: a.studentId, status: a.status, note: a.note }));
   await db.$transaction(async (tx) => {
-    for (const e of valid) {
-      await tx.attendance.upsert({
-        where: { sessionId_studentId: { sessionId, studentId: e.studentId } },
-        update: { status: e.status, note: e.note, markedById: actor.id, markedAt: now },
-        create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now },
+    for (const g of updateGroups) {
+      await tx.attendance.updateMany({
+        where: { sessionId, studentId: { in: g.studentIds } },
+        data: { status: g.status, note: g.note, markedById: actor.id, markedAt: now },
       });
+    }
+    if (toCreate.length > 0) {
+      const created = await tx.attendance.createMany({
+        data: toCreate.map((e) => ({ sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now })),
+        skipDuplicates: true,
+      });
+      // Hiếm: người khác vừa điểm danh cùng buổi → một số dòng đã tồn tại và bị bỏ qua; ghi đè như upsert cũ.
+      if (created.count < toCreate.length) {
+        for (const e of toCreate) {
+          await tx.attendance.upsert({
+            where: { sessionId_studentId: { sessionId, studentId: e.studentId } },
+            update: { status: e.status, note: e.note, markedById: actor.id, markedAt: now },
+            create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now },
+          });
+        }
+      }
     }
     if (session.status === "SCHEDULED" && now > session.endsAt) {
       await tx.classSession.update({ where: { id: sessionId }, data: { status: "COMPLETED" } });
@@ -98,31 +117,47 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
   return { classId: session.classId, count: valid.length };
 }
 
-/** FR-026: cảnh báo vắng 2 buổi liên tiếp, theo phạm vi (quản lý: mọi lớp đang chạy; GV: lớp mình). */
+type AlertRow = { classId: string; classCode: string; rn: bigint; studentId: string; status: AttendanceStatus; studentName: string };
+
+/**
+ * FR-026: cảnh báo vắng 2 buổi liên tiếp, theo phạm vi (quản lý: mọi lớp đang chạy; GV: lớp mình).
+ * MỘT query: 2 buổi đã điểm danh gần nhất của mỗi lớp (ROW_NUMBER) + bản ghi điểm danh + tên học sinh.
+ * Trước đây: lớp → buổi → điểm danh → tên = 4 query và Prisma tải hết buổi của lớp rồi mới cắt 2 trong bộ nhớ.
+ * Quy tắc BR-033 vẫn do `consecutiveAbsentees` quyết định.
+ */
 export async function listAbsenceAlerts(actor: Actor) {
   if (!isManager(actor) && actor.role !== "TEACHER") throw new ForbiddenError();
-  const classes = await db.class.findMany({
-    where: { status: { in: ["OPEN", "IN_PROGRESS"] }, ...(actor.role === "TEACHER" ? { teacherId: actor.id } : {}) },
-    select: {
-      id: true,
-      code: true,
-      sessions: {
-        where: { status: { not: "CANCELLED" }, attendances: { some: {} } },
-        orderBy: { startsAt: "desc" },
-        take: 2,
-        select: { status: true, attendances: { select: { studentId: true, status: true } } },
-      },
-    },
-  });
-  const alerts: { classId: string; classCode: string; studentIds: string[] }[] = [];
-  for (const c of classes) {
-    const ids = consecutiveAbsentees(c.sessions.map((s) => ({ cancelled: s.status === "CANCELLED", records: s.attendances })));
-    if (ids.length > 0) alerts.push({ classId: c.id, classCode: c.code, studentIds: ids });
+  const teacherFilter = actor.role === "TEACHER" ? Prisma.sql`AND c."teacherId" = ${actor.id}` : Prisma.empty;
+  const rows = await db.$queryRaw<AlertRow[]>(Prisma.sql`
+    WITH recent AS (
+      SELECT s."id", s."classId", ROW_NUMBER() OVER (PARTITION BY s."classId" ORDER BY s."startsAt" DESC) AS rn
+      FROM "class_sessions" s
+      JOIN "classes" c ON c."id" = s."classId"
+      WHERE c."status" IN ('OPEN', 'IN_PROGRESS') ${teacherFilter}
+        AND s."status" <> 'CANCELLED'
+        AND EXISTS (SELECT 1 FROM "attendances" x WHERE x."sessionId" = s."id")
+    )
+    SELECT r."classId", c."code" AS "classCode", r.rn, a."studentId", a."status", u."fullName" AS "studentName"
+    FROM recent r
+    JOIN "classes" c ON c."id" = r."classId"
+    JOIN "attendances" a ON a."sessionId" = r."id"
+    JOIN "users" u ON u."id" = a."studentId"
+    WHERE r.rn <= 2
+    ORDER BY c."code", r.rn, u."fullName"`);
+
+  const byClass = new Map<string, { code: string; sessions: Map<number, { studentId: string; status: AttendanceStatus }[]> }>();
+  const names = new Map<string, string>();
+  for (const r of rows) {
+    names.set(r.studentId, r.studentName);
+    const c = byClass.get(r.classId) ?? { code: r.classCode, sessions: new Map() };
+    byClass.set(r.classId, c);
+    const rn = Number(r.rn);
+    c.sessions.set(rn, [...(c.sessions.get(rn) ?? []), { studentId: r.studentId, status: r.status }]);
   }
-  const names = new Map(
-    (await db.user.findMany({ where: { id: { in: alerts.flatMap((a) => a.studentIds) } }, select: { id: true, fullName: true } })).map((u) => [u.id, u.fullName]),
-  );
-  return alerts.flatMap((a) => a.studentIds.map((id) => ({ classId: a.classId, classCode: a.classCode, studentId: id, studentName: names.get(id) ?? "—" })));
+  return [...byClass.entries()].flatMap(([classId, c]) => {
+    const sessions = [1, 2].flatMap((rn) => (c.sessions.has(rn) ? [{ cancelled: false, records: c.sessions.get(rn)! }] : []));
+    return consecutiveAbsentees(sessions).map((studentId) => ({ classId, classCode: c.code, studentId, studentName: names.get(studentId) ?? "—" }));
+  });
 }
 
 /** FR-025: lịch sử và tỷ lệ chuyên cần của một học sinh (chính mình / con / quản lý / GV của lớp). */

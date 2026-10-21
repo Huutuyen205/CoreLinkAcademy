@@ -1,25 +1,29 @@
-import { db } from "@/server/db";
-import { isUniqueViolation } from "@/server/users/credentials";
-import { consume, TRIAL_LIMIT } from "./rules";
+import { db, type Tx } from "@/server/db";
+import { TRIAL_LIMIT } from "./rules";
 
-async function hitOnce(key: string, limit: { max: number; windowMs: number }): Promise<boolean> {
-  return db.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw<{ count: number; resetAt: Date }[]>`
-      SELECT "count", "resetAt" FROM "rate_limit_buckets" WHERE "key" = ${key} FOR UPDATE`;
-    const current = rows[0] ? { count: Number(rows[0].count), resetAt: new Date(rows[0].resetAt) } : null;
-    const { allowed, next } = consume(current, new Date(), limit);
-    await tx.rateLimitBucket.upsert({ where: { key }, update: next, create: { key, ...next } });
-    return allowed;
-  });
+/**
+ * Ghi nhận một lần gọi cho `key`; trả false khi vượt giới hạn (BR-002, BR-009).
+ * Cùng quy tắc với `consume()` (rules.ts, có unit test) nhưng chạy trong MỘT câu `INSERT … ON CONFLICT` nguyên tử:
+ * trước đây BEGIN + SELECT FOR UPDATE + upsert + COMMIT = 4 round-trip cho mỗi lần đăng nhập/gửi form.
+ * ON CONFLICT khóa dòng nên hai request đồng thời không đếm thiếu, và không còn lỗi trùng khóa khi tạo bucket.
+ */
+export async function hitRateLimit(
+  key: string,
+  limit: { max: number; windowMs: number } = TRIAL_LIMIT,
+  client: Tx = db,
+  now = new Date(),
+): Promise<boolean> {
+  const resetAt = new Date(now.getTime() + limit.windowMs);
+  const rows = await client.$queryRaw<{ count: number }[]>`
+    INSERT INTO "rate_limit_buckets" ("key", "count", "resetAt") VALUES (${key}, 1, ${resetAt})
+    ON CONFLICT ("key") DO UPDATE SET
+      "count"   = CASE WHEN "rate_limit_buckets"."resetAt" <= ${now} THEN 1 ELSE "rate_limit_buckets"."count" + 1 END,
+      "resetAt" = CASE WHEN "rate_limit_buckets"."resetAt" <= ${now} THEN ${resetAt} ELSE "rate_limit_buckets"."resetAt" END
+    RETURNING "count"`;
+  return Number(rows[0]?.count ?? 1) <= limit.max;
 }
 
-/** Ghi nhận một lần gọi cho `key`; trả false khi vượt giới hạn (BR-002, BR-009). */
-export async function hitRateLimit(key: string, limit: { max: number; windowMs: number } = TRIAL_LIMIT): Promise<boolean> {
-  try {
-    return await hitOnce(key, limit);
-  } catch (error) {
-    // Hai request đầu tiên cùng tạo bucket: request thua chạy lại và đọc được dòng đã có.
-    if (isUniqueViolation(error)) return hitOnce(key, limit);
-    throw error;
-  }
+/** Xóa bucket đã hết hạn quá 1 ngày (bảng không phình theo số IP). Gọi kèm, không chặn luồng chính. */
+export async function pruneRateLimitBuckets(now = new Date()): Promise<void> {
+  await db.rateLimitBucket.deleteMany({ where: { resetAt: { lt: new Date(now.getTime() - 24 * 3_600_000) } } });
 }

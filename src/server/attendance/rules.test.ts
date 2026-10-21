@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow } from "./rules";
+import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
 
 const session = { startsAt: new Date("2026-10-21T11:00:00Z"), endsAt: new Date("2026-10-21T12:30:00Z") };
 
@@ -58,5 +58,29 @@ describe("cảnh báo vắng BR-033", () => {
 
   it("TC-022 chưa đủ 2 buổi thì không cảnh báo", () => {
     expect(consecutiveAbsentees([{ cancelled: false, records: [{ studentId: "a", status: "ABSENT" }] }])).toEqual([]);
+  });
+});
+
+describe("planAttendanceWrites (ghi điểm danh theo lô)", () => {
+  const e = (studentId: string, status: "PRESENT" | "ABSENT" | "LATE" | "EXCUSED", note: string | null = null) => ({ studentId, status, note });
+
+  it("lần đầu điểm danh: tất cả là bản ghi mới, không có updateMany", () => {
+    const plan = planAttendanceWrites([e("a", "PRESENT"), e("b", "ABSENT")], []);
+    expect(plan.toCreate.map((x) => x.studentId)).toEqual(["a", "b"]);
+    expect(plan.updateGroups).toEqual([]);
+  });
+
+  it("sửa lại: gộp bản ghi đã có theo (trạng thái, ghi chú) — mỗi nhóm một updateMany", () => {
+    const plan = planAttendanceWrites([e("a", "PRESENT"), e("b", "PRESENT"), e("c", "LATE", "kẹt xe"), e("d", "PRESENT")], ["a", "b", "c"]);
+    expect(plan.toCreate.map((x) => x.studentId)).toEqual(["d"]);
+    expect(plan.updateGroups).toEqual([
+      { status: "PRESENT", note: null, studentIds: ["a", "b"] },
+      { status: "LATE", note: "kẹt xe", studentIds: ["c"] },
+    ]);
+  });
+
+  it("trùng học sinh trong cùng lần gửi: lấy lần cuối như vòng upsert tuần tự", () => {
+    const plan = planAttendanceWrites([e("a", "PRESENT"), e("a", "ABSENT")], []);
+    expect(plan.toCreate).toEqual([e("a", "ABSENT")]);
   });
 });

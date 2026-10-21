@@ -6,7 +6,7 @@ import { db } from "@/server/db";
 import type { ActionState } from "@/server/errors";
 import { fieldErrorsOf } from "@/server/validation";
 import { normalizePhone } from "@/lib/phone";
-import { hitRateLimit } from "@/server/rate-limit/limiter";
+import { hitRateLimit, pruneRateLimitBuckets } from "@/server/rate-limit/limiter";
 import { LOGIN_LIMIT } from "@/server/rate-limit/rules";
 import { clientIp } from "@/server/request";
 import { requireActor } from "./guard";
@@ -72,8 +72,14 @@ async function attemptLogin(formData: FormData): Promise<ActionState> {
 
   if (user.status !== "ACTIVE") return { ok: false, message: "Tài khoản đã bị khóa. Vui lòng liên hệ học viện." };
 
-  await db.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
-  await createSession(user.id);
+  // Song song: đặt lại bộ đếm sai (chỉ khi cần), tạo phiên, dọn bucket rate limit cũ.
+  await Promise.all([
+    user.failedLoginCount > 0 || user.lockedUntil
+      ? db.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } })
+      : null,
+    createSession(user.id),
+    pruneRateLimitBuckets(now),
+  ]);
   redirect(user.mustChangePassword ? "/doi-mat-khau" : HOME_BY_ROLE[user.role]);
 }
 

@@ -1,9 +1,10 @@
 // Quản trị danh mục (FR-015, FR-016) — chỉ ADMIN.
+import { writeAudit } from "@/server/audit/log";
 import { assertCan } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
-import { isUniqueViolation } from "@/server/users/credentials";
+import { isForeignKeyViolation, isUniqueViolation } from "@/server/users/credentials";
 
 export type SubjectInput = { name: string; slug: string; description: string; sortOrder: number };
 
@@ -49,8 +50,18 @@ export async function deleteSubject(actor: Actor, id: string): Promise<void> {
   assertCan(actor, "catalog.manage");
   const subject = await db.subject.findUnique({ where: { id }, select: { _count: { select: { courses: true } } } });
   if (!subject) throw new ForbiddenError();
-  if (subject._count.courses > 0) throw new DomainError("HAS_COURSES", "Môn đang có khóa học nên không xóa được.");
-  await db.subject.delete({ where: { id } });
+  const hasCourses = () => new DomainError("HAS_COURSES", "Môn đang có khóa học nên không xóa được.");
+  if (subject._count.courses > 0) throw hasCourses();
+  try {
+    await db.$transaction(async (tx) => {
+      const deleted = await tx.subject.delete({ where: { id }, select: { slug: true } });
+      await writeAudit({ actorId: actor.id, action: "subject.delete", entity: "Subject", entityId: id, detail: { slug: deleted.slug } }, tx);
+    });
+  } catch (error) {
+    // Vừa có khóa học được thêm vào môn giữa lúc kiểm tra và xóa (FK RESTRICT).
+    if (isForeignKeyViolation(error)) throw hasCourses();
+    throw error;
+  }
 }
 
 export async function listCoursesAdmin(actor: Actor) {
@@ -90,8 +101,18 @@ export async function deleteCourse(actor: Actor, id: string): Promise<void> {
   assertCan(actor, "catalog.manage");
   const course = await db.course.findUnique({ where: { id }, select: { _count: { select: { classes: true } } } });
   if (!course) throw new ForbiddenError();
-  if (course._count.classes > 0) throw new DomainError("HAS_CLASSES", "Khóa đã có lớp nên không xóa được. Hãy tắt xuất bản để ẩn khóa.");
-  await db.$transaction([db.lead.updateMany({ where: { courseId: id }, data: { courseId: null } }), db.course.delete({ where: { id } })]);
+  const hasClasses = () => new DomainError("HAS_CLASSES", "Khóa đã có lớp nên không xóa được. Hãy tắt xuất bản để ẩn khóa.");
+  if (course._count.classes > 0) throw hasClasses();
+  try {
+    await db.$transaction([
+      db.lead.updateMany({ where: { courseId: id }, data: { courseId: null } }),
+      db.course.delete({ where: { id } }),
+      db.auditLog.create({ data: { actorId: actor.id, action: "course.delete", entity: "Course", entityId: id } }),
+    ]);
+  } catch (error) {
+    if (isForeignKeyViolation(error)) throw hasClasses();
+    throw error;
+  }
 }
 
 export async function listRoomsAdmin(actor: Actor) {
@@ -115,6 +136,15 @@ export async function deleteRoom(actor: Actor, id: string): Promise<void> {
   assertCan(actor, "room.manage");
   const room = await db.room.findUnique({ where: { id }, select: { _count: { select: { classes: true, sessions: true } } } });
   if (!room) throw new ForbiddenError();
-  if (room._count.classes + room._count.sessions > 0) throw new DomainError("IN_USE", "Phòng đang được dùng cho lớp/buổi học nên không xóa được.");
-  await db.room.delete({ where: { id } });
+  const inUse = () => new DomainError("IN_USE", "Phòng đang được dùng cho lớp/buổi học nên không xóa được.");
+  if (room._count.classes + room._count.sessions > 0) throw inUse();
+  try {
+    await db.$transaction([
+      db.room.delete({ where: { id } }),
+      db.auditLog.create({ data: { actorId: actor.id, action: "room.delete", entity: "Room", entityId: id } }),
+    ]);
+  } catch (error) {
+    if (isForeignKeyViolation(error)) throw inUse();
+    throw error;
+  }
 }

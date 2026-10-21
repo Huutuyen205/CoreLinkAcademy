@@ -3,6 +3,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // relationJoins: include/select quan hệ được gộp thành MỘT câu SQL (LATERAL JOIN) thay vì mỗi quan hệ một query.
+  // DB ở xa (Supabase, ~250 ms/round-trip) nên số round-trip quyết định thời gian phản hồi — docs/21 §Hiệu năng.
+  previewFeatures = ["relationJoins"]
 }
 
 datasource db {
@@ -118,7 +121,7 @@ model User {
   gradedSubmissions Submission[]    @relation("SubmissionGrader")
   auditLogs         AuditLog[]
 
-  @@index([role])
+  @@index([role, fullName]) // listUsers/listLearners: lọc vai trò + sắp xếp theo tên
   @@map("users")
 }
 
@@ -130,6 +133,7 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([expiresAt]) // dọn phiên hết hạn
   @@map("sessions")
 }
 
@@ -219,6 +223,8 @@ model Class {
 
   @@index([teacherId])
   @@index([courseId, status])
+  @@index([status, startDate]) // danh sách lớp lọc trạng thái, sắp xếp ngày khai giảng; đếm lớp theo trạng thái
+  @@index([roomId]) // kiểm tra phòng đang dùng trước khi xóa
   @@map("classes")
 }
 
@@ -302,6 +308,8 @@ model Lead {
 
   @@index([phone])
   @@index([status, createdAt])
+  @@index([subjectId, createdAt]) // lọc lead theo môn
+  @@index([courseId]) // gỡ tham chiếu khi xóa khóa học
   @@map("leads")
 }
 
@@ -406,6 +414,7 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([createdAt])
+  @@index([action, createdAt]) // nhật ký lọc theo loại thao tác
   @@map("audit_logs")
 }
 
@@ -414,5 +423,6 @@ model RateLimitBucket {
   count   Int
   resetAt DateTime
 
+  @@index([resetAt]) // dọn bucket hết hạn
   @@map("rate_limit_buckets")
 }

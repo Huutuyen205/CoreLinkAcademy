@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
-import { listClasses } from "@/server/academic/service";
+import { CLASS_PAGE_SIZE, listClassesPage } from "@/server/academic/service";
 import { requireRole } from "@/server/auth/guard";
 import { CLASS_STATUS } from "@/lib/labels";
 import { formatSchedule } from "@/lib/schedule";
@@ -13,11 +13,12 @@ import { formatDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Lớp học" };
 
-export default async function ClassListPage({ searchParams }: { searchParams: Promise<{ status?: string; thongbao?: string }> }) {
+export default async function ClassListPage({ searchParams }: { searchParams: Promise<{ status?: string; thongbao?: string; page?: string }> }) {
   const actor = await requireRole("ADMIN", "STAFF");
   const sp = await searchParams;
   const status = sp.status && sp.status in CLASS_STATUS ? (sp.status as ClassStatus) : undefined;
-  const classes = await listClasses(actor, { status });
+  const page = parsePage(sp.page);
+  const { total, rows: classes } = await listClassesPage(actor, { status, page });
 
   return (
     <>
@@ -34,7 +35,7 @@ export default async function ClassListPage({ searchParams }: { searchParams: Pr
         ))}
       </nav>
       {classes.length === 0 ? (
-        <EmptyState message="Chưa có lớp nào." action={<ButtonLink href="/quan-ly/lop/moi">Mở lớp đầu tiên</ButtonLink>} />
+        <EmptyState message={status || page > 1 ? "Không có lớp phù hợp." : "Chưa có lớp nào."} action={<ButtonLink href="/quan-ly/lop/moi">Mở lớp đầu tiên</ButtonLink>} />
       ) : (
         <DataTable
           caption="Danh sách lớp"
@@ -61,6 +62,7 @@ export default async function ClassListPage({ searchParams }: { searchParams: Pr
           ]}
         />
       )}
+      <Pagination page={page} pageSize={CLASS_PAGE_SIZE} total={total} basePath="/quan-ly/lop" params={{ status }} />
     </>
   );
 }

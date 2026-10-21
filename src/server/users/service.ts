@@ -207,12 +207,17 @@ export async function linkGuardian(actor: Actor, parentId: string, studentId: st
     const count = await tx.guardianship.count({ where: { studentId } });
     if (!canAddGuardian(count)) throw new DomainError("MAX_GUARDIANS", `Mỗi học sinh có tối đa ${MAX_GUARDIANS} phụ huynh.`);
     await tx.guardianship.create({ data: { parentId, studentId } });
+    // Liên kết quyết định ai xem được dữ liệu của trẻ → ghi audit (FR-035).
+    await writeAudit({ actorId: actor.id, action: "guardian.link", entity: "User", entityId: studentId, detail: { parentId } }, tx);
   });
 }
 
 export async function unlinkGuardian(actor: Actor, parentId: string, studentId: string): Promise<void> {
   assertCan(actor, "guardian.manage");
-  await db.guardianship.deleteMany({ where: { parentId, studentId } });
+  await db.$transaction(async (tx) => {
+    const { count } = await tx.guardianship.deleteMany({ where: { parentId, studentId } });
+    if (count > 0) await writeAudit({ actorId: actor.id, action: "guardian.unlink", entity: "User", entityId: studentId, detail: { parentId } }, tx);
+  });
 }
 
 /** Con đã liên kết của phụ huynh đang đăng nhập. */

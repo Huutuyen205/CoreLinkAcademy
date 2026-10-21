@@ -2,6 +2,57 @@
 
 Ghi theo phiên, mới nhất ở trên. Kết quả lệnh là output thực tế, không ước lượng.
 
+## 2026-10-22 — Rà soát và tối ưu Backend khu quản lý (DECISION-D23, chờ PO xác nhận)
+
+### Phát hiện chính
+Dữ liệu dev còn rất nhỏ (2 lead, 15 user, 3 lớp, 80 buổi) nhưng mỗi round-trip tới Supabase ~250 ms → thời gian phản hồi gần như hoàn toàn do **số query tuần tự**. Hai nguyên nhân lớn nhất: `.env` đặt `connection_limit=1` (Promise.all chạy nối tiếp) và Prisma tải mỗi quan hệ `include` bằng một query riêng.
+
+### Đã làm
+- Prisma `previewFeatures = ["relationJoins"]`: mỗi lệnh đọc có quan hệ = 1 câu SQL. Kiểm chứng: dump kết quả 18 nhóm service (135 KB JSON) với chiến lược cũ và mới → **giống hệt từng byte**.
+- Tổng quan: đếm lead 2→1 query (`FILTER`), đếm lớp 2→1 (`groupBy`), cảnh báo vắng 4→1 query (`ROW_NUMBER`), số liệu được cache (tag `dashboard`, TTL 60/300 s, vô hiệu ở mọi action ghi lead/lớp). Cảnh báo vắng: đối chiếu cách cũ trên dữ liệu thật — cùng 1 cảnh báo, cùng 6 buổi được chọn; thứ tự hiển thị nay theo mã lớp, tên học sinh.
+- Danh sách môn cache (tag `subjects`, vô hiệu khi lưu/xóa môn/khóa) — bỏ 1 round-trip ở `/quan-ly/lead`, `/khoa-hoc`, form học thử.
+- Rate limit: BEGIN + SELECT FOR UPDATE + upsert + COMMIT (4 round-trip) → một `INSERT … ON CONFLICT` nguyên tử; kiểm chứng trên Postgres thật trong transaction rollback (4 lần, max 3 → `[true,true,true,false]`, reset sau cửa sổ, DB không đổi).
+- Đăng nhập: bỏ `UPDATE` thừa khi bộ đếm sai đã 0; tạo phiên ∥ dọn phiên hết hạn ∥ dọn bucket cũ.
+- Điểm danh: một upsert/học sinh → `createMany` + `updateMany` gộp nhóm (`planAttendanceWrites`, 3 unit test); dự phòng upsert khi điểm danh đồng thời.
+- Chuyển lead: 4 kiểm tra trùng SĐT/email tuần tự → 1 query. Ghi chú lead: 3 query không transaction → 1 lệnh lồng nguyên tử.
+- Lỗi logic: xóa lớp có thể cascade mất ghi danh vừa thêm (race) → khóa dòng `FOR UPDATE` trong transaction; xóa môn/khóa/phòng đồng thời với thao tác tham chiếu trả 500 → bắt `P2003` thành thông báo thân thiện.
+- Audit thêm: `class.delete`, `course.delete`, `subject.delete`, `room.delete`, `guardian.link`, `guardian.unlink`.
+- Phân trang danh sách lớp quản lý (`listClassesPage`, 50/trang); `listClasses` giữ nguyên cho trang giáo viên.
+- Index mới: migration `prisma/migrations/20261022090000_admin_perf_indexes` (sinh offline bằng `prisma migrate diff`) — **chưa chạy trên DB**.
+- Log `[db] CHẬM` cho query ≥ `SLOW_QUERY_MS` (300 ms); `Cache-Control` 1 ngày cho `/brand/*`; `pnpm bench:admin` (chỉ đọc).
+
+### Trước / sau (`pnpm bench:admin`, median 7 lần, ms; RTT ~230–255 ms; ca "Tổng quan" và "Danh sách lead" đo phần query KHÔNG qua cache)
+| Ca | Trước, limit=1 | Sau, limit=1 | Trước, limit=5 | Sau, limit=5 |
+|---|---|---|---|---|
+| Tổng quan `/quan-ly` | 1706 | 888 | 707 | 321 |
+| Danh sách lead (môn + trang 1) | 849 | 782 | 613 | 455 |
+| Tìm lead theo tên | 489 | 527 | 269 | 229 |
+| Chi tiết lead | 439 | 235 | 478 | 226 |
+| Danh sách lớp | 540 | 907 | 736 | 223 |
+| Chi tiết lớp | 1330 | 226 | 1391 | 229 |
+| Học viên | 1224 | 650 | 675 | 225 |
+| Người dùng | 488 | 426 | 260 | 219 |
+| Nhật ký | 484 | 429 | 265 | 219 |
+
+Ghi chú trung thực: với `limit=1` danh sách lớp chậm hơn vì phân trang thêm một query đếm chạy nối tiếp; "Tìm lead" chênh trong biên nhiễu (p90 dao động tới 1,5 s). Sau tối ưu + `limit=5` mọi ca ≈ 1 round-trip.
+
+### Kết quả lệnh
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm typecheck` / `pnpm lint` | Pass / Pass |
+| `pnpm test` | 14 file, **79/79** pass (thêm 3 test `planAttendanceWrites`) |
+| `pnpm build` | Pass |
+| `next start` smoke | `/`, `/khoa-hoc`, `/dang-ky-hoc-thu`, `/dang-nhap` 200; `/quan-ly` 307 khi chưa đăng nhập; `/khoa-hoc` lần 2 nhanh hơn (cache môn); gzip bật; `/brand/logo.png` có `max-age=86400` |
+| Integration test (`test:integration`) | **Chưa chạy** — không có `TEST_DATABASE_URL`, máy không có Postgres/Docker |
+| Đăng nhập thật + thao tác ghi trong trình duyệt | **Chưa làm** |
+
+### Cần PO làm
+1. `pnpm db:migrate` để tạo index.
+2. Sửa `.env`: `connection_limit=1` → `5` (dev); trên Vercel đặt `3`.
+3. Xác nhận DECISION-D23.
+
+---
+
 ## 2026-10-21 (phiên 3, tiếp) — Làm lại trang chủ theo mô tả của PO (DECISION-D22)
 
 ### Đã làm

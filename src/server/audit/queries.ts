@@ -15,6 +15,12 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "grade.update_after_publish": "Sửa điểm sau công bố",
   "session.reschedule": "Dời buổi học",
   "session.cancel": "Hủy buổi học",
+  "class.delete": "Xóa lớp",
+  "course.delete": "Xóa khóa học",
+  "subject.delete": "Xóa môn học",
+  "room.delete": "Xóa phòng",
+  "guardian.link": "Liên kết phụ huynh",
+  "guardian.unlink": "Bỏ liên kết phụ huynh",
 };
 
 /** FR-035: chỉ ADMIN xem; không có thao tác xóa. */

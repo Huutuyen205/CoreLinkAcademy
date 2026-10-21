@@ -24,10 +24,14 @@ Yêu cầu máy: Node ≥ 22 (máy dev có 24), pnpm 9.15.9 (`packageManager`), 
 | `SEED_DEMO_PASSWORD` | Mật khẩu chung tài khoản demo khi seed | Không | Dev | `.env`; trống → seed tự sinh và in một lần | Seed từ chối nếu yếu (BR-006) |
 | `TEST_DATABASE_URL` | DB riêng cho integration test | Chỉ khi chạy `test:integration` | Dev/CI | `.env` | Test tự skip khi thiếu |
 | `NODE_ENV` | `production` bật cookie `Secure` | — | Prod | Do `next start` | — |
+| `SLOW_QUERY_MS` | Ngưỡng log `[db] CHẬM` (ms) | Không (mặc định 300) | Mọi | `.env` | Xem stdout |
+| `DB_LOG_QUERIES` | `1` = in mọi query kèm thời gian | Không | Dev | `.env` | Xem stdout |
 
 Mẫu: `.env.example`. `.env` có trong `.gitignore`. File `.env` hiện tại còn biến của v2 (Redis, S3, JWT, AI…) không dùng — nên dọn theo `.env.example` (không ảnh hưởng chạy).
 
 `prisma.config.ts` tự nạp `.env` (Node ≥ 20.12, `process.loadEnvFile`); không có `.env` thì dùng biến môi trường hệ thống.
+
+**`connection_limit` trong `DATABASE_URL`:** `=1` làm mọi query của một request chạy nối tiếp và các request chờ nhau. Đo 2026-10-22 (`pnpm bench:admin`): trang tổng quan 888 ms với `=1` so với 321 ms với `=5`. Dev đặt `5`; Vercel đặt `3` (xem `.env.example`).
 
 ## 3. Lệnh (PowerShell, tại thư mục gốc)
 
@@ -93,7 +97,7 @@ Sau khi có DB: đăng nhập 5 vai trò (TC-009), mở 1 trang của mỗi khu.
 |---|---|---|
 | Log | stdout của Next.js (lỗi không bắt); không log PII/secret | Thu gom log có redaction |
 | Health check | Trang `/dang-nhap` 200 (không cần DB) | Endpoint `/api/health` kiểm tra DB |
-| Metrics / alert | Không có | Uptime check, tỷ lệ 5xx, thời gian phản hồi (QUESTION-Q05) |
+| Metrics / alert | Cảnh báo query chậm `[db] CHẬM` ≥ `SLOW_QUERY_MS`; thời gian từng request: `next dev` in sẵn, Vercel ghi trong Logs; `pnpm bench:admin` đo thủ công | Uptime check, tỷ lệ 5xx, APM/tracing (QUESTION-Q05) |
 | Nghiệp vụ | Ô "Lead quá 24 giờ", audit log | Báo cáo tháng (P2-18) |
 
 ## 7. Backup and recovery

@@ -21,8 +21,13 @@ function hashToken(token: string): string {
 
 export async function createSession(userId: string): Promise<void> {
   const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await db.session.create({ data: { id: hashToken(token), userId, expiresAt } });
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  // Dọn phiên hết hạn của chính người này cùng lúc tạo phiên mới (bảng sessions không phình vô hạn).
+  await Promise.all([
+    db.session.create({ data: { id: hashToken(token), userId, expiresAt } }),
+    db.session.deleteMany({ where: { userId, expiresAt: { lte: now } } }),
+  ]);
 
   const store = await cookies();
   store.set(COOKIE_NAME, token, {

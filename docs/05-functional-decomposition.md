@@ -161,6 +161,10 @@ CoreLink Academy v3
 | P2-23 | Trang riêng cho các mục menu (Giới thiệu, Tuyển sinh, Đào tạo, Tin tức – Hoạt động): thư ngỏ, lịch sử, cơ sở vật chất, đối tác, thời khóa biểu công khai… (hiện trỏ về khối trên trang chủ) | Công khai | Trang chủ D22 | Nội dung từ PO |
 | P2-24 | Quản trị tin tức, giáo viên, học viên tiêu biểu trong cổng quản lý (hiện sửa file `src/data/home.ts`) | Công khai | Trang chủ D22 | P2-21 (upload ảnh) |
 | P2-25 | Tìm kiếm toàn site, tra cứu kết quả công khai bằng mã (hiện nút tìm dẫn tới `/khoa-hoc`, "Tra cứu kết quả" dẫn tới đăng nhập) | Công khai | Trang chủ D22 | — |
+| P2-26 | Xóa mềm (`deletedAt`) cho môn/khóa/phòng/lớp/người dùng thay xóa cứng (hiện: chỉ xóa khi không còn tham chiếu + audit) | Nền tảng | Rà soát BE 2026-10-22 | Đổi schema + lọc mọi truy vấn |
+| P2-27 | Ô chọn phụ huynh có tìm kiếm (combobox) ở trang Học viên thay `<select>` 500 dòng lặp lại ở mỗi học sinh | Nền tảng | Rà soát BE 2026-10-22 | — |
+| P2-28 | Tìm kiếm tên không phân biệt dấu/hoa thường bằng index `pg_trgm` + `unaccent` khi lead/người dùng > vài chục nghìn | Nền tảng | Rà soát BE 2026-10-22 | Extension Supabase |
+| P2-29 | Hàng đợi nền (gửi thông báo, xuất Excel, báo cáo tháng) và cache dùng chung (Redis/KV) khi chạy nhiều instance | Vận hành | Rà soát BE 2026-10-22 | P2-03, P2-18 |
 
 ## 6. Coverage check
 

@@ -285,18 +285,18 @@ Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) �
 |---|---|---|---|---|---|
 | id | VARCHAR(191) | N | cuid | PK | |
 | actorId | VARCHAR(191) | Y | | FK→users (SET NULL) | |
-| action | VARCHAR(60) | N | | | `lead.convert`, `user.create`, `user.role_change`, `user.disable`, `user.enable`, `user.reset_password`, `attendance.override`, `grade.update_after_publish`, `session.reschedule`, `session.cancel` |
+| action | VARCHAR(60) | N | | | `lead.convert`, `user.create`, `user.role_change`, `user.disable`, `user.enable`, `user.reset_password`, `attendance.override`, `grade.update_after_publish`, `session.reschedule`, `session.cancel`, `class.delete`, `course.delete`, `subject.delete`, `room.delete`, `guardian.link`, `guardian.unlink` |
 | entity | VARCHAR(40) | N | | IX(entity, entityId) | Tên model (`Lead`, `User`, `ClassSession`, `Submission`) |
 | entityId | VARCHAR(40) | N | | | |
 | detail | JSON | Y | | | before/after, lý do — **không** chứa mật khẩu/token |
-| createdAt | DATETIME(3) | N | now | IX | |
+| createdAt | DATETIME(3) | N | now | IX; IX(action, createdAt) | |
 
 ### ENT-018 `rate_limit_buckets`
 | Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
 |---|---|---|---|---|---|
 | key | VARCHAR(120) | N | | PK | `trial:<ip>`, `login:<ip>` |
 | count | INT | N | | | Số lần trong cửa sổ |
-| resetAt | DATETIME(3) | N | | | Hết cửa sổ |
+| resetAt | DATETIME(3) | N | | IX | Hết cửa sổ; bucket hết hạn > 1 ngày bị xóa khi đăng nhập thành công |
 
 ## 5. Constraints and lifecycle
 
@@ -314,6 +314,8 @@ Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) �
 | Concurrency | docs/06 §3 |
 
 ## 6. Migration and recovery
+
+**Migration `20261022090000_admin_perf_indexes`** (chỉ index, không đổi dữ liệu): `users(role, fullName)` thay `users(role)`; `sessions(expiresAt)`; `classes(status, startDate)`, `classes(roomId)`; `leads(subjectId, createdAt)`, `leads(courseId)`; `audit_logs(action, createdAt)`; `rate_limit_buckets(resetAt)`. Chạy: `pnpm db:migrate` (PO chạy). Rollback: `DROP INDEX` từng index + `CREATE INDEX "users_role_idx" ON "users"("role")`.
 
 | Bước | Lệnh (PowerShell, thư mục gốc) | Ghi chú |
 |---|---|---|

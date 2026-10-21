@@ -2,6 +2,7 @@
 import type { ClassStatus, EnrollmentStatus, Prisma } from "@prisma/client";
 import { writeAudit } from "@/server/audit/log";
 import { assertCan } from "@/server/auth/policy";
+import { cached, CACHE_TAGS } from "@/server/cache";
 import { assertCanViewClass, isManager, linkedStudentIds } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db, type Tx } from "@/server/db";
@@ -152,10 +153,16 @@ export async function setClassStatus(actor: Actor, classId: string, to: ClassSta
 /** Xóa lớp chỉ khi chưa có ghi danh (docs/10 §3). */
 export async function deleteClass(actor: Actor, classId: string): Promise<void> {
   assertCan(actor, "class.manage");
-  const klass = await db.class.findUnique({ where: { id: classId }, select: { _count: { select: { enrollments: true } } } });
-  if (!klass) throw new ForbiddenError();
-  if (klass._count.enrollments > 0) throw new DomainError("HAS_ENROLLMENTS", "Lớp đã có ghi danh, chỉ có thể hủy lớp.");
-  await db.class.delete({ where: { id: classId } });
+  await db.$transaction(async (tx) => {
+    // Khóa dòng lớp như enrollInTx: tránh trường hợp vừa kiểm tra "0 ghi danh" thì Staff khác ghi danh,
+    // rồi lệnh xóa cascade mất luôn ghi danh mới.
+    const locked = await tx.$queryRaw<{ id: string; code: string }[]>`SELECT "id", "code" FROM "classes" WHERE "id" = ${classId} FOR UPDATE`;
+    if (locked.length === 0) throw new ForbiddenError();
+    const enrollments = await tx.enrollment.count({ where: { classId } });
+    if (enrollments > 0) throw new DomainError("HAS_ENROLLMENTS", "Lớp đã có ghi danh, chỉ có thể hủy lớp.");
+    await tx.class.delete({ where: { id: classId } });
+    await writeAudit({ actorId: actor.id, action: "class.delete", entity: "Class", entityId: classId, detail: { code: locked[0]!.code } }, tx);
+  });
 }
 
 /** API-013 — FR-019. */
@@ -239,6 +246,39 @@ export async function listClasses(actor: Actor, filter: { status?: ClassStatus }
       ...seatCount,
     },
   });
+}
+
+export const CLASS_PAGE_SIZE = 50;
+
+/** Danh sách lớp cho quản lý, có phân trang (lớp tích lũy qua các khóa). Cùng thứ tự và trường với listClasses. */
+export async function listClassesPage(actor: Actor, filter: { status?: ClassStatus; page: number }) {
+  assertCan(actor, "class.manage");
+  const where: Prisma.ClassWhereInput = filter.status ? { status: filter.status } : {};
+  const [total, rows] = await Promise.all([
+    db.class.count({ where }),
+    db.class.findMany({
+      where,
+      orderBy: [{ status: "asc" }, { startDate: "desc" }, { id: "asc" }],
+      skip: (filter.page - 1) * CLASS_PAGE_SIZE,
+      take: CLASS_PAGE_SIZE,
+      select: {
+        id: true,
+        code: true,
+        status: true,
+        startDate: true,
+        weekdays: true,
+        startTime: true,
+        endTime: true,
+        capacity: true,
+        totalSessions: true,
+        course: { select: { title: true } },
+        teacher: { select: { fullName: true } },
+        room: { select: { name: true } },
+        ...seatCount,
+      },
+    }),
+  ]);
+  return { total, rows };
 }
 
 export async function listEnrollableClasses(actor: Actor) {
@@ -328,13 +368,18 @@ export async function listSessionsInRange(actor: Actor, from: Date, to: Date, st
   });
 }
 
+/** Số lớp đang tuyển/đang học trong MỘT query groupBy (trước: 2 query). */
+export async function classCountsQuery(): Promise<{ open: number; running: number }> {
+  const groups = await db.class.groupBy({ by: ["status"], where: { status: { in: ["OPEN", "IN_PROGRESS"] } }, _count: { _all: true } });
+  const of = (status: ClassStatus) => groups.find((g) => g.status === status)?._count._all ?? 0;
+  return { open: of("OPEN"), running: of("IN_PROGRESS") };
+}
+
+const cachedClassCounts = cached(classCountsQuery, "dashboard:class-counts", { tags: [CACHE_TAGS.dashboard], revalidate: 300 });
+
 export async function classCounts(actor: Actor) {
   assertCan(actor, "class.manage");
-  const [open, running] = await Promise.all([
-    db.class.count({ where: { status: "OPEN" } }),
-    db.class.count({ where: { status: "IN_PROGRESS" } }),
-  ]);
-  return { open, running };
+  return cachedClassCounts();
 }
 
 /** Chi tiết lớp cho giáo viên (lớp mình dạy hoặc có buổi dạy thay) — TC-035. */

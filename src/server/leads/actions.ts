@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
+import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
 import { hitRateLimit } from "@/server/rate-limit/limiter";
 import { clientIp } from "@/server/request";
@@ -38,6 +39,7 @@ export async function submitTrialRequestAction(_prev: ActionState, formData: For
 
   const result = await runAction(() => submitTrialRequest(parsed.data), fields);
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   redirect(THANK_YOU);
 }
 
@@ -89,6 +91,7 @@ export async function submitHomeTrialAction(_prev: ActionState, formData: FormDa
 
   const result = await runAction(() => submitTrialRequest(parsed.data), values);
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   return { ok: true };
 }
 
@@ -111,6 +114,7 @@ export async function createLeadAction(_prev: CreateLeadState, formData: FormDat
     fields,
   );
   if (!result.ok) return { ...result.state, existingLeadId };
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath("/quan-ly/lead");
   redirect(`/quan-ly/lead/${result.value}?thongbao=tao-lead`);
 }
@@ -132,6 +136,7 @@ export async function changeLeadStatusAction(_prev: ActionState, formData: FormD
 
   const result = await runAction(() => changeLeadStatus(actor, leadId, status as LeadStatus, lostReason || null), { lostReason });
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath(`/quan-ly/lead/${leadId}`);
   return { ok: true, message: "Đã cập nhật trạng thái." };
 }
@@ -175,6 +180,7 @@ export async function convertLeadAction(_prev: ConvertState, formData: FormData)
 
   const result = await runAction(() => convertLead(actor, { ...parsed.data, classId }), fields);
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath(`/quan-ly/lead/${parsed.data.leadId}`);
   revalidatePath("/quan-ly/lead");
   return { ok: true, message: "Đã chuyển thành học viên.", ...result.value };

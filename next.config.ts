@@ -13,7 +13,12 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: process.cwd(),
   serverExternalPackages: ["@node-rs/argon2"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      // Logo/banner tĩnh: cho trình duyệt/CDN giữ 1 ngày, dùng bản cũ tới 7 ngày trong lúc tải lại.
+      // (Trang động và trang nội bộ vẫn `no-store` mặc định của Next.)
+      { source: "/brand/:path*", headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }] },
+    ];
   },
 };
 

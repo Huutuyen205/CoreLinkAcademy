@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formFields, formIds, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
+import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
 import { isValidTime, vnToUtc } from "@/lib/time";
 import {
@@ -52,6 +53,7 @@ export async function createClassAction(_prev: ActionState, formData: FormData):
   if (!parsed.ok) return { ...parsed.state, values };
   const result = await runAction(() => createClass(actor, { ...parsed.data, weekdays: [...new Set(parsed.data.weekdays)].sort() }), values);
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath("/quan-ly/lop");
   redirect(`/quan-ly/lop/${result.value}?thongbao=tao-lop`);
 }
@@ -65,6 +67,7 @@ export async function setClassStatusAction(_prev: ActionState, formData: FormDat
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setClassStatus(actor, parsed.data.classId, parsed.data.status));
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath(`/quan-ly/lop/${parsed.data.classId}`);
   return { ok: true, message: "Đã cập nhật trạng thái lớp." };
 }
@@ -75,6 +78,7 @@ export async function deleteClassAction(_prev: ActionState, formData: FormData):
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deleteClass(actor, parsed.data.classId));
   if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
   revalidatePath("/quan-ly/lop");
   redirect("/quan-ly/lop?thongbao=xoa-lop");
 }

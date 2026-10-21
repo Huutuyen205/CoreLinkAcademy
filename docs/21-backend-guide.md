@@ -31,7 +31,7 @@ Xem [09 component §1–3](09-architecture/component-architecture.md). Mỗi dom
 - Validate input bằng Zod ở action (`parseForm`), giới hạn độ dài mọi chuỗi, id 1–40.
 - Lỗi nghiệp vụ: `throw new DomainError(code, messageVi, fieldErrors?, details?)`.
 - Không tồn tại / sai phạm vi: `throw new ForbiddenError()` (→ 404, ADR-004). Không phân biệt hai trường hợp.
-- Lỗi unique Prisma (`P2002`): bắt bằng `isUniqueViolation(error, field)` → `DomainError` thân thiện.
+- Lỗi unique Prisma (`P2002`): bắt bằng `isUniqueViolation(error, field)` → `DomainError` thân thiện. Khóa ngoại (`P2003`, xóa trong lúc bản ghi vừa được tham chiếu): `isForeignKeyViolation` → cùng thông báo "đang được dùng". Không tồn tại khi cập nhật (`P2025`): `isRecordNotFound` → `ForbiddenError`.
 - Không `console.log` dữ liệu người dùng; không log mật khẩu/token/PII (NFR-006).
 
 ## 7. AuthN, AuthZ, privacy, secrets
@@ -88,6 +88,19 @@ Sau đó: thêm mã lỗi vào docs/11 §3, API vào §4, BR vào docs/06, test 
 - Migration chỉ **thêm** trong cùng release (expand/contract).
 - Ràng buộc bất biến bằng unique/FK; kiểm tra phức tạp ở service trong transaction; khóa dòng bằng `` tx.$queryRaw`SELECT id FROM … WHERE id = ${id} FOR UPDATE` `` (tagged template = tham số hóa).
 - Thời gian lưu UTC; chuyển đổi qua `src/lib/time.ts`.
+
+### 10.1 Hiệu năng (DB ở xa — đếm round-trip)
+
+DB là Supabase (Singapore); đo từ máy dev mỗi round-trip ~250 ms, dữ liệu còn nhỏ nên **thời gian phản hồi ≈ số round-trip tuần tự × RTT**. Quy tắc:
+
+- `relationJoins` đang bật (`prisma/schema.prisma`): một `findX` với `include`/`select` quan hệ = **một** câu SQL. Không tách quan hệ thành query riêng.
+- Query độc lập → `Promise.all` (chỉ song song thật khi `connection_limit` > 1, xem `.env.example`).
+- Đếm nhiều điều kiện trên cùng bảng → một query (`count(*) FILTER (…)` hoặc `groupBy`), không N lần `count`.
+- Ghi nhiều dòng → `createMany`/`updateMany` theo lô; không vòng `await` trong transaction (vd. `planAttendanceWrites`).
+- Kiểm tra + ghi trên cùng bản ghi → một lệnh lồng/nguyên tử (`update` + `activities.create`, `INSERT … ON CONFLICT`); bắt `P2025` bằng `isRecordNotFound`.
+- Cache (`src/server/cache.ts`, Next Data Cache): chỉ dữ liệu không phụ thuộc người xem, kiểm tra quyền chạy **ngoài** hàm cache, không trả `Date`. Mỗi tag có `invalidate(...)` ở Server Action ghi tương ứng + TTL dự phòng. Hiện có: `subjects` (danh sách môn, 1 giờ), `dashboard` (số liệu tổng quan, 60 s/300 s).
+- Danh sách tăng theo thời gian phải phân trang (`page` + `*_PAGE_SIZE`): lead 20, người dùng/học viên 25, lớp 50, nhật ký 50. Danh mục nhỏ có giới hạn tự nhiên (môn, phòng, khóa) không phân trang.
+- Đo: `pnpm bench:admin` (chỉ đọc) — so sánh trước/sau khi đổi query. Log: query ≥ `SLOW_QUERY_MS` (mặc định 300) in `[db] CHẬM …` (chỉ câu SQL có `$1`, không in tham số/PII); `DB_LOG_QUERIES=1` in mọi query.
 
 ## 11. Git, commit, review
 Nhánh `rebuild/v3`. Trợ lý không commit/push (chủ dự án làm). Trước khi bàn giao: tự review diff theo checklist §12.

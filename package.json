@@ -19,7 +19,8 @@
     "db:migrate:new": "prisma migrate dev --create-only",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "bench:admin": "tsx --env-file=.env scripts/bench-admin.ts"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",
