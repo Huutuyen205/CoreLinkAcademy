@@ -16,7 +16,7 @@ export default async function StudentSchedulePage({ searchParams }: { searchPara
   return (
     <>
       <PageHeader title="Lịch học" description="Giờ hiển thị theo giờ Việt Nam." />
-      <WeekSchedule weekStart={weekStart} sessions={sessions} weekHref={(w) => `/hoc-sinh/lich?tuan=${w}`} showTeacher />
+      <WeekSchedule weekStart={weekStart} sessions={sessions} weekHref={(w) => `/hoc-sinh/lich?tuan=${w}`} sessionHref={(s) => `/hoc-sinh/buoi/${s.id}`} showTeacher />
     </>
   );
 }

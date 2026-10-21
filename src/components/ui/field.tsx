@@ -119,6 +119,27 @@ export function SelectField({
   );
 }
 
+/** Ô chọn tệp (FR-040). Trên điện thoại, `accept` có ảnh → cho chọn chụp ảnh trực tiếp. */
+export function FileField({ name, label, hint, error, id = name, className, required, ...props }: Common & Omit<ComponentProps<"input">, "type">) {
+  return (
+    <FieldShell id={id} label={label} hint={hint} error={error} required={required} className={className}>
+      <input
+        id={id}
+        name={name}
+        type="file"
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, hint, error)}
+        className={cn(
+          control,
+          "min-h-11 py-2 text-sm file:mr-3 file:rounded-control file:border-0 file:bg-primary-soft file:px-3 file:py-1.5 file:font-semibold file:text-primary",
+        )}
+        {...props}
+      />
+    </FieldShell>
+  );
+}
+
 export function CheckboxField({
   name,
   label,

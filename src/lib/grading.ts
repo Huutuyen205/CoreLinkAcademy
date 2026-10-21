@@ -64,12 +64,13 @@ export type AssignmentTransitionError = "INVALID_TRANSITION" | "NO_QUESTIONS" | 
 export function checkAssignmentTransition(
   from: AssignmentStatus,
   to: AssignmentStatus,
-  ctx: { questionCount: number; dueAt: Date; now: Date },
+  ctx: { questionCount: number; acceptsFiles?: boolean; dueAt: Date; now: Date },
 ): AssignmentTransitionError | null {
   const allowed: Record<AssignmentStatus, AssignmentStatus[]> = { DRAFT: ["PUBLISHED"], PUBLISHED: ["CLOSED"], CLOSED: ["PUBLISHED"] };
   if (!allowed[from].includes(to)) return "INVALID_TRANSITION";
   if (from === "DRAFT" && to === "PUBLISHED") {
-    if (ctx.questionCount < 1) return "NO_QUESTIONS";
+    // FR-040: bài nhận nộp tệp/ảnh được giao khi chưa có câu hỏi (chấm một điểm tổng).
+    if (ctx.questionCount < 1 && !ctx.acceptsFiles) return "NO_QUESTIONS";
     if (ctx.dueAt <= ctx.now) return "DUE_IN_PAST";
   }
   return null;
@@ -85,9 +86,24 @@ export function checkSubmit(ctx: { submissionStatus: SubmissionStatus; dueAt: Da
   return { error: null, isLate: late };
 }
 
-/** TC-029: bài chỉ có câu khách quan → GRADED ngay khi nộp. */
-export function statusAfterSubmit(questions: { type: QuestionType }[]): SubmissionStatus {
+/**
+ * TC-029: bài chỉ có câu khách quan → GRADED ngay khi nộp.
+ * FR-040: có tệp đính kèm hoặc bài không có câu hỏi → chờ giáo viên chấm.
+ */
+export function statusAfterSubmit(questions: { type: QuestionType }[], hasFiles = false): SubmissionStatus {
+  if (questions.length === 0 || hasFiles) return "SUBMITTED";
   return questions.some((q) => q.type === "ESSAY") ? "SUBMITTED" : "GRADED";
+}
+
+/** Điểm tối đa: tổng điểm câu hỏi; bài không có câu hỏi dùng điểm tối đa giáo viên đặt (FR-040). */
+export function assignmentMaxScore(a: { questions: { points: number }[]; manualMaxScore: number | null }): number {
+  if (a.questions.length > 0) return round2(a.questions.reduce((s, q) => s + q.points, 0));
+  return a.manualMaxScore ?? 0;
+}
+
+/** FR-040: bài không có câu hỏi phải kèm ít nhất một tệp bài làm. */
+export function checkSubmitContent(questionCount: number, fileCount: number): "NO_FILES" | null {
+  return questionCount === 0 && fileCount === 0 ? "NO_FILES" : null;
 }
 
 /** BR-046, TC-033. */

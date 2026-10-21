@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   autoGrade,
+  assignmentMaxScore,
   checkAssignmentTransition,
+  checkSubmitContent,
   checkSubmit,
   checkTeacherPoints,
   normalizeAnswer,
@@ -21,6 +23,7 @@ const now = new Date("2026-10-21T03:00:00Z");
 describe("chuyển trạng thái bài tập", () => {
   it("TC-023 xuất bản bài không có câu → NO_QUESTIONS", () => {
     expect(checkAssignmentTransition("DRAFT", "PUBLISHED", { questionCount: 0, dueAt: new Date("2026-10-30Z"), now })).toBe("NO_QUESTIONS");
+    expect(checkAssignmentTransition("DRAFT", "PUBLISHED", { questionCount: 0, acceptsFiles: true, dueAt: new Date("2026-10-30Z"), now })).toBeNull();
   });
 
   it("TC-024 DRAFT → PUBLISHED → CLOSED → PUBLISHED; hạn nộp quá khứ bị chặn", () => {
@@ -89,6 +92,17 @@ describe("nộp bài", () => {
   it("TC-029 bài chỉ có câu khách quan → GRADED ngay", () => {
     expect(statusAfterSubmit([{ type: "MCQ" }, { type: "SHORT" }])).toBe("GRADED");
     expect(statusAfterSubmit([{ type: "MCQ" }, { type: "ESSAY" }])).toBe("SUBMITTED");
+  });
+  it("FR-040: có tệp hoặc không có câu hỏi → chờ chấm", () => {
+    expect(statusAfterSubmit([{ type: "MCQ" }], true)).toBe("SUBMITTED");
+    expect(statusAfterSubmit([], true)).toBe("SUBMITTED");
+  });
+  it("FR-040: điểm tối đa và nội dung nộp", () => {
+    expect(assignmentMaxScore({ questions: [{ points: 2 }, { points: 0.25 }], manualMaxScore: 10 })).toBe(2.25);
+    expect(assignmentMaxScore({ questions: [], manualMaxScore: 10 })).toBe(10);
+    expect(checkSubmitContent(0, 0)).toBe("NO_FILES");
+    expect(checkSubmitContent(0, 1)).toBeNull();
+    expect(checkSubmitContent(2, 0)).toBeNull();
   });
 });
 

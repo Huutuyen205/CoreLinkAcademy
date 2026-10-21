@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CourseCard } from "@/components/catalog/course-card";
+import { Stagger, StaggerItem } from "@/components/home/motion";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/field";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -55,13 +56,13 @@ export default async function CatalogPage({ searchParams }: Props) {
           <p className="mb-4 text-sm text-muted" aria-live="polite">
             {courses.length} khóa học
           </p>
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Stagger as="ul" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {courses.map((c) => (
-              <li key={c.id}>
+              <StaggerItem key={c.id} as="li" className="list-none">
                 <CourseCard course={c} />
-              </li>
+              </StaggerItem>
             ))}
-          </ul>
+          </Stagger>
         </>
       )}
     </>

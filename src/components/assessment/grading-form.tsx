@@ -21,8 +21,18 @@ export type GradingItem = {
   feedback: string | null;
 };
 
+type Props = {
+  submissionId: string;
+  items: GradingItem[];
+  comment: string | null;
+  publishedWarning: boolean;
+  /** FR-040: bài không có câu hỏi → một ô điểm tổng trong [0, manualMax]. */
+  manualMax?: number | null;
+  currentScore?: number | null;
+};
+
 /** UC-010: chấm tự luận, sửa điểm câu tự chấm (để trống = giữ điểm tự chấm), nhận xét. */
-export function GradingForm({ submissionId, items, comment, publishedWarning }: { submissionId: string; items: GradingItem[]; comment: string | null; publishedWarning: boolean }) {
+export function GradingForm({ submissionId, items, comment, publishedWarning, manualMax = null, currentScore = null }: Props) {
   const [state, action] = useActionState(gradeSubmissionAction, initialActionState);
   const e = state.fieldErrors ?? {};
   const v = state.ok ? {} : (state.values ?? {});
@@ -78,6 +88,21 @@ export function GradingForm({ submissionId, items, comment, publishedWarning }: 
           </li>
         ))}
       </ol>
+      {items.length === 0 && manualMax !== null && (
+        <TextField
+          name="manualScore"
+          type="number"
+          step="0.25"
+          min="0"
+          max={String(manualMax)}
+          inputMode="decimal"
+          label={`Điểm bài làm (tối đa ${manualMax})`}
+          required
+          className="max-w-xs"
+          defaultValue={v.manualScore ?? (currentScore !== null ? String(currentScore) : "")}
+          error={e.manualScore}
+        />
+      )}
       <TextareaField name="comment" label="Nhận xét chung" rows={3} maxLength={5000} defaultValue={v.comment ?? comment ?? ""} />
       <SubmitButton>Lưu điểm</SubmitButton>
     </form>

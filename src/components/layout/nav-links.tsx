@@ -4,8 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/format";
+import { navIcon } from "./nav-icons";
 
-export type NavItem = { href: string; label: string };
+/** `section`: tiêu đề nhóm hiện phía trên mục này trong sidebar. */
+export type NavItem = { href: string; label: string; section?: string };
 
 function isActive(pathname: string, href: string, rootHref: string) {
   return href === rootHref ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
@@ -18,17 +20,20 @@ export function SideNav({ items, rootHref }: { items: NavItem[]; rootHref: strin
     <ul className="space-y-1">
       {items.map((item) => {
         const active = isActive(pathname, item.href, rootHref);
+        const Icon = navIcon(item.href);
         return (
           <li key={item.href}>
+            {item.section && <p className="mb-1 mt-4 px-3 text-xs font-semibold uppercase tracking-wider text-on-brand-muted first:mt-0">{item.section}</p>}
             <Link
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-11 items-center rounded-control px-3 text-base no-underline",
+                "group/nav flex min-h-11 items-center gap-3 rounded-control px-3 text-base no-underline transition-colors duration-200",
                 // Mục đang chọn: ô trắng chữ xanh như ô nhấn trên banner (utilities thắng `.on-brand a` ở lớp base).
-                active ? "bg-white font-semibold text-primary" : "text-white/90 hover:bg-white/10",
+                active ? "bg-white font-semibold text-primary shadow-sm" : "text-white/90 hover:bg-white/10",
               )}
             >
+              <Icon className={cn("size-[18px] shrink-0 transition-transform duration-200", !active && "group-hover/nav:translate-x-0.5")} aria-hidden="true" />
               {item.label}
             </Link>
           </li>
@@ -78,16 +83,18 @@ export function BottomNav({ items, rootHref }: { items: NavItem[]; rootHref: str
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}>
         {shown.map((item) => {
           const active = isActive(pathname, item.href, rootHref);
+          const Icon = navIcon(item.href);
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex min-h-14 items-center justify-center border-t-[3px] px-2 text-center text-sm no-underline",
+                  "flex min-h-14 flex-col items-center justify-center gap-0.5 border-t-[3px] px-1 text-center text-xs no-underline transition-colors",
                   active ? "border-primary font-semibold text-primary" : "border-transparent text-muted",
                 )}
               >
+                <Icon className={cn("size-5 transition-transform", active && "-translate-y-0.5")} aria-hidden="true" />
                 {item.label}
               </Link>
             </li>

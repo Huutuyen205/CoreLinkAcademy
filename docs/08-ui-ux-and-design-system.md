@@ -147,6 +147,17 @@ Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2
 
 Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới nội dung" ở đầu mọi trang (công khai và nội bộ — GAP-06); menu ngăn kéo là `details/summary` (Enter/Space mở); không bẫy focus.
 
+## 5b. Cổng nội bộ v3.2 (FR-047)
+
+| Thành phần | Quy tắc |
+|---|---|
+| `WelcomeBanner` / `BannerLink` | Đầu trang tổng quan mỗi vai trò: nền gradient thương hiệu, vòm cầu logo, lời chào theo giờ VN, 1 câu tóm tắt việc hôm nay, ≤ 4 lối tắt (nút viền trắng ≥ 44px) |
+| `StatCard` | Icon trong ô màu + số + nhãn; tone `warning` khi có việc tồn, `danger` khi cảnh báo; có `href` → cả thẻ bấm được (`card-interactive`); xuất hiện lần lượt 60 ms/thẻ |
+| Menu | Icon lucide theo đường dẫn (`nav-icons.ts`); quản lý chia nhóm (`section`); thanh đáy điện thoại icon trên chữ |
+| Chuyển trang | `template.tsx` ở mỗi cổng bọc `.animate-rise` (0,45 s, kết thúc `transform: none` để không ảnh hưởng phần tử fixed) |
+| Thông báo sau thao tác làm form ẩn | Chuyển trang + `Flash` (`?thongbao=`), không trả message trong form |
+| Tệp | `FileList`: mở xem (ảnh/PDF) hoặc tải về; ô chọn tệp `FileField` (trên điện thoại cho chụp ảnh) |
+
 ## 6. Component rules (src/components/ui)
 
 | Component | Biến thể | Trạng thái bắt buộc | Quy tắc |

@@ -15,8 +15,9 @@ import {
   setClassStatusAction,
   setEnrollmentStatusAction,
 } from "@/server/academic/actions";
+import { addMakeupSessionAction, assignSessionTeacherAction, updateClassAction } from "@/server/academic/operations-actions";
 import { CLASS_TRANSITIONS, ENROLLMENT_TRANSITIONS } from "@/server/academic/rules";
-import { getClassForManager, listStudentsForEnrollment } from "@/server/academic/service";
+import { classFormOptions, getClassForManager, listStudentsForEnrollment } from "@/server/academic/service";
 import { requireRole } from "@/server/auth/guard";
 import { orNotFound } from "@/server/page";
 import { CLASS_STATUS, ENROLLMENT_STATUS, SESSION_STATUS } from "@/lib/labels";
@@ -31,7 +32,10 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
   const actor = await requireRole("ADMIN", "STAFF");
   const { id } = await params;
   const sp = await searchParams;
-  const klass = await orNotFound(getClassForManager(actor, id));
+  const [klass, options] = await Promise.all([orNotFound(getClassForManager(actor, id)), classFormOptions(actor)]);
+  const isClosed = klass.status === "COMPLETED" || klass.status === "CANCELLED";
+  const teacherOptions = options.teachers.map((t) => ({ value: t.id, label: t.fullName }));
+  const roomOptions = options.rooms.map((r) => ({ value: r.id, label: `${r.name} (${r.capacity} chỗ)` }));
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;
   const canEnroll = klass.status === "OPEN" || klass.status === "IN_PROGRESS";
   const candidates = canEnroll ? await listStudentsForEnrollment(actor, klass.id, q) : [];
@@ -51,7 +55,7 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
         action={<Badge tone={CLASS_STATUS[klass.status].tone}>{CLASS_STATUS[klass.status].label}</Badge>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Card title="Thông tin lớp">
             <dl className="grid gap-3 sm:grid-cols-3">
@@ -70,7 +74,15 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                 rows={klass.enrollments}
                 rowKey={(e) => e.id}
                 columns={[
-                  { header: "Học sinh", primary: true, cell: (e) => `${e.student.fullName} (${e.student.studentCode ?? "—"})` },
+                  {
+                    header: "Học sinh",
+                    primary: true,
+                    cell: (e) => (
+                      <Link href={`/quan-ly/hoc-vien/${e.student.id}`}>
+                        {e.student.fullName} ({e.student.studentCode ?? "—"})
+                      </Link>
+                    ),
+                  },
                   { header: "Trạng thái", cell: (e) => <Badge tone={ENROLLMENT_STATUS[e.status].tone}>{ENROLLMENT_STATUS[e.status].label}</Badge> },
                   {
                     header: "Đổi trạng thái",
@@ -110,11 +122,18 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                     <div>
                       <p className="font-medium">
                         Buổi {s.index} · {formatVn(s.startsAt, "EEEE dd/MM/yyyy")}
+                        {s.isMakeup && (
+                          <span className="ml-2 align-middle">
+                            <Badge tone="primary">Học bù</Badge>
+                          </span>
+                        )}
                       </p>
                       <p className="text-sm text-muted">
                         {formatTime(s.startsAt)}–{formatTime(s.endsAt)} · {s.teacher.fullName}
                         {s.room ? ` · ${s.room.name}` : ""} · đã điểm danh {s._count.attendances} em
                       </p>
+                      {s.teacherId !== klass.teacherId && <p className="text-sm text-warning">Giáo viên dạy thay: {s.teacher.fullName}</p>}
+                      {s.note && <p className="text-sm text-muted">Ghi chú: {s.note}</p>}
                       {s.cancelReason && <p className="text-sm text-danger">Lý do hủy: {s.cancelReason}</p>}
                     </div>
                     <div className="flex items-center gap-2">
@@ -128,8 +147,19 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                   </div>
                   {s.status === "SCHEDULED" && s.startsAt > now && (
                     <details>
-                      <summary className="cursor-pointer py-2.5 text-sm text-primary">Hủy hoặc dời buổi</summary>
+                      <summary className="cursor-pointer py-2.5 text-sm text-primary">Dời, hủy hoặc đổi giáo viên</summary>
                       <div className="mt-3 grid gap-6 md:grid-cols-2">
+                        <ConfigForm
+                          action={assignSessionTeacherAction}
+                          hidden={{ sessionId: s.id }}
+                          submitLabel="Phân công"
+                          submitVariant="secondary"
+                          className="md:col-span-2"
+                          fields={[
+                            { type: "select", name: "teacherId", label: "Giáo viên dạy buổi này", required: true, options: teacherOptions, defaultValue: s.teacherId },
+                            { type: "text", name: "note", label: "Ghi chú (tùy chọn)", maxLength: 255 },
+                          ]}
+                        />
                         <ConfigForm
                           action={rescheduleSessionAction}
                           hidden={{ sessionId: s.id }}
@@ -160,6 +190,43 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
         </div>
 
         <div className="space-y-6">
+          {!isClosed && (
+            <Card title="Sửa lớp / phân công giáo viên">
+              <ConfigForm
+                action={updateClassAction}
+                hidden={{ classId: klass.id }}
+                submitLabel="Lưu"
+                submitVariant="secondary"
+                confirm="Đổi giáo viên hoặc phòng sẽ áp dụng cho các buổi chưa diễn ra và gửi thông báo cho lớp. Tiếp tục?"
+                fields={[
+                  { type: "text", name: "code", label: "Mã lớp", required: true, maxLength: 30, defaultValue: klass.code },
+                  { type: "select", name: "teacherId", label: "Giáo viên phụ trách", required: true, options: teacherOptions, defaultValue: klass.teacherId },
+                  { type: "select", name: "roomId", label: "Phòng", placeholder: "Chưa xếp phòng", options: roomOptions, defaultValue: klass.roomId ?? "" },
+                  { type: "number", name: "capacity", label: "Sĩ số tối đa", required: true, min: "1", max: "100", defaultValue: String(klass.capacity) },
+                ]}
+              />
+            </Card>
+          )}
+
+          {!isClosed && (
+            <Card title="Xếp buổi học bù">
+              <ConfigForm
+                action={addMakeupSessionAction}
+                hidden={{ classId: klass.id }}
+                submitLabel="Thêm buổi học bù"
+                submitVariant="secondary"
+                fields={[
+                  { type: "date", name: "date", label: "Ngày", required: true },
+                  { type: "time", name: "startTime", label: "Bắt đầu", required: true, defaultValue: klass.startTime },
+                  { type: "time", name: "endTime", label: "Kết thúc", required: true, defaultValue: klass.endTime },
+                  { type: "select", name: "teacherId", label: "Giáo viên", placeholder: "Giáo viên phụ trách lớp", options: teacherOptions },
+                  { type: "select", name: "roomId", label: "Phòng", placeholder: "Phòng của lớp", options: roomOptions },
+                  { type: "text", name: "note", label: "Ghi chú (vd. bù buổi nghỉ lễ)", maxLength: 255 },
+                ]}
+              />
+            </Card>
+          )}
+
           {canEnroll && (
             <Card title="Ghi danh học sinh">
               <form method="get" className="mb-4 flex items-end gap-2">

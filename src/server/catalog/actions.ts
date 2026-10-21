@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { formFields, parseForm, runAction } from "@/server/action";
+import { formFields, formIds, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
 import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
-import { deleteCourse, deleteRoom, deleteSubject, saveCourse, saveRoom, saveSubject } from "./admin";
+import { deleteCourse, deleteRoom, deleteSubject, saveCourse, saveLevel, saveRoom, saveSubject } from "./admin";
 
 const optionalId = z.string().max(40).transform((v) => v || null);
 const slug = z
@@ -35,11 +35,14 @@ const subjectSchema = z.object({
 
 export async function saveSubjectAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN");
-  const fields = formFields(formData, ["id", "name", "slug", "description", "sortOrder"]);
+  // Form thêm mới không có ô trạng thái (statusField) → mặc định đang dùng.
+  const isActive = formData.has("statusField") ? formData.get("isActive") === "on" : true;
+  const levelIds = formIds(formData, "levelIds", 20);
+  const fields = { ...formFields(formData, ["id", "name", "slug", "description", "sortOrder"]), isActive: isActive ? "on" : "", levelIds: levelIds.join(",") };
   const parsed = parseForm(subjectSchema, fields);
   if (!parsed.ok) return parsed.state;
   const { id, ...data } = parsed.data;
-  const result = await runAction(() => saveSubject(actor, id, data), fields);
+  const result = await runAction(() => saveSubject(actor, id, { ...data, isActive, levelIds }), fields);
   if (!result.ok) return result.state;
   revalidateCatalog();
   return { ok: true, message: id ? "Đã lưu môn học." : "Đã thêm môn học." };
@@ -130,18 +133,48 @@ export async function deleteCourseAction(_prev: ActionState, formData: FormData)
   redirect("/quan-ly/khoa-hoc?thongbao=xoa-khoa");
 }
 
-const roomSchema = z.object({ id: optionalId, name: z.string().trim().min(1, "Nhập tên phòng.").max(60), capacity: int(1, 500, "Sức chứa") });
+const roomSchema = z.object({
+  id: optionalId,
+  name: z.string().trim().min(1, "Nhập tên phòng.").max(60),
+  capacity: int(1, 500, "Sức chứa"),
+  note: z.string().trim().max(255).transform((v) => v || null),
+});
 
 export async function saveRoomAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN");
-  const fields = formFields(formData, ["id", "name", "capacity"]);
+  const isActive = formData.has("statusField") ? formData.get("isActive") === "on" : true;
+  const fields = { ...formFields(formData, ["id", "name", "capacity", "note"]), isActive: isActive ? "on" : "" };
   const parsed = parseForm(roomSchema, fields);
   if (!parsed.ok) return parsed.state;
   const { id, ...data } = parsed.data;
-  const result = await runAction(() => saveRoom(actor, id, data), fields);
+  const result = await runAction(() => saveRoom(actor, id, { ...data, isActive }), fields);
   if (!result.ok) return result.state;
   revalidatePath("/quan-ly/phong");
   return { ok: true, message: id ? "Đã lưu phòng." : "Đã thêm phòng." };
+}
+
+const levelSchema = z.object({
+  id: optionalId,
+  name: z.string().trim().min(2, "Nhập tên cấp học.").max(60),
+  gradeFrom: int(0, 12, "Khối bắt đầu"),
+  gradeTo: int(0, 12, "Khối kết thúc"),
+  description: z.string().trim().max(300).transform((v) => v || null),
+  sortOrder: int(0, 999, "Thứ tự"),
+});
+
+/** Admin §1: thêm / sửa / ngừng sử dụng cấp học. */
+export async function saveLevelAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN");
+  const isActive = formData.has("statusField") ? formData.get("isActive") === "on" : true;
+  const fields = { ...formFields(formData, ["id", "name", "gradeFrom", "gradeTo", "description", "sortOrder"]), isActive: isActive ? "on" : "" };
+  const parsed = parseForm(levelSchema, fields);
+  if (!parsed.ok) return parsed.state;
+  const { id, ...data } = parsed.data;
+  const result = await runAction(() => saveLevel(actor, id, { ...data, isActive }), fields);
+  if (!result.ok) return result.state;
+  revalidatePath("/quan-ly/mon-hoc");
+  revalidateCatalog();
+  return { ok: true, message: id ? "Đã lưu cấp học." : "Đã thêm cấp học." };
 }
 
 export async function deleteRoomAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

@@ -40,6 +40,20 @@ C = tạo, R = xem, U = sửa, D = xóa/ẩn, X = thao tác đặc biệt. "own"
 | Bài nộp | — | — | — | R/U chấm own | CRU own (đến khi nộp) | — |
 | Kết quả đã công bố + đã chấm | — | — | — | R own | R own | R own (con) |
 | Audit log | — | R | — | — | — | — |
+| Hồ sơ GV (FR-036) | — | CRU | R | — | — | — |
+| Hồ sơ HS/PH, nhập HS hàng loạt (FR-036) | — | CRU | CRU | R own (HS lớp mình, FR-046) | — | — |
+| Cấp học, liên kết môn–cấp | — | CRU | — | — | — | — |
+| Sửa lớp, dạy thay, học bù, chuyển lớp, lịch tổng (FR-037/038) | — | X | X | — | — | — |
+| Tệp bài tập / bài nộp (FR-040) | — | R | R | CRUD own (lớp mình) | R đề; CRD bài làm own (trước khi nộp) | R (con) |
+| Giáo trình (FR-042) | — | CRUD, X phân phối | CRUD, X phân phối | R (môn mình dạy / lớp mình) | — | — |
+| Tài liệu học tập | — | CRUD, X chia sẻ | CRUD, X chia sẻ | CRUD own, X chia sẻ lớp mình | R (lớp mình, cờ HS) | R (lớp của con, cờ PH) |
+| Giáo án | — | R | R | CRUD own | — | — |
+| Đề xuất đổi lịch (FR-043) | — | R, X duyệt | R, X duyệt | CRU own (khi chờ) | — | — |
+| Đơn xin nghỉ (FR-044) | — | R, X duyệt | R, X duyệt | R, X duyệt (lớp/buổi mình) | — | CR own (con), X rút |
+| Thông báo (FR-048) | — | C mọi đối tượng, R đã gửi | như Admin | C cho lớp mình | R own | R own |
+| Đánh giá định kỳ (FR-049) | — | R (đã gửi) | R (đã gửi) | CRUD own (nháp), X gửi | R own (đã gửi) | R (con, đã gửi) |
+| Nhắn tin (FR-050) | — | Nhóm lớp mọi lớp; 1-1 GV/PH/quản lý | như Admin | Nhóm lớp mình; 1-1 quản lý, PH lớp mình | Nhóm lớp mình | Nhóm lớp của con; 1-1 quản lý, GV của con |
+| Báo cáo + xuất CSV (FR-052) | — | R | R | — | — | — |
 
 Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Pha 1 (ma trận cũ ghi R nhưng không có FR yêu cầu; chuyển thành Pha 2 — xem 05 §5).
 
@@ -73,6 +87,13 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | Xem kết quả, chuyên cần | STUDENT (self), PARENT (con), TEACHER (HS lớp mình, chỉ dữ liệu lớp mình), ADMIN/STAFF | `assertCanViewStudent` | con người khác | 404 | — | TC-034 |
 | Xem lịch tuần | TEACHER (buổi mình), STUDENT (lớp mình), PARENT (`?con` phải là con) | `listSessionsInRange` | con không liên kết | 404 | — | TC-034 |
 | `audit.read` | ADMIN | — | STAFF | chuyển về tổng quan | — | TC-036 |
+| `staff.view` — danh sách/hồ sơ GV, lịch tổng | ADMIN, STAFF (sửa hồ sơ GV: ADMIN) | — | vai trò khác | chuyển về tổng quan | `user.member_status` | E2E 2026-10-21 |
+| `document.manage` — giáo trình, phân phối | ADMIN, STAFF | GV: `canManageDocument` (tài liệu/giáo án của mình), chia sẻ chỉ lớp mình phụ trách | tài liệu người khác, giáo án chia sẻ | 404 / `NOT_SHAREABLE` | `document.delete` | E2E: hs lớp khác → 404 |
+| Tải tệp `/tep/<id>` | Theo chủ sở hữu tệp | bài tập: GV chính / HS-PH của lớp khi bài đã giao; bài nộp: HS đó, GV lớp, PH của HS; tài liệu: `documentVisibilityWhere` | ngoài phạm vi | 404 | — | E2E: hs3 → 404 |
+| `request.handle` — duyệt đề xuất đổi lịch | ADMIN, STAFF | — | — | chuyển về tổng quan | theo thao tác lịch | E2E |
+| Duyệt đơn xin nghỉ | ADMIN, STAFF, TEACHER | GV: buổi mình dạy hoặc lớp mình phụ trách | đơn đã xử lý | 404 / `NOT_PENDING` | — | E2E |
+| Nhắn 1-1 | theo `canDirectMessage` | kiểm tra lại khi gửi | quan hệ không còn | 404 / `NOT_ALLOWED` | — | E2E |
+| `report.view` | ADMIN, STAFF | — | vai trò khác | 404 (route CSV) | — | E2E |
 | Đổi mật khẩu | Mọi người đã đăng nhập (kể cả `mustChangePassword`) | chính mình | — | — | — (thu hồi phiên khác) | TC-012 |
 
 ## 5. Điều cấm (không ngoại lệ)

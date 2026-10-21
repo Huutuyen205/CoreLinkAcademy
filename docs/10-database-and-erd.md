@@ -313,7 +313,24 @@ Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) �
 | Transaction | Chuyển lead, mở lớp + buổi, ghi danh (FOR UPDATE), liên kết PH (FOR UPDATE), điểm danh (nhiều upsert + audit), nộp bài, chấm + audit, dời buổi + audit, đổi trạng thái lớp + hệ quả |
 | Concurrency | docs/06 §3 |
 
+## 5b. Bảng bổ sung v3.2 (FR-036..FR-052)
+
+| Bảng | Mục đích | Ghi chú |
+|---|---|---|
+| `education_levels`, `subject_levels` | Cấp học, liên kết môn–cấp | 4 cấp khởi tạo trong migration |
+| `stored_files`, `file_blobs` | Metadata tệp / nội dung nhị phân (DECISION-D24) | Mỗi tệp thuộc đúng một chủ: bài tập, bài nộp, tài liệu (FK cascade) |
+| `schedule_requests` | Đề xuất đổi lịch của GV | `RequestStatus`: PENDING/APPROVED/REJECTED/CANCELLED |
+| `leave_requests` | Đơn xin nghỉ của PH | Duyệt → `attendances` EXCUSED |
+| `documents`, `document_shares` | Giáo trình / tài liệu / giáo án; chia sẻ theo lớp | Gỡ chia sẻ = xóa dòng share |
+| `announcements`, `notifications` | Thông báo soạn tay + hộp thư từng người | Fan-out lúc gửi (DECISION-D28) |
+| `evaluations` | Đánh giá định kỳ | Duy nhất (lớp, HS, kỳ) |
+| `conversations`, `conversation_members`, `messages` | Nhắn tin | CLASS: thành viên suy ra từ lớp; DIRECT: `directKey` duy nhất |
+
+Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `profileNote`), `subjects.isActive`, `rooms` (`isActive`, `note`), `class_sessions` (`isMakeup`, `note`), `assignments` (`acceptsFiles`, `manualMaxScore`). Tất cả có mặc định hoặc cho phép null.
+
 ## 6. Migration and recovery
+
+**Migration `20261023090000_portal_features`** (chỉ thêm bảng/cột + dữ liệu cấp học): đã áp lên Supabase ngày 2026-10-21 cùng `20261022090000_admin_perf_indexes` (PO đồng ý). Rollback: `DROP TABLE` 14 bảng mới + `ALTER TABLE … DROP COLUMN` các cột mới (mất dữ liệu của tính năng mới).
 
 **Migration `20261022090000_admin_perf_indexes`** (chỉ index, không đổi dữ liệu): `users(role, fullName)` thay `users(role)`; `sessions(expiresAt)`; `classes(status, startDate)`, `classes(roomId)`; `leads(subjectId, createdAt)`, `leads(courseId)`; `audit_logs(action, createdAt)`; `rate_limit_buckets(resetAt)`. Chạy: `pnpm db:migrate` (PO chạy). Rollback: `DROP INDEX` từng index + `CREATE INDEX "users_role_idx" ON "users"("role")`.
 

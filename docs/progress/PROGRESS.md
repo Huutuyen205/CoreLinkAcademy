@@ -1,5 +1,37 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-21 (tối) — Bổ sung chức năng theo 4 file của PO (FR-036..FR-052, DECISION-D26) + giao diện cổng
+
+### Bước 1 — Kiểm kê
+35 FR v3 đã chạy (công khai/tuyển sinh, tài khoản, đào tạo, điểm danh, bài tập/chấm, cổng + audit). Đối chiếu 4 file PO (Admin.md, Giáo viên.md, Phụ huynh.md, Bảng phân loại ưu tiên demo.md): thiếu nộp bài bằng tệp/ảnh, hồ sơ GV/HS/PH, sửa lớp/dạy thay/học bù/lịch tổng, cấp học, giáo trình–tài liệu, đề xuất đổi lịch, đơn xin nghỉ, thông báo, đánh giá định kỳ, nhắn tin, báo cáo. PO chốt: trợ lý được chạy migration chỉ-thêm; tệp lưu trong Postgres (D24); đơn nghỉ do GV lớp hoặc giáo vụ duyệt (D25).
+
+### Bước 2 — Đã làm
+- **DB:** migration `20261023090000_portal_features` (14 bảng mới + cột mới, có mặc định; 4 cấp học khởi tạo) và `20261022090000_admin_perf_indexes` — **đã áp lên Supabase** (`pnpm db:migrate`, PO đồng ý). Chi tiết docs/10 §5b.
+- **Tệp:** `src/server/files/*` (kiểm tra loại/dung lượng, `stored_files` + `file_blobs`), route `/tep/[id]` kiểm tra quyền theo chủ sở hữu, `Content-Security-Policy: sandbox`.
+- **Bài tập (FR-040/041):** bài nhận tệp/ảnh, tệp đề, bài không câu hỏi chấm điểm tổng, xóa bài, nhắc nộp; điểm tối đa qua `assignmentMaxScore`.
+- **Quản lý (FR-036..038):** trang Giáo viên, Phụ huynh, hồ sơ Học sinh (chuyển/gỡ lớp, phụ huynh, chuyên cần, kết quả, đánh giá), nhập HS hàng loạt, sửa lớp/đổi GV-phòng, dạy thay từng buổi, học bù, lịch tổng lọc GV/phòng/lớp, Môn & cấp học, phòng tạm ngừng.
+- **HS/PH (FR-039, 044, 045):** chi tiết buổi học, đơn xin nghỉ (duyệt → "Có phép"), bài tập của con, lớp con đang học.
+- **GV (FR-043, 046, 049):** đề xuất đổi lịch, duyệt đơn nghỉ, hồ sơ HS lớp mình, đánh giá định kỳ kèm tổng hợp chuyên cần/điểm.
+- **Chung (FR-042, 047, 048, 050, 051, 052):** giáo trình–tài liệu–giáo án (chia sẻ theo lớp), thông báo + chuông chưa đọc, nhắn tin (nhóm lớp + 1-1, tự làm mới), tài khoản cá nhân, báo cáo + xuất CSV.
+- **Tài liệu:** docs/00, 01 (v3.2), 03, 05 (P2-32..P2-41), 08, 10, 17 (D24..D29).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` ✓ **17 file / 103 test** (mới: `files/rules.test.ts`, `users/import.test.ts`, `reports/reports.test.ts`, bổ sung `grading.test.ts`).
+- **E2E trên Chrome headless + DB thật** (4 vai trò): GV tạo bài nhận tệp + tệp đề → giao → HS bị chặn nộp khi chưa có tệp → tải ảnh, nộp → GV nhắc nộp, chấm 8,5/10, công bố → HS/PH thấy điểm + thông báo, PH tải được ảnh bài làm của con → PH gửi đơn nghỉ → GV Toán duyệt → buổi "Có phép" + PH nhận thông báo → GV đề xuất nghỉ → Admin từ chối → Admin: lịch tổng, giáo viên, phụ huynh, hồ sơ HS, báo cáo, CSV 200 text/csv → thông báo lớp → tài liệu chia sẻ lớp → tin nhắn Admin↔GV, nhóm lớp HS/PH. Truy cập chéo: HS lớp khác mở tài liệu/tệp bài làm → 404; PH2 xem con PH1, GV Văn xem HS lớp Anh → trang "Không tìm thấy" (soft 404 do `loading.tsx` stream trước, không lộ dữ liệu). **Tất cả pass.**
+- **Lỗi thật E2E tìm ra và đã sửa:** thông báo thành công nằm trong form nên biến mất khi form ẩn sau thao tác (gửi đơn nghỉ, duyệt/từ chối đơn & đề xuất, giao/đóng bài, công bố) → chuyển trang + Flash.
+- Dữ liệu kiểm thử (nhãn "[Kiểm thử]") đã xóa sau mỗi lượt; audit log giữ nguyên (chỉ thêm, NFR-011).
+
+### Bước 3 — Giao diện cổng
+Banner chào theo vai trò (lời chào theo giờ, ngày VN, vòm cầu logo), thẻ số liệu có icon xuất hiện lần lượt, menu có icon + nhóm mục (quản lý), thanh đáy điện thoại icon + chữ, hiệu ứng vào trang (`template.tsx` + `.animate-rise`, tắt khi giảm chuyển động), khóa học xuất hiện lần lượt, nút "Đăng ký học thử" dính đáy trên điện thoại ở trang chi tiết khóa. docs/08 §5b.
+
+### Việc PO
+1. Review và commit/push (trợ lý không commit).
+2. Xác nhận DECISION-D27 (tin nhắn không realtime), D28 (thông báo fan-out lúc gửi), D29 (chưa mở nhắn 1-1 GV↔HS).
+3. Vercel: dung lượng tệp ≤ 4 MB/lần (giới hạn body) — muốn tệp lớn hơn thì chuyển Supabase Storage (P2).
+4. Các mục "Giả định – cần xác nhận" trong file PO đang ở docs/05 P2-32..P2-41.
+
+---
+
 ## 2026-10-21 — Production chậm: Vercel Functions chạy ở Mỹ, DB ở Singapore
 
 - Đo `core-link-academy.vercel.app`: `X-Vercel-Id: hkg1::iad1::…` (function ở `iad1`), `/khoa-hoc` TTFB 1,45–1,70 s, `/dang-nhap` 0,37–0,64 s.

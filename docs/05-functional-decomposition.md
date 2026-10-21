@@ -165,7 +165,17 @@ CoreLink Academy v3
 | P2-27 | Ô chọn phụ huynh có tìm kiếm (combobox) ở trang Học viên thay `<select>` 500 dòng lặp lại ở mỗi học sinh | Nền tảng | Rà soát BE 2026-10-22 | — |
 | P2-28 | Tìm kiếm tên không phân biệt dấu/hoa thường bằng index `pg_trgm` + `unaccent` khi lead/người dùng > vài chục nghìn | Nền tảng | Rà soát BE 2026-10-22 | Extension Supabase |
 | P2-29 | Hàng đợi nền (gửi thông báo, xuất Excel, báo cáo tháng) và cache dùng chung (Redis/KV) khi chạy nhiều instance | Vận hành | Rà soát BE 2026-10-22 | P2-03, P2-18 |
-| P2-30 | Trang Môn học/Phòng/Khóa học quản lý trên điện thoại: thu gọn form sửa từng mục vào "Sửa" (hiện mở sẵn tất cả, trang Môn học dài ~4.100px ở 375px); bộ lọc lead thu gọn | Nền tảng | Rà soát giao diện điện thoại 2026-10-21 | — |
+| P2-30 | Trang Khóa học quản lý trên điện thoại: thu gọn form; bộ lọc lead thu gọn (trang Môn học/Phòng đã thu gọn ở FR-036) | Nền tảng | Rà soát giao diện điện thoại 2026-10-21 | — |
+| P2-32 | GV đăng ký lịch rảnh để giáo vụ xếp lịch | Đào tạo | Giáo viên.md §2 ("Giả định – cần xác nhận") | Chờ PO |
+| P2-33 | Ghi nhận thái độ học tập khi điểm danh theo tiêu chí trung tâm | Đào tạo | Giáo viên.md §6 (giả định, BR15) | Chờ tiêu chí |
+| P2-34 | Gửi duyệt giáo án trước buổi dạy | Đào tạo | Giáo viên.md §4 (giả định) | FR-042 |
+| P2-35 | Hồ sơ giới thiệu GV công khai + gửi duyệt | Công khai | Giáo viên.md §11A (giả định, BR36) | — |
+| P2-36 | GV tải lên / thay / xóa bài làm hộ HS (ảnh bài trên giấy) | Bài tập | Giáo viên.md §8; bảng ưu tiên (chức năng phụ) | FR-040 |
+| P2-37 | Giao bài cho nhóm / từng học sinh thay vì cả lớp | Bài tập | Giáo viên.md §7 | — |
+| P2-38 | Chia sẻ tài liệu cho từng học sinh / từng buổi (hiện: theo lớp; giáo án gắn buổi) | Tài liệu | Giáo viên.md §5 | FR-042 |
+| P2-39 | Nhắn tin realtime, gửi ảnh/tệp trong chat, nhắn 1-1 GV ↔ HS (DECISION-D27, D29) | Tương tác | Bảng ưu tiên (chức năng phụ) | Hạ tầng realtime |
+| P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
+| P2-41 | HS tự ôn luyện (đề luyện tập, lịch sử, chấm tự động); lịch tháng; biểu đồ tiến độ/xu hướng điểm | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |
 
 ## 6. Coverage check

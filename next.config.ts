@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
   // Có package-lock.json ở thư mục cha trên máy dev; chốt gốc dự án để Next không đoán sai.
   outputFileTracingRoot: process.cwd(),
   serverExternalPackages: ["@node-rs/argon2"],
+  // Tệp tải lên ≤ 4 MB (src/server/files/rules.ts) + phần form; Vercel giới hạn body 4,5 MB.
+  experimental: { serverActions: { bodySizeLimit: "4.5mb" } },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

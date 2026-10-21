@@ -39,7 +39,8 @@ const courseCard = {
 export type CourseCardData = Prisma.CourseGetPayload<{ select: typeof courseCard }>;
 
 export function querySubjects() {
-  return db.subject.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
+  // Môn ngừng sử dụng (Admin §1) không hiện ở bộ lọc công khai và form học thử.
+  return db.subject.findMany({ where: { isActive: true }, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] });
 }
 
 /** Danh sách môn dùng ở bộ lọc công khai và quản lý — cache, vô hiệu khi lưu/xóa môn/khóa (CACHE_TAGS.subjects). */
@@ -48,7 +49,7 @@ export const listSubjects = cached(querySubjects, "subjects:list", { tags: [CACH
 /** Môn có ít nhất một khóa đã xuất bản. */
 export function listSubjectsWithCourses() {
   return db.subject.findMany({
-    where: { courses: { some: { isPublished: true } } },
+    where: { isActive: true, courses: { some: { isPublished: true } } },
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
     include: { _count: { select: { courses: { where: { isPublished: true } } } } },
   });

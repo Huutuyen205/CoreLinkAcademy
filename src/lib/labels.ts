@@ -1,11 +1,18 @@
 // Nhãn tiếng Việt + tông màu cho các trạng thái (docs/08 §6). Luôn hiển thị kèm chữ.
 import type {
+  AnnouncementAudience,
   AssignmentStatus,
   AttendanceStatus,
   ClassStatus,
+  DocumentKind,
   EnrollmentStatus,
+  EvaluationStatus,
   LeadStatus,
+  MemberStatus,
   QuestionType,
+  RequestStatus,
+  Role,
+  ScheduleRequestType,
   SessionStatus,
   SubmissionStatus,
   UserStatus,
@@ -85,3 +92,49 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
 };
 
 export const GRADE_OPTIONS =Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Lớp ${i + 1}` }));
+
+/* ───────────── Nhãn cho tính năng bổ sung (FR-036..FR-052) ───────────── */
+
+
+/** Trạng thái hồ sơ: chữ khác nhau theo vai trò. */
+export function memberStatusLabel(role: Role, status: MemberStatus): Labeled {
+  const learner = role === "STUDENT";
+  const map: Record<MemberStatus, Labeled> = {
+    ACTIVE: { label: learner ? "Đang học" : role === "TEACHER" ? "Đang dạy" : "Hoạt động", tone: "success" },
+    ON_LEAVE: { label: learner ? "Bảo lưu" : "Tạm nghỉ", tone: "warning" },
+    INACTIVE: { label: learner ? "Đã nghỉ học" : "Đã nghỉ", tone: "neutral" },
+  };
+  return map[status];
+}
+
+export const REQUEST_STATUS: Record<RequestStatus, Labeled> = {
+  PENDING: { label: "Chờ duyệt", tone: "warning" },
+  APPROVED: { label: "Đã duyệt", tone: "success" },
+  REJECTED: { label: "Từ chối", tone: "danger" },
+  CANCELLED: { label: "Đã rút", tone: "neutral" },
+};
+
+export const SCHEDULE_REQUEST_TYPE: Record<ScheduleRequestType, string> = {
+  LEAVE: "Xin nghỉ buổi dạy",
+  RESCHEDULE: "Đề xuất dời buổi",
+};
+
+export const DOCUMENT_KIND: Record<DocumentKind, string> = {
+  CURRICULUM: "Giáo trình",
+  MATERIAL: "Tài liệu học tập",
+  LESSON_PLAN: "Giáo án",
+};
+
+export const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
+  ALL: "Tất cả người dùng",
+  STAFF: "Quản trị & giáo vụ",
+  TEACHERS: "Toàn bộ giáo viên",
+  STUDENTS: "Toàn bộ học sinh",
+  PARENTS: "Toàn bộ phụ huynh",
+  CLASS: "Một lớp (GV, HS, PH của lớp)",
+};
+
+export const EVALUATION_STATUS: Record<EvaluationStatus, Labeled> = {
+  DRAFT: { label: "Nháp", tone: "neutral" },
+  SENT: { label: "Đã gửi", tone: "success" },
+};

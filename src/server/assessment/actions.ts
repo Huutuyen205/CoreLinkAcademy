@@ -8,38 +8,62 @@ import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
 import { vnToUtc } from "@/lib/time";
+import { readUploads } from "@/server/files/storage";
 import {
+  addAssignmentFiles,
   createAssignment,
+  deleteAssignment,
+  deleteAssignmentFile,
   deleteQuestion,
+  deleteSubmissionFile,
   gradeSubmission,
   publishResults,
+  remindUnsubmitted,
   saveDraftAnswers,
   saveQuestion,
   setAssignmentStatus,
   submitAssignment,
   updateAssignment,
+  uploadSubmissionFiles,
 } from "./service";
 
 const id = z.string().min(1).max(40);
 
-const assignmentSchema = z.object({
-  title: z.string().trim().min(3, "Nhập tên bài (ít nhất 3 ký tự).").max(200),
-  instructions: z.string().trim().max(5000, "Tối đa 5000 ký tự."),
-  dueAt: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Chọn hạn nộp.")
-    .transform((v) => vnToUtc(v.slice(0, 10), v.slice(11, 16))),
-  allowLate: z.boolean(),
-});
+const quarter = (v: number) => Math.abs(v * 4 - Math.round(v * 4)) < 1e-9;
+
+const assignmentSchema = z
+  .object({
+    title: z.string().trim().min(3, "Nhập tên bài (ít nhất 3 ký tự).").max(200),
+    instructions: z.string().trim().max(5000, "Tối đa 5000 ký tự."),
+    dueAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Chọn hạn nộp.")
+      .transform((v) => vnToUtc(v.slice(0, 10), v.slice(11, 16))),
+    allowLate: z.boolean(),
+    acceptsFiles: z.boolean(),
+    manualMaxScore: z.string().transform((v) => (v.trim() === "" ? null : Number(v.trim().replace(",", ".")))),
+  })
+  .superRefine((v, ctx) => {
+    if (v.manualMaxScore !== null && (!Number.isFinite(v.manualMaxScore) || v.manualMaxScore < 1 || v.manualMaxScore > 100 || !quarter(v.manualMaxScore))) {
+      ctx.addIssue({ code: "custom", path: ["manualMaxScore"], message: "Điểm tối đa từ 1 đến 100, bước 0,25." });
+    }
+  })
+  // Bài nhận tệp mà chưa đặt điểm tối đa → thang 10 (dùng khi bài không có câu hỏi).
+  .transform((v) => ({ ...v, manualMaxScore: v.acceptsFiles ? (v.manualMaxScore ?? 10) : v.manualMaxScore }));
 
 function assignmentInput(formData: FormData) {
   const allowLate = formData.get("allowLate") === "on";
-  // allowLate trả lại dạng "on"/"" để ConfigForm giữ trạng thái checkbox khi lỗi.
-  const fields = { ...formFields(formData, ["title", "instructions", "dueAt"]), allowLate: allowLate ? "on" : "" };
-  return { fields, data: { ...fields, allowLate } };
+  const acceptsFiles = formData.get("acceptsFiles") === "on";
+  // Checkbox trả lại dạng "on"/"" để ConfigForm giữ trạng thái khi lỗi.
+  const fields = {
+    ...formFields(formData, ["title", "instructions", "dueAt", "manualMaxScore"]),
+    allowLate: allowLate ? "on" : "",
+    acceptsFiles: acceptsFiles ? "on" : "",
+  };
+  return { fields, data: { ...fields, allowLate, acceptsFiles } };
 }
 
-/** API-016 — FR-027. */
+/** API-016 — FR-027, FR-040 (tệp đề bài tùy chọn). */
 export async function createAssignmentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("TEACHER");
   const classId = String(formData.get("classId") ?? "");
@@ -47,9 +71,48 @@ export async function createAssignmentAction(_prev: ActionState, formData: FormD
   const { fields, data } = assignmentInput(formData);
   const parsed = parseForm(assignmentSchema, data);
   if (!parsed.ok) return { ...parsed.state, values: fields };
-  const result = await runAction(() => createAssignment(actor, classId, parsed.data), fields);
+  const result = await runAction(async () => createAssignment(actor, classId, parsed.data, await readUploads(formData, "files")), fields);
   if (!result.ok) return result.state;
   redirect(`/giao-vien/bai-tap/${result.value}?thongbao=tao-bai`);
+}
+
+export async function addAssignmentFilesAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const assignmentId = String(formData.get("assignmentId") ?? "");
+  if (!id.safeParse(assignmentId).success) return { ok: false, message: "Bài tập không hợp lệ." };
+  const result = await runAction(async () => addAssignmentFiles(actor, assignmentId, await readUploads(formData, "files")));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${assignmentId}`);
+  return { ok: true, message: "Đã tải tệp lên." };
+}
+
+export async function deleteAssignmentFileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ assignmentId: id, fileId: id }), formFields(formData, ["assignmentId", "fileId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => deleteAssignmentFile(actor, parsed.data.assignmentId, parsed.data.fileId));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${parsed.data.assignmentId}`);
+  return { ok: true, message: "Đã xóa tệp." };
+}
+
+/** FR-041. */
+export async function deleteAssignmentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ assignmentId: id }), formFields(formData, ["assignmentId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => deleteAssignment(actor, parsed.data.assignmentId));
+  if (!result.ok) return result.state;
+  redirect(`/giao-vien/lop/${result.value}?thongbao=xoa-bai`);
+}
+
+export async function remindUnsubmittedAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ assignmentId: id }), formFields(formData, ["assignmentId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => remindUnsubmitted(actor, parsed.data.assignmentId));
+  if (!result.ok) return result.state;
+  return { ok: true, message: `Đã gửi nhắc nhở cho ${result.value} học sinh chưa nộp (và phụ huynh).` };
 }
 
 export async function updateAssignmentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -126,8 +189,8 @@ export async function setAssignmentStatusAction(_prev: ActionState, formData: Fo
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setAssignmentStatus(actor, parsed.data.assignmentId, parsed.data.status));
   if (!result.ok) return result.state;
-  revalidatePath(`/giao-vien/bai-tap/${parsed.data.assignmentId}`);
-  return { ok: true, message: parsed.data.status === "PUBLISHED" ? "Đã giao bài cho lớp." : "Đã đóng bài." };
+  // Nút giao/đóng/mở lại đổi theo trạng thái mới (form cũ biến mất) → báo kết quả bằng Flash.
+  redirect(`/giao-vien/bai-tap/${parsed.data.assignmentId}?thongbao=${parsed.data.status === "PUBLISHED" ? "giao-bai" : "dong-bai"}`);
 }
 
 /** API-020 — FR-032. */
@@ -139,7 +202,7 @@ export async function publishResultsAction(_prev: ActionState, formData: FormDat
   if (!result.ok) return result.state;
   revalidatePath(`/giao-vien/bai-tap/${parsed.data.assignmentId}`);
   revalidatePath(`/giao-vien/bai-tap/${parsed.data.assignmentId}/bai-nop`);
-  return { ok: true, message: "Đã công bố kết quả. Học sinh và phụ huynh đã xem được điểm." };
+  redirect(`/giao-vien/bai-tap/${parsed.data.assignmentId}?thongbao=cong-bo`);
 }
 
 /** API-019 — FR-031. Form gửi `points:<answerId>`, `feedback:<answerId>` và `answerIds`. */
@@ -159,8 +222,12 @@ export async function gradeSubmissionAction(_prev: ActionState, formData: FormDa
   }
   const comment = String(formData.get("comment") ?? "").trim().slice(0, 5000);
   values.comment = comment;
+  // FR-040: bài nộp tệp không có câu hỏi → một điểm tổng.
+  const rawManual = String(formData.get("manualScore") ?? "").trim().replace(",", ".");
+  values.manualScore = rawManual;
+  const manualScore = rawManual === "" ? null : Number(rawManual);
 
-  const result = await runAction(() => gradeSubmission(actor, submissionId, grades, comment || null), values);
+  const result = await runAction(() => gradeSubmission(actor, submissionId, grades, comment || null, manualScore), values);
   if (!result.ok) return result.state;
   revalidatePath(`/giao-vien/bai-nop/${submissionId}`);
   revalidatePath(`/giao-vien/bai-tap/${result.value}/bai-nop`);
@@ -193,4 +260,25 @@ export async function studentAnswerAction(_prev: ActionState, formData: FormData
   const result = await runAction(() => saveDraftAnswers(actor, assignmentId, answers), values);
   if (!result.ok) return result.state;
   return { ok: true, message: "Đã lưu nháp.", values };
+}
+
+/** FR-040: học sinh tải ảnh/tệp bài làm (trước khi nộp). */
+export async function uploadSubmissionFilesAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("STUDENT");
+  const assignmentId = String(formData.get("assignmentId") ?? "");
+  if (!id.safeParse(assignmentId).success) return { ok: false, message: "Bài tập không hợp lệ." };
+  const result = await runAction(async () => uploadSubmissionFiles(actor, assignmentId, await readUploads(formData, "files")));
+  if (!result.ok) return result.state;
+  revalidatePath(`/hoc-sinh/bai-tap/${assignmentId}`);
+  return { ok: true, message: "Đã tải bài làm lên. Nhớ bấm \"Nộp bài\" khi hoàn thành." };
+}
+
+export async function deleteSubmissionFileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("STUDENT");
+  const parsed = parseForm(z.object({ assignmentId: id, fileId: id }), formFields(formData, ["assignmentId", "fileId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => deleteSubmissionFile(actor, parsed.data.assignmentId, parsed.data.fileId));
+  if (!result.ok) return result.state;
+  revalidatePath(`/hoc-sinh/bai-tap/${parsed.data.assignmentId}`);
+  return { ok: true, message: "Đã xóa tệp." };
 }

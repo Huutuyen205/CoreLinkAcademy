@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId } from "react";
-import { CheckboxField, SelectField, TextareaField, TextField } from "@/components/ui/field";
+import { CheckboxField, FileField, SelectField, TextareaField, TextField } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/format";
@@ -14,6 +14,7 @@ export type FieldConfig =
   | (Base & { type: "textarea"; maxLength?: number; rows?: number })
   | (Base & { type: "select"; options: { value: string; label: string }[]; placeholder?: string })
   | (Base & { type: "checkbox"; defaultChecked?: boolean })
+  | (Base & { type: "file"; accept?: string; multiple?: boolean })
   | (Base & { type: "checkboxes"; options: { value: string; label: string }[]; defaultValues?: string[] });
 
 type Props = {
@@ -77,6 +78,10 @@ export function ConfigForm({ action, fields, hidden, submitLabel, columns = 1, c
             case "select":
               return (
                 <SelectField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
+              );
+            case "file":
+              return (
+                <FileField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} accept={f.accept} multiple={f.multiple} error={e[f.name]} />
               );
             case "checkbox":
               // Khi lỗi, action trả `values[name]` = "on" | "" để giữ trạng thái người dùng đã chọn.

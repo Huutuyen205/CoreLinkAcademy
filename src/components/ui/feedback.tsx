@@ -1,3 +1,4 @@
+import { Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
 
@@ -43,7 +44,7 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
 
 export function Card({ title, action, children, className }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-block border border-line bg-surface p-4 sm:p-5", className)}>
+    <section className={cn("rounded-block border border-line bg-surface p-4 shadow-[0_1px_3px_rgba(14,20,51,0.05)] sm:p-5", className)}>
       {(title || action) && (
         <header className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-lg">{title}</h2>}
@@ -57,7 +58,8 @@ export function Card({ title, action, children, className }: { title?: string; a
 
 export function EmptyState({ message, action }: { message: string; action?: ReactNode }) {
   return (
-    <div className="rounded-block border border-dashed border-line px-5 py-8 text-center">
+    <div className="rounded-block border border-dashed border-line bg-paper/50 px-5 py-8 text-center">
+      <Sparkles className="mx-auto mb-2 size-6 text-primary/40" aria-hidden="true" />
       <p className="text-muted">{message}</p>
       {action && <div className="mt-4">{action}</div>}
     </div>

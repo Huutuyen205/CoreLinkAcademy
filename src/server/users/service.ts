@@ -7,6 +7,7 @@ import { revokeUserSessions, type Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
 import { generateTempPassword, isUniqueViolation, nextStudentCode, withStudentCodeRetry } from "./credentials";
+import type { ImportRow } from "./import";
 import { canAddGuardian, MAX_GUARDIANS } from "./rules";
 
 export type UserInput = { fullName: string; email: string | null; phone: string | null; role: Role; gradeLevel: number | null };
@@ -229,4 +230,47 @@ export async function listMyChildren(actor: Actor) {
     select: { student: { select: { id: true, fullName: true, gradeLevel: true, studentCode: true } } },
   });
   return links.map((l) => l.student);
+}
+
+/**
+ * Admin §2: nhập danh sách học sinh. Tất cả hoặc không: một dòng trùng email/SĐT với tài khoản đã có → không tạo dòng nào.
+ * Mật khẩu tạm từng em trả về một lần (giống tạo tài khoản đơn lẻ).
+ */
+export async function importStudents(actor: Actor, rows: ImportRow[]): Promise<{ fullName: string; studentCode: string; login: string; password: string }[]> {
+  if (!canCreateUserWithRole(actor.role, "STUDENT")) throw new ForbiddenError();
+  const phones = rows.map((r) => r.phone).filter((p): p is string => Boolean(p));
+  const emails = rows.map((r) => r.email).filter((e): e is string => Boolean(e));
+  const taken = await db.user.findMany({ where: { OR: [{ phone: { in: phones } }, { email: { in: emails } }] }, select: { phone: true, email: true } });
+  if (taken.length > 0) {
+    const details = rows
+      .filter((r) => taken.some((t) => (r.phone && t.phone === r.phone) || (r.email && t.email === r.email)))
+      .map((r) => `Dòng ${r.line}: ${r.fullName} — email/SĐT đã có tài khoản.`);
+    throw new DomainError("DUPLICATE", "Một số dòng trùng email/SĐT với tài khoản đã có. Chưa nhập dòng nào.", undefined, details);
+  }
+  const prepared = await Promise.all(
+    rows.map(async (r) => {
+      const password = generateTempPassword();
+      return { ...r, password, hash: await hashPassword(password) };
+    }),
+  );
+  return withStudentCodeRetry(() =>
+    db.$transaction(
+      async (tx) => {
+        const out: { fullName: string; studentCode: string; login: string; password: string }[] = [];
+        const ids: string[] = [];
+        for (const r of prepared) {
+          const studentCode = await nextStudentCode(tx);
+          const u = await tx.user.create({
+            data: { fullName: r.fullName, gradeLevel: r.gradeLevel, phone: r.phone, email: r.email, role: "STUDENT", studentCode, passwordHash: r.hash, mustChangePassword: true },
+            select: { id: true },
+          });
+          ids.push(u.id);
+          out.push({ fullName: r.fullName, studentCode, login: r.email ?? r.phone ?? "— (chưa có email/SĐT)", password: r.password });
+        }
+        await writeAudit({ actorId: actor.id, action: "user.import", entity: "User", entityId: ids[0]!, detail: { count: ids.length, userIds: ids } }, tx);
+        return out;
+      },
+      { timeout: 60_000 },
+    ),
+  );
 }

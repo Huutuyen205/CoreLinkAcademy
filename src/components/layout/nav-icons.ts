@@ -1,0 +1,58 @@
+import {
+  BarChart3,
+  BookOpen,
+  BookOpenCheck,
+  CalendarDays,
+  ClipboardList,
+  DoorOpen,
+  FileText,
+  GraduationCap,
+  Inbox,
+  LayoutDashboard,
+  Library,
+  type LucideIcon,
+  Megaphone,
+  MessagesSquare,
+  ScrollText,
+  Shapes,
+  Trophy,
+  UserCog,
+  Users,
+  UsersRound,
+} from "lucide-react";
+
+/** Icon theo đường dẫn menu; mục không có trong bảng dùng icon mặc định. */
+const ICONS: Record<string, LucideIcon> = {
+  "/quan-ly": LayoutDashboard,
+  "/quan-ly/lead": Inbox,
+  "/quan-ly/lop": Shapes,
+  "/quan-ly/lich": CalendarDays,
+  "/quan-ly/hoc-vien": GraduationCap,
+  "/quan-ly/giao-vien": UserCog,
+  "/quan-ly/phu-huynh": UsersRound,
+  "/quan-ly/de-xuat": ClipboardList,
+  "/quan-ly/bao-cao": BarChart3,
+  "/quan-ly/nguoi-dung": Users,
+  "/quan-ly/khoa-hoc": BookOpen,
+  "/quan-ly/mon-hoc": Library,
+  "/quan-ly/phong": DoorOpen,
+  "/quan-ly/nhat-ky": ScrollText,
+  "/giao-vien": LayoutDashboard,
+  "/giao-vien/lich": CalendarDays,
+  "/giao-vien/lop": Shapes,
+  "/giao-vien/de-xuat": ClipboardList,
+  "/hoc-sinh": LayoutDashboard,
+  "/hoc-sinh/lich": CalendarDays,
+  "/hoc-sinh/bai-tap": BookOpenCheck,
+  "/hoc-sinh/ket-qua": Trophy,
+  "/phu-huynh": GraduationCap,
+  "/phu-huynh/bai-tap": BookOpenCheck,
+  "/phu-huynh/don-nghi": ClipboardList,
+  "/tai-lieu": FileText,
+  "/thong-bao": Megaphone,
+  "/tin-nhan": MessagesSquare,
+};
+
+export function navIcon(href: string): LucideIcon {
+  return ICONS[href] ?? FileText;
+}

@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { CalendarCheck, ClipboardList, PenLine, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { Flash } from "@/components/layout/flash";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { BannerLink, WelcomeBanner } from "@/components/layout/welcome-banner";
+import { Badge, Card, EmptyState } from "@/components/ui/feedback";
+import { StatCard } from "@/components/ui/stat-card";
 import { listSessionsInRange } from "@/server/academic/service";
 import { countPendingGrading } from "@/server/assessment/service";
 import { listAbsenceAlerts } from "@/server/attendance/service";
 import { requireRole } from "@/server/auth/guard";
+import { countPendingLeaveRequests } from "@/server/requests/leave";
 import { SESSION_STATUS } from "@/lib/labels";
 import { formatDateTime, formatTime, vnDateKey, vnToUtc } from "@/lib/time";
 
@@ -17,13 +21,40 @@ export default async function TeacherDashboard({ searchParams }: { searchParams:
   const { thongbao } = await searchParams;
   const from = vnToUtc(vnDateKey(new Date()), "00:00");
   const to = new Date(from.getTime() + 24 * 3_600_000);
-  const [today, pending, alerts] = await Promise.all([listSessionsInRange(actor, from, to), countPendingGrading(actor), listAbsenceAlerts(actor)]);
+  const [today, pending, alerts, leaves] = await Promise.all([
+    listSessionsInRange(actor, from, to),
+    countPendingGrading(actor),
+    listAbsenceAlerts(actor),
+    countPendingLeaveRequests(actor),
+  ]);
 
   return (
     <>
       <Flash code={thongbao} />
-      <PageHeader title={`Xin chào, ${actor.fullName}`} description="Buổi dạy hôm nay và việc cần làm." />
-      <div className="grid gap-6 lg:grid-cols-2">
+      <WelcomeBanner
+        name={actor.fullName}
+        roleLabel="Giáo viên"
+        summary={today.length > 0 ? `Hôm nay bạn có ${today.length} buổi dạy. Nhớ điểm danh trong khung giờ nhé!` : "Hôm nay bạn không có buổi dạy."}
+      >
+        <BannerLink href="/giao-vien/lich">Lịch dạy</BannerLink>
+        <BannerLink href="/giao-vien/lop">Lớp của tôi</BannerLink>
+        <BannerLink href="/tai-lieu">Tài liệu & giáo án</BannerLink>
+      </WelcomeBanner>
+      <ul className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <li>
+          <StatCard icon={CalendarCheck} label="Buổi dạy hôm nay" value={today.length} href="/giao-vien/lich" index={0} />
+        </li>
+        <li>
+          <StatCard icon={PenLine} label="Bài chờ chấm" value={pending.total} tone={pending.total > 0 ? "warning" : "primary"} index={1} />
+        </li>
+        <li>
+          <StatCard icon={ClipboardList} label="Đơn xin nghỉ chờ duyệt" value={leaves} href="/giao-vien/de-xuat#don-nghi" tone={leaves > 0 ? "warning" : "primary"} index={2} />
+        </li>
+        <li>
+          <StatCard icon={TriangleAlert} label="Cảnh báo vắng liên tiếp" value={alerts.length} tone={alerts.length > 0 ? "danger" : "success"} index={3} />
+        </li>
+      </ul>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Buổi dạy hôm nay" action={<Link href="/giao-vien/lich" className="inline-flex min-h-11 items-center">Lịch tuần</Link>}>
           {today.length === 0 ? (
             <EmptyState message="Hôm nay bạn không có buổi dạy." />

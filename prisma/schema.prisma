@@ -2,7 +2,7 @@
 // Mọi thời gian lưu UTC. CSDL: PostgreSQL (Supabase) — ADR-005.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   // relationJoins: include/select quan hệ được gộp thành MỘT câu SQL (LATERAL JOIN) thay vì mỗi quan hệ một query.
   // DB ở xa (Supabase, ~250 ms/round-trip) nên số round-trip quyết định thời gian phản hồi — docs/21 §Hiệu năng.
   previewFeatures = ["relationJoins"]
@@ -89,37 +89,100 @@ enum SubmissionStatus {
   GRADED
 }
 
-model User {
-  id                 String     @id @default(cuid())
-  email              String?    @unique @db.VarChar(191)
-  phone              String?    @unique @db.VarChar(20)
-  fullName           String     @db.VarChar(120)
-  passwordHash       String     @db.VarChar(255)
-  role               Role
-  status             UserStatus @default(ACTIVE)
-  mustChangePassword Boolean    @default(false)
-  failedLoginCount   Int        @default(0)
-  lockedUntil        DateTime?
-  studentCode        String?    @unique @db.VarChar(16)
-  gradeLevel         Int?       @db.SmallInt
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+// Trạng thái hồ sơ (khác `UserStatus` là khóa đăng nhập): HS đang học / bảo lưu / đã nghỉ; GV đang dạy / tạm nghỉ / đã nghỉ.
+enum MemberStatus {
+  ACTIVE
+  ON_LEAVE
+  INACTIVE
+}
 
-  sessions          Session[]
-  childLinks        Guardianship[]  @relation("ParentLinks")
-  parentLinks       Guardianship[]  @relation("StudentLinks")
-  teachingClasses   Class[]         @relation("ClassTeacher")
-  teachingSessions  ClassSession[]  @relation("SessionTeacher")
-  enrollments       Enrollment[]
-  attendances       Attendance[]    @relation("AttendanceStudent")
-  attendanceMarks   Attendance[]    @relation("AttendanceMarker")
-  assignedLeads     Lead[]          @relation("LeadAssignee")
-  convertedLeads    Lead[]          @relation("LeadConvertedStudent")
-  leadActivities    LeadActivity[]
-  createdAssignments Assignment[]
-  submissions       Submission[]    @relation("SubmissionStudent")
-  gradedSubmissions Submission[]    @relation("SubmissionGrader")
-  auditLogs         AuditLog[]
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ScheduleRequestType {
+  LEAVE // xin nghỉ buổi dạy → giáo vụ phân công dạy thay hoặc hủy buổi
+  RESCHEDULE // đề xuất dời buổi sang thời gian khác
+}
+
+enum DocumentKind {
+  CURRICULUM // giáo trình chuẩn của trung tâm
+  MATERIAL // tài liệu học tập / bài giảng
+  LESSON_PLAN // giáo án của giáo viên
+}
+
+enum AnnouncementAudience {
+  ALL
+  STAFF
+  TEACHERS
+  STUDENTS
+  PARENTS
+  CLASS
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SENT
+}
+
+enum ConversationKind {
+  DIRECT
+  CLASS
+}
+
+model User {
+  id                 String       @id @default(cuid())
+  email              String?      @unique @db.VarChar(191)
+  phone              String?      @unique @db.VarChar(20)
+  fullName           String       @db.VarChar(120)
+  passwordHash       String       @db.VarChar(255)
+  role               Role
+  status             UserStatus   @default(ACTIVE)
+  mustChangePassword Boolean      @default(false)
+  failedLoginCount   Int          @default(0)
+  lockedUntil        DateTime?
+  studentCode        String?      @unique @db.VarChar(16)
+  gradeLevel         Int?         @db.SmallInt
+  memberStatus       MemberStatus @default(ACTIVE)
+  dateOfBirth        DateTime?    @db.Date
+  address            String?      @db.VarChar(255)
+  expertise          String?      @db.VarChar(200) // GV: chuyên môn / môn dạy
+  profileNote        String?      @db.Text // ghi chú hồ sơ (năng lực đầu vào, mục tiêu…) — chỉ quản lý sửa
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  sessions                Session[]
+  childLinks              Guardianship[]       @relation("ParentLinks")
+  parentLinks             Guardianship[]       @relation("StudentLinks")
+  teachingClasses         Class[]              @relation("ClassTeacher")
+  teachingSessions        ClassSession[]       @relation("SessionTeacher")
+  enrollments             Enrollment[]
+  attendances             Attendance[]         @relation("AttendanceStudent")
+  attendanceMarks         Attendance[]         @relation("AttendanceMarker")
+  assignedLeads           Lead[]               @relation("LeadAssignee")
+  convertedLeads          Lead[]               @relation("LeadConvertedStudent")
+  leadActivities          LeadActivity[]
+  createdAssignments      Assignment[]
+  submissions             Submission[]         @relation("SubmissionStudent")
+  gradedSubmissions       Submission[]         @relation("SubmissionGrader")
+  auditLogs               AuditLog[]
+  uploadedFiles           StoredFile[]
+  scheduleRequests        ScheduleRequest[]    @relation("ScheduleRequestTeacher")
+  handledScheduleRequests ScheduleRequest[]    @relation("ScheduleRequestHandler")
+  leaveRequests           LeaveRequest[]       @relation("LeaveStudent")
+  requestedLeaves         LeaveRequest[]       @relation("LeaveRequester")
+  handledLeaves           LeaveRequest[]       @relation("LeaveHandler")
+  documents               Document[]
+  documentShares          DocumentShare[]
+  announcements           Announcement[]
+  notifications           Notification[]
+  evaluationsReceived     Evaluation[]         @relation("EvaluationStudent")
+  evaluationsWritten      Evaluation[]         @relation("EvaluationTeacher")
+  conversationMemberships ConversationMember[]
+  messages                Message[]
 
   @@index([role, fullName]) // listUsers/listLearners: lọc vai trò + sắp xếp theo tên
   @@map("users")
@@ -151,15 +214,44 @@ model Guardianship {
 }
 
 model Subject {
-  id          String   @id @default(cuid())
-  name        String   @db.VarChar(80)
-  slug        String   @unique @db.VarChar(80)
-  description String   @db.Text
-  sortOrder   Int      @default(0)
+  id          String         @id @default(cuid())
+  name        String         @db.VarChar(80)
+  slug        String         @unique @db.VarChar(80)
+  description String         @db.Text
+  sortOrder   Int            @default(0)
+  isActive    Boolean        @default(true) // ngừng sử dụng: ẩn khỏi form công khai và form tạo khóa mới
   courses     Course[]
   leads       Lead[]
+  levels      SubjectLevel[]
+  documents   Document[]
 
   @@map("subjects")
+}
+
+/// Cấp học (Tiền tiểu học, Tiểu học, THCS, THPT…) — khoảng khối lớp và các môn dạy ở cấp đó.
+model EducationLevel {
+  id          String         @id @default(cuid())
+  name        String         @unique @db.VarChar(60)
+  gradeFrom   Int            @db.SmallInt // 0 = tiền tiểu học
+  gradeTo     Int            @db.SmallInt
+  description String?        @db.VarChar(300)
+  sortOrder   Int            @default(0)
+  isActive    Boolean        @default(true)
+  subjects    SubjectLevel[]
+  documents   Document[]
+
+  @@map("education_levels")
+}
+
+model SubjectLevel {
+  subjectId String
+  levelId   String
+  subject   Subject        @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  level     EducationLevel @relation(fields: [levelId], references: [id], onDelete: Cascade)
+
+  @@id([subjectId, levelId])
+  @@index([levelId])
+  @@map("subject_levels")
 }
 
 model Course {
@@ -193,6 +285,8 @@ model Room {
   id       String         @id @default(cuid())
   name     String         @unique @db.VarChar(60)
   capacity Int            @db.SmallInt
+  isActive Boolean        @default(true) // tạm ngừng: không chọn được cho lớp/buổi mới
+  note     String?        @db.VarChar(255)
   classes  Class[]
   sessions ClassSession[]
 
@@ -200,26 +294,30 @@ model Room {
 }
 
 model Class {
-  id            String       @id @default(cuid())
-  code          String       @unique @db.VarChar(30)
-  courseId      String
-  teacherId     String
-  roomId        String?
-  startDate     DateTime     @db.Date
-  weekdays      String       @db.VarChar(20) // "1,3,5" — 1 = Thứ Hai … 7 = Chủ nhật
-  startTime     String       @db.Char(5) // "18:00" giờ Việt Nam
-  endTime       String       @db.Char(5)
-  totalSessions Int          @db.SmallInt
-  capacity      Int          @db.SmallInt
-  status        ClassStatus  @default(OPEN)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  course        Course       @relation(fields: [courseId], references: [id])
-  teacher       User         @relation("ClassTeacher", fields: [teacherId], references: [id])
-  room          Room?        @relation(fields: [roomId], references: [id])
-  sessions      ClassSession[]
-  enrollments   Enrollment[]
-  assignments   Assignment[]
+  id             String          @id @default(cuid())
+  code           String          @unique @db.VarChar(30)
+  courseId       String
+  teacherId      String
+  roomId         String?
+  startDate      DateTime        @db.Date
+  weekdays       String          @db.VarChar(20) // "1,3,5" — 1 = Thứ Hai … 7 = Chủ nhật
+  startTime      String          @db.Char(5) // "18:00" giờ Việt Nam
+  endTime        String          @db.Char(5)
+  totalSessions  Int             @db.SmallInt
+  capacity       Int             @db.SmallInt
+  status         ClassStatus     @default(OPEN)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  course         Course          @relation(fields: [courseId], references: [id])
+  teacher        User            @relation("ClassTeacher", fields: [teacherId], references: [id])
+  room           Room?           @relation(fields: [roomId], references: [id])
+  sessions       ClassSession[]
+  enrollments    Enrollment[]
+  assignments    Assignment[]
+  documentShares DocumentShare[]
+  announcements  Announcement[]
+  evaluations    Evaluation[]
+  conversation   Conversation?
 
   @@index([teacherId])
   @@index([courseId, status])
@@ -229,19 +327,24 @@ model Class {
 }
 
 model ClassSession {
-  id           String        @id @default(cuid())
-  classId      String
-  index        Int           @db.SmallInt
-  startsAt     DateTime
-  endsAt       DateTime
-  teacherId    String
-  roomId       String?
-  status       SessionStatus @default(SCHEDULED)
-  cancelReason String?       @db.VarChar(255)
-  class        Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
-  teacher      User          @relation("SessionTeacher", fields: [teacherId], references: [id])
-  room         Room?         @relation(fields: [roomId], references: [id])
-  attendances  Attendance[]
+  id               String            @id @default(cuid())
+  classId          String
+  index            Int               @db.SmallInt
+  startsAt         DateTime
+  endsAt           DateTime
+  teacherId        String
+  roomId           String?
+  status           SessionStatus     @default(SCHEDULED)
+  cancelReason     String?           @db.VarChar(255)
+  isMakeup         Boolean           @default(false) // buổi học bù do giáo vụ thêm
+  note             String?           @db.VarChar(255)
+  class            Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher          User              @relation("SessionTeacher", fields: [teacherId], references: [id])
+  room             Room?             @relation(fields: [roomId], references: [id])
+  attendances      Attendance[]
+  scheduleRequests ScheduleRequest[]
+  leaveRequests    LeaveRequest[]
+  documents        Document[]
 
   @@unique([classId, index])
   @@index([teacherId, startsAt])
@@ -266,16 +369,16 @@ model Enrollment {
 }
 
 model Attendance {
-  id          String           @id @default(cuid())
-  sessionId   String
-  studentId   String
-  status      AttendanceStatus
-  note        String?          @db.VarChar(255)
-  markedById  String
-  markedAt    DateTime         @default(now())
-  session     ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  student     User             @relation("AttendanceStudent", fields: [studentId], references: [id])
-  markedBy    User             @relation("AttendanceMarker", fields: [markedById], references: [id])
+  id         String           @id @default(cuid())
+  sessionId  String
+  studentId  String
+  status     AttendanceStatus
+  note       String?          @db.VarChar(255)
+  markedById String
+  markedAt   DateTime         @default(now())
+  session    ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student    User             @relation("AttendanceStudent", fields: [studentId], references: [id])
+  markedBy   User             @relation("AttendanceMarker", fields: [markedById], references: [id])
 
   @@unique([sessionId, studentId])
   @@index([studentId])
@@ -335,6 +438,9 @@ model Assignment {
   instructions       String           @db.Text
   dueAt              DateTime
   allowLate          Boolean          @default(false)
+  // Nhận bài nộp dạng file/ảnh. Bài không có câu hỏi → GV chấm một điểm tổng trong [0, manualMaxScore].
+  acceptsFiles       Boolean          @default(false)
+  manualMaxScore     Float?
   status             AssignmentStatus @default(DRAFT)
   resultsPublishedAt DateTime?
   createdAt          DateTime         @default(now())
@@ -343,6 +449,7 @@ model Assignment {
   createdBy          User             @relation(fields: [createdById], references: [id])
   questions          Question[]
   submissions        Submission[]
+  files              StoredFile[]
 
   @@index([classId, status])
   @@map("assignments")
@@ -381,6 +488,7 @@ model Submission {
   student        User             @relation("SubmissionStudent", fields: [studentId], references: [id])
   gradedBy       User?            @relation("SubmissionGrader", fields: [gradedById], references: [id])
   answers        Answer[]
+  files          StoredFile[]
 
   @@unique([assignmentId, studentId])
   @@index([studentId])
@@ -416,6 +524,236 @@ model AuditLog {
   @@index([createdAt])
   @@index([action, createdAt]) // nhật ký lọc theo loại thao tác
   @@map("audit_logs")
+}
+
+/// Metadata tệp tải lên. Nội dung nằm ở `file_blobs` để truy vấn danh sách không bao giờ kéo dữ liệu nhị phân.
+/// Mỗi tệp thuộc đúng một chủ sở hữu (bài tập / bài nộp / tài liệu) — quyền tải xuống suy ra từ chủ sở hữu.
+model StoredFile {
+  id           String      @id @default(cuid())
+  fileName     String      @db.VarChar(200)
+  mimeType     String      @db.VarChar(120)
+  size         Int
+  uploadedById String
+  assignmentId String?
+  submissionId String?
+  documentId   String?
+  createdAt    DateTime    @default(now())
+  uploadedBy   User        @relation(fields: [uploadedById], references: [id])
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  document     Document?   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  blob         FileBlob?
+
+  @@index([assignmentId])
+  @@index([submissionId])
+  @@index([documentId])
+  @@map("stored_files")
+}
+
+model FileBlob {
+  fileId String     @id
+  data   Bytes
+  file   StoredFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@map("file_blobs")
+}
+
+/// Đề xuất của giáo viên cho một buổi dạy: xin nghỉ hoặc dời buổi. Giáo vụ/Admin duyệt.
+model ScheduleRequest {
+  id               String              @id @default(cuid())
+  sessionId        String
+  teacherId        String
+  type             ScheduleRequestType
+  proposedStartsAt DateTime?
+  proposedEndsAt   DateTime?
+  reason           String              @db.VarChar(500)
+  status           RequestStatus       @default(PENDING)
+  responseNote     String?             @db.VarChar(500)
+  handledById      String?
+  handledAt        DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  session          ClassSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  teacher          User                @relation("ScheduleRequestTeacher", fields: [teacherId], references: [id])
+  handledBy        User?               @relation("ScheduleRequestHandler", fields: [handledById], references: [id])
+
+  @@index([status, createdAt])
+  @@index([teacherId, createdAt])
+  @@index([sessionId])
+  @@map("schedule_requests")
+}
+
+/// Đơn xin nghỉ một buổi học do phụ huynh gửi cho con. GV lớp hoặc giáo vụ duyệt → điểm danh "Có phép".
+model LeaveRequest {
+  id            String        @id @default(cuid())
+  sessionId     String
+  studentId     String
+  requestedById String
+  reason        String        @db.VarChar(500)
+  status        RequestStatus @default(PENDING)
+  responseNote  String?       @db.VarChar(500)
+  handledById   String?
+  handledAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  session       ClassSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student       User          @relation("LeaveStudent", fields: [studentId], references: [id])
+  requestedBy   User          @relation("LeaveRequester", fields: [requestedById], references: [id])
+  handledBy     User?         @relation("LeaveHandler", fields: [handledById], references: [id])
+
+  @@index([sessionId])
+  @@index([studentId, createdAt])
+  @@index([status, createdAt])
+  @@map("leave_requests")
+}
+
+/// Giáo trình, tài liệu học tập, giáo án. Nội dung là tệp tải lên (`files`) và/hoặc đường dẫn ngoài (`url`).
+model Document {
+  id                String          @id @default(cuid())
+  kind              DocumentKind
+  title             String          @db.VarChar(200)
+  description       String?         @db.Text
+  url               String?         @db.VarChar(500)
+  subjectId         String?
+  levelId           String?
+  sessionId         String? // giáo án / tài liệu cho một buổi
+  ownerId           String
+  visibleToStudents Boolean         @default(true)
+  visibleToParents  Boolean         @default(false)
+  isActive          Boolean         @default(true) // ngừng sử dụng: ẩn khỏi HS/PH/GV, quản lý vẫn thấy
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  subject           Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  level             EducationLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  session           ClassSession?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  owner             User            @relation(fields: [ownerId], references: [id])
+  files             StoredFile[]
+  shares            DocumentShare[]
+
+  @@index([kind, isActive])
+  @@index([ownerId])
+  @@index([subjectId])
+  @@map("documents")
+}
+
+/// Chia sẻ / phân phối tài liệu cho một lớp. Gỡ chia sẻ = xóa dòng (tệp gốc giữ nguyên).
+model DocumentShare {
+  documentId String
+  classId    String
+  sharedById String
+  createdAt  DateTime @default(now())
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  class      Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  sharedBy   User     @relation(fields: [sharedById], references: [id])
+
+  @@id([documentId, classId])
+  @@index([classId])
+  @@map("document_shares")
+}
+
+/// Thông báo do người dùng soạn. Người nhận được tính lúc gửi và ghi thành `notifications` (fan-out).
+model Announcement {
+  id             String               @id @default(cuid())
+  authorId       String
+  audience       AnnouncementAudience
+  classId        String?
+  title          String               @db.VarChar(200)
+  body           String               @db.Text
+  recipientCount Int                  @default(0)
+  createdAt      DateTime             @default(now())
+  author         User                 @relation(fields: [authorId], references: [id])
+  class          Class?               @relation(fields: [classId], references: [id], onDelete: SetNull)
+  notifications  Notification[]
+
+  @@index([authorId, createdAt])
+  @@index([createdAt])
+  @@map("announcements")
+}
+
+/// Hộp thư thông báo của từng người: từ `Announcement` hoặc sự kiện hệ thống (đổi lịch, kết quả đơn, nhắc nộp bài…).
+model Notification {
+  id             String        @id @default(cuid())
+  userId         String
+  announcementId String?
+  kind           String        @db.VarChar(40)
+  title          String        @db.VarChar(200)
+  body           String        @db.Text
+  link           String?       @db.VarChar(300)
+  readAt         DateTime?
+  createdAt      DateTime      @default(now())
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement   Announcement? @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([announcementId])
+  @@map("notifications")
+}
+
+/// Đánh giá định kỳ của giáo viên cho học sinh trong một lớp. Chỉ bản SENT hiện cho HS/PH.
+model Evaluation {
+  id           String           @id @default(cuid())
+  classId      String
+  studentId    String
+  teacherId    String
+  period       String           @db.VarChar(40) // vd. "Tháng 10/2026", "Giữa khóa"
+  content      String           @db.Text
+  strengths    String?          @db.Text
+  improvements String?          @db.Text
+  status       EvaluationStatus @default(DRAFT)
+  sentAt       DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  class        Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student      User             @relation("EvaluationStudent", fields: [studentId], references: [id])
+  teacher      User             @relation("EvaluationTeacher", fields: [teacherId], references: [id])
+
+  @@unique([classId, studentId, period])
+  @@index([studentId, status])
+  @@map("evaluations")
+}
+
+/// Cuộc trò chuyện: DIRECT (2 người, `directKey` = 2 id đã sắp xếp) hoặc CLASS (nhóm lớp, thành viên suy ra từ lớp).
+model Conversation {
+  id            String               @id @default(cuid())
+  kind          ConversationKind
+  classId       String?              @unique
+  directKey     String?              @unique @db.VarChar(90)
+  lastMessageAt DateTime             @default(now())
+  createdAt     DateTime             @default(now())
+  class         Class?               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  members       ConversationMember[]
+  messages      Message[]
+
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+/// DIRECT: hai thành viên. CLASS: dòng chỉ để lưu `lastReadAt` (tạo khi người dùng mở nhóm).
+model ConversationMember {
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  joinedAt       DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+  @@map("conversation_members")
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  senderId       String
+  body           String       @db.Text
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  @@map("messages")
 }
 
 model RateLimitBucket {

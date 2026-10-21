@@ -6,7 +6,7 @@ import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
 import { isForeignKeyViolation, isUniqueViolation } from "@/server/users/credentials";
 
-export type SubjectInput = { name: string; slug: string; description: string; sortOrder: number };
+export type SubjectInput = { name: string; slug: string; description: string; sortOrder: number; isActive: boolean; levelIds: string[] };
 
 export type CourseInput = {
   subjectId: string;
@@ -28,17 +28,27 @@ export type CourseInput = {
 
 const duplicateSlug = () => new DomainError("DUPLICATE_SLUG", "Đường dẫn (slug) đã được dùng.", { slug: "Slug đã tồn tại." });
 
-export async function listSubjectsAdmin(actor: Actor) {
+export async function listSubjectsAdmin(actor: Actor, q?: string) {
   assertCan(actor, "catalog.manage");
-  return db.subject.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], include: { _count: { select: { courses: true } } } });
+  const query = q?.trim();
+  return db.subject.findMany({
+    where: query ? { OR: [{ name: { contains: query, mode: "insensitive" } }, { slug: { contains: query, mode: "insensitive" } }] } : {},
+    orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }, { name: "asc" }],
+    include: { _count: { select: { courses: true } }, levels: { select: { levelId: true, level: { select: { name: true, sortOrder: true } } } } },
+  });
 }
 
-/** API-010. */
+/** API-010 + Admin §1: thông tin môn, ngừng sử dụng, liên kết cấp học (thay toàn bộ liên kết trong một transaction). */
 export async function saveSubject(actor: Actor, id: string | null, input: SubjectInput): Promise<void> {
   assertCan(actor, "catalog.manage");
+  const { levelIds, ...data } = input;
   try {
-    if (id) await db.subject.update({ where: { id }, data: input });
-    else await db.subject.create({ data: input });
+    await db.$transaction(async (tx) => {
+      const subject = id ? await tx.subject.update({ where: { id }, data, select: { id: true } }) : await tx.subject.create({ data, select: { id: true } });
+      const levels = levelIds.length ? await tx.educationLevel.findMany({ where: { id: { in: levelIds } }, select: { id: true } }) : [];
+      await tx.subjectLevel.deleteMany({ where: { subjectId: subject.id } });
+      if (levels.length) await tx.subjectLevel.createMany({ data: levels.map((l) => ({ subjectId: subject.id, levelId: l.id })) });
+    });
   } catch (error) {
     if (isUniqueViolation(error, "slug")) throw duplicateSlug();
     throw error;
@@ -121,7 +131,7 @@ export async function listRoomsAdmin(actor: Actor) {
 }
 
 /** API-010 — FR-016: tên phòng duy nhất. */
-export async function saveRoom(actor: Actor, id: string | null, input: { name: string; capacity: number }): Promise<void> {
+export async function saveRoom(actor: Actor, id: string | null, input: { name: string; capacity: number; isActive: boolean; note: string | null }): Promise<void> {
   assertCan(actor, "room.manage");
   try {
     if (id) await db.room.update({ where: { id }, data: input });
@@ -145,6 +155,30 @@ export async function deleteRoom(actor: Actor, id: string): Promise<void> {
     ]);
   } catch (error) {
     if (isForeignKeyViolation(error)) throw inUse();
+    throw error;
+  }
+}
+
+/* ───────────── Cấp học (Admin §1 — FR-036) ───────────── */
+
+export type LevelInput = { name: string; gradeFrom: number; gradeTo: number; description: string | null; sortOrder: number; isActive: boolean };
+
+export async function listLevelsAdmin(actor: Actor) {
+  assertCan(actor, "level.manage");
+  return db.educationLevel.findMany({
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    include: { subjects: { select: { subject: { select: { name: true } } } }, _count: { select: { documents: true } } },
+  });
+}
+
+export async function saveLevel(actor: Actor, id: string | null, input: LevelInput): Promise<void> {
+  assertCan(actor, "level.manage");
+  if (input.gradeTo < input.gradeFrom) throw new DomainError("INVALID_RANGE", "Khối kết thúc phải lớn hơn hoặc bằng khối bắt đầu.", { gradeTo: "Phải lớn hơn hoặc bằng khối bắt đầu." });
+  try {
+    if (id) await db.educationLevel.update({ where: { id }, data: input });
+    else await db.educationLevel.create({ data: input });
+  } catch (error) {
+    if (isUniqueViolation(error, "name")) throw new DomainError("DUPLICATE_NAME", "Tên cấp học đã tồn tại.", { name: "Tên cấp học đã tồn tại." });
     throw error;
   }
 }

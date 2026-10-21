@@ -35,7 +35,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           </span>
         }
       />
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Card title="Thông tin">
             <ConfigForm

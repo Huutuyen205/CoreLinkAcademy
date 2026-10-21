@@ -114,6 +114,7 @@ export async function setEnrollmentStatusAction(_prev: ActionState, formData: Fo
   const result = await runAction(() => setEnrollmentStatus(actor, parsed.data.enrollmentId, parsed.data.status));
   if (!result.ok) return result.state;
   revalidatePath(`/quan-ly/lop/${result.value}`);
+  revalidatePath("/quan-ly/hoc-vien", "layout");
   return { ok: true, message: "Đã cập nhật." };
 }
 

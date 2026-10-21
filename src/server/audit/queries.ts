@@ -21,6 +21,14 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "room.delete": "Xóa phòng",
   "guardian.link": "Liên kết phụ huynh",
   "guardian.unlink": "Bỏ liên kết phụ huynh",
+  "class.update": "Sửa lớp / đổi GV, phòng",
+  "session.assign_teacher": "Phân công GV dạy buổi",
+  "session.makeup": "Xếp buổi học bù",
+  "enrollment.transfer": "Chuyển lớp học sinh",
+  "user.member_status": "Đổi trạng thái hồ sơ",
+  "user.contact_change": "Tự đổi email/SĐT đăng nhập",
+  "user.import": "Nhập danh sách học sinh",
+  "document.delete": "Xóa tài liệu",
 };
 
 /** FR-035: chỉ ADMIN xem; không có thao tác xóa. */

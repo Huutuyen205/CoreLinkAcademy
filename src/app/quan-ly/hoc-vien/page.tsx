@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
 import { CreateUserForm } from "@/components/forms/create-user-form";
+import { ImportStudentsForm } from "@/components/forms/import-students-form";
 import { buttonClass } from "@/components/ui/button";
 import { Pagination, parsePage } from "@/components/ui/data-table";
 import { TextField } from "@/components/ui/field";
@@ -39,6 +40,13 @@ export default async function LearnersPage({ searchParams }: { searchParams: Pro
         </div>
       </details>
 
+      <details className="mb-6 rounded-block border border-line bg-surface p-4">
+        <summary className="cursor-pointer font-medium text-primary">Nhập danh sách học sinh hàng loạt</summary>
+        <div className="mt-4">
+          <ImportStudentsForm />
+        </div>
+      </details>
+
       <form method="get" className="mb-6 flex items-end gap-2">
         <TextField name="q" label="Tìm học sinh theo tên hoặc mã" defaultValue={q} maxLength={80} className="flex-1" />
         <button type="submit" className={buttonClass("secondary")}>
@@ -55,7 +63,7 @@ export default async function LearnersPage({ searchParams }: { searchParams: Pro
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-medium">
-                    {actor.role === "ADMIN" ? <Link href={`/quan-ly/nguoi-dung/${s.id}`}>{s.fullName}</Link> : s.fullName}{" "}
+                    <Link href={`/quan-ly/hoc-vien/${s.id}`}>{s.fullName}</Link>{" "}
                     <span className="text-sm font-normal text-muted">
                       {s.studentCode}
                       {s.gradeLevel ? ` · lớp ${s.gradeLevel}` : ""}

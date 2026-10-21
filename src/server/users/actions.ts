@@ -6,7 +6,8 @@ import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
 import { normalizePhone } from "@/lib/phone";
-import { createUser, linkGuardian, resetPassword, setUserStatus, unlinkGuardian, updateUser } from "./service";
+import { parseStudentImport } from "./import";
+import { createUser, importStudents, linkGuardian, resetPassword, setUserStatus, unlinkGuardian, updateUser } from "./service";
 
 const id = z.string().min(1).max(40);
 const ROLES = ["ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] as const;
@@ -106,7 +107,8 @@ export async function linkGuardianAction(_prev: ActionState, formData: FormData)
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => linkGuardian(actor, parsed.data.parentId, parsed.data.studentId), fields);
   if (!result.ok) return result.state;
-  revalidatePath("/quan-ly/hoc-vien");
+  revalidatePath("/quan-ly/hoc-vien", "layout");
+  revalidatePath("/quan-ly/phu-huynh", "layout");
   revalidatePath(`/quan-ly/nguoi-dung/${parsed.data.studentId}`);
   return { ok: true, message: "Đã liên kết phụ huynh." };
 }
@@ -117,7 +119,22 @@ export async function unlinkGuardianAction(_prev: ActionState, formData: FormDat
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => unlinkGuardian(actor, parsed.data.parentId, parsed.data.studentId));
   if (!result.ok) return result.state;
-  revalidatePath("/quan-ly/hoc-vien");
+  revalidatePath("/quan-ly/hoc-vien", "layout");
+  revalidatePath("/quan-ly/phu-huynh", "layout");
   revalidatePath(`/quan-ly/nguoi-dung/${parsed.data.studentId}`);
   return { ok: true, message: "Đã bỏ liên kết." };
+}
+
+export type ImportState = ActionState & { credentials?: { fullName: string; studentCode: string; login: string; password: string }[] };
+
+/** Admin §2 — FR-036: nhập danh sách học sinh hàng loạt. */
+export async function importStudentsAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
+  const actor = await requireRole("ADMIN", "STAFF");
+  const text = String(formData.get("data") ?? "").slice(0, 50_000);
+  const { rows, errors } = parseStudentImport(text);
+  if (errors.length > 0) return { ok: false, message: "Dữ liệu chưa hợp lệ. Chưa nhập dòng nào.", details: errors.slice(0, 30), values: { data: text } };
+  const result = await runAction(() => importStudents(actor, rows), { data: text });
+  if (!result.ok) return result.state;
+  revalidatePath("/quan-ly/hoc-vien");
+  return { ok: true, message: `Đã tạo ${result.value.length} tài khoản học sinh.`, credentials: result.value };
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { getClassForTeacher } from "@/server/academic/service";
@@ -14,9 +15,10 @@ import { formatDateTime, formatTime, formatVn } from "@/lib/time";
 export const metadata: Metadata = { title: "Lớp học" };
 
 // FR-033 + UC-007/UC-008: học sinh, buổi, bài tập, bảng điểm của lớp mình dạy.
-export default async function TeacherClassPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function TeacherClassPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string }> }) {
   const actor = await requireRole("TEACHER");
   const { id } = await params;
+  const { thongbao } = await searchParams;
   const klass = await orNotFound(getClassForTeacher(actor, id));
   const [assignments, gradebook, alerts] = klass.isOwner
     ? await Promise.all([listClassAssignments(actor, id), getGradebook(actor, id), listAbsenceAlerts(actor)])
@@ -29,11 +31,28 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ i
       <p className="mb-2 text-sm">
         <Link href="/giao-vien/lop">← Lớp của tôi</Link>
       </p>
+      <Flash code={thongbao} />
       <PageHeader
         title={`Lớp ${klass.code}`}
         description={`${klass.course.title} · ${formatSchedule(klass.weekdays, klass.startTime, klass.endTime)}${klass.room ? ` · ${klass.room.name}` : ""}`}
         action={<Badge tone={CLASS_STATUS[klass.status].tone}>{CLASS_STATUS[klass.status].label}</Badge>}
       />
+      {klass.isOwner && (
+        <nav aria-label="Công cụ lớp" className="mb-6 flex flex-wrap gap-2">
+          <ButtonLink href={`/giao-vien/lop/${klass.id}/danh-gia`} variant="secondary" size="sm">
+            Đánh giá định kỳ
+          </ButtonLink>
+          <ButtonLink href={`/tai-lieu?lop=${klass.id}`} variant="secondary" size="sm">
+            Tài liệu lớp
+          </ButtonLink>
+          <ButtonLink href={`/thong-bao/gui?lop=${klass.id}`} variant="secondary" size="sm">
+            Gửi thông báo cho lớp
+          </ButtonLink>
+          <ButtonLink href={`/tin-nhan/lop/${klass.id}`} variant="secondary" size="sm">
+            Nhóm trao đổi lớp
+          </ButtonLink>
+        </nav>
+      )}
 
       {classAlerts.length > 0 && (
         <div role="status" className="mb-6 rounded-control border border-danger/30 bg-danger-soft px-4 py-3 text-sm text-danger">
@@ -42,7 +61,7 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ i
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title={`Học sinh (${klass.enrollments.length})`}>
           {klass.enrollments.length === 0 ? (
             <EmptyState message="Lớp chưa có học sinh." />
@@ -51,7 +70,8 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ i
               {klass.enrollments.map((e) => (
                 <li key={e.student.id} className="flex items-center justify-between gap-2 py-2">
                   <span>
-                    {e.student.fullName} <span className="text-sm text-muted">{e.student.studentCode}</span>
+                    {klass.isOwner ? <Link href={`/giao-vien/hoc-sinh/${e.student.id}`}>{e.student.fullName}</Link> : e.student.fullName}{" "}
+                    <span className="text-sm text-muted">{e.student.studentCode}</span>
                   </span>
                   {e.status !== "ACTIVE" && <Badge tone={ENROLLMENT_STATUS[e.status].tone}>{ENROLLMENT_STATUS[e.status].label}</Badge>}
                 </li>
@@ -70,7 +90,11 @@ export default async function TeacherClassPage({ params }: { params: Promise<{ i
                 </span>
                 <span className="flex items-center gap-2">
                   {s.status !== "SCHEDULED" && <Badge tone={SESSION_STATUS[s.status].tone}>{SESSION_STATUS[s.status].label}</Badge>}
-                  {s.status !== "CANCELLED" && <Link href={`/giao-vien/buoi/${s.id}`}>Điểm danh</Link>}
+                  {s.status !== "CANCELLED" && (
+                    <Link href={`/giao-vien/buoi/${s.id}`} className="inline-flex min-h-11 items-center">
+                      Điểm danh
+                    </Link>
+                  )}
                 </span>
               </li>
             ))}

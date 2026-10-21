@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AnswerForm } from "@/components/assessment/answer-form";
-import { Alert, Badge, PageHeader } from "@/components/ui/feedback";
+import { FileList } from "@/components/files/file-list";
+import { ConfigForm } from "@/components/forms/config-form";
+import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
+import { deleteSubmissionFileAction, uploadSubmissionFilesAction } from "@/server/assessment/actions";
 import { openAssignmentForStudent } from "@/server/assessment/service";
 import { requireRole } from "@/server/auth/guard";
+import { ACCEPT_ATTRIBUTE, ACCEPT_LABEL } from "@/server/files/rules";
 import { orNotFound } from "@/server/page";
 import { SUBMISSION_STATUS } from "@/lib/labels";
 import { formatDateTime } from "@/lib/time";
@@ -15,7 +19,7 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
   const actor = await requireRole("STUDENT");
   const data = await orNotFound(openAssignmentForStudent(actor, (await params).id));
   const { assignment: a, submission, canWork, pastDueBlocked, resultsPublished, awaitingGrade, items } = data;
-  const maxScore = items.reduce((s, i) => s + i.question.points, 0);
+  const maxScore = a.maxScore;
 
   return (
     <>
@@ -24,7 +28,7 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
       </p>
       <PageHeader
         title={a.title}
-        description={`Lớp ${a.classCode} · hạn nộp ${formatDateTime(a.dueAt)}${a.allowLate ? " (nhận nộp muộn)" : ""} · ${items.length} câu`}
+        description={`Lớp ${a.classCode} · hạn nộp ${formatDateTime(a.dueAt)}${a.allowLate ? " (nhận nộp muộn)" : ""} · ${items.length > 0 ? `${items.length} câu` : "nộp bài bằng tệp/ảnh"} · ${maxScore} điểm`}
         action={
           submission && (
             <span className="flex flex-wrap gap-2">
@@ -35,6 +39,32 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
         }
       />
       {a.instructions && <p className="mb-6 whitespace-pre-line">{a.instructions}</p>}
+      {a.files.length > 0 && (
+        <Card title="Tệp đề bài / tài liệu" className="mb-6">
+          <FileList files={a.files} />
+        </Card>
+      )}
+      {a.acceptsFiles && submission && (
+        <Card title={`Bài làm dạng tệp/ảnh (${submission.files.length})`} className="mb-6">
+          {canWork ? (
+            <div className="space-y-4">
+              <p className="text-sm text-muted">
+                Chụp ảnh bài làm trên giấy hoặc chọn tệp PDF/Word{items.length === 0 ? ", rồi bấm \"Nộp bài\" ở cuối trang." : ". Tệp được gửi kèm khi bạn nộp bài."}
+              </p>
+              <FileList files={submission.files} empty="Chưa có tệp bài làm." deleteAction={deleteSubmissionFileAction} deleteHidden={{ assignmentId: a.id }} />
+              <ConfigForm
+                action={uploadSubmissionFilesAction}
+                hidden={{ assignmentId: a.id }}
+                submitLabel="Tải lên"
+                submitVariant="secondary"
+                fields={[{ type: "file", name: "files", label: "Chọn ảnh hoặc tệp", hint: ACCEPT_LABEL, accept: `image/*,${ACCEPT_ATTRIBUTE}`, multiple: true }]}
+              />
+            </div>
+          ) : (
+            <FileList files={submission.files} empty="Không có tệp bài làm." />
+          )}
+        </Card>
+      )}
 
       {canWork ? (
         <AnswerForm

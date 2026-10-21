@@ -1,20 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { QuestionForm } from "@/components/assessment/question-form";
+import { FileList } from "@/components/files/file-list";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
 import { Alert, Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import {
+  addAssignmentFilesAction,
+  deleteAssignmentAction,
+  deleteAssignmentFileAction,
   deleteQuestionAction,
   publishResultsAction,
+  remindUnsubmittedAction,
   setAssignmentStatusAction,
   updateAssignmentAction,
 } from "@/server/assessment/actions";
 import { getAssignmentForTeacher } from "@/server/assessment/service";
 import { requireRole } from "@/server/auth/guard";
+import { ACCEPT_ATTRIBUTE, ACCEPT_LABEL } from "@/server/files/rules";
 import { orNotFound } from "@/server/page";
-import { round2 } from "@/lib/grading";
+import { assignmentMaxScore } from "@/lib/grading";
 import { ASSIGNMENT_STATUS, QUESTION_TYPE } from "@/lib/labels";
 import { formatDateTime, formatVn } from "@/lib/time";
 
@@ -26,7 +32,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
   const { id } = await params;
   const a = await orNotFound(getAssignmentForTeacher(actor, id));
   const isDraft = a.status === "DRAFT";
-  const total = round2(a.questions.reduce((s, q) => s + q.points, 0));
+  const total = assignmentMaxScore(a);
 
   return (
     <>
@@ -36,7 +42,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
       <Flash code={(await searchParams).thongbao} />
       <PageHeader
         title={a.title}
-        description={`Hạn nộp ${formatDateTime(a.dueAt)} · ${a.questions.length} câu · tổng ${total} điểm${a.allowLate ? " · cho nộp muộn" : ""}`}
+        description={`Hạn nộp ${formatDateTime(a.dueAt)} · ${a.questions.length} câu · tổng ${total} điểm${a.acceptsFiles ? " · nhận bài nộp tệp/ảnh" : ""}${a.allowLate ? " · cho nộp muộn" : ""}`}
         action={
           <span className="flex flex-wrap gap-2">
             <Badge tone={ASSIGNMENT_STATUS[a.status].tone}>{ASSIGNMENT_STATUS[a.status].label}</Badge>
@@ -45,12 +51,14 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <Card title={`Câu hỏi (${a.questions.length})`}>
             {!isDraft && <Alert className="mb-4">Bài đã giao nên không sửa được câu hỏi.</Alert>}
             {a.questions.length === 0 ? (
-              <EmptyState message="Chưa có câu hỏi. Thêm câu hỏi ở bên dưới." />
+              <EmptyState
+                message={a.acceptsFiles ? "Bài chỉ nhận nộp tệp/ảnh (không có câu hỏi). Bạn vẫn có thể thêm câu hỏi ở bên dưới." : "Chưa có câu hỏi. Thêm câu hỏi ở bên dưới."}
+              />
             ) : (
               <ol className="space-y-5">
                 {a.questions.map((q) => (
@@ -96,6 +104,18 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
               <QuestionForm assignmentId={a.id} />
             </Card>
           )}
+          <Card title={`Tệp đề bài / tài liệu kèm theo (${a.files.length})`}>
+            <div className="space-y-4">
+              <FileList files={a.files} empty="Chưa có tệp đính kèm." deleteAction={deleteAssignmentFileAction} deleteHidden={{ assignmentId: a.id }} />
+              <ConfigForm
+                action={addAssignmentFilesAction}
+                hidden={{ assignmentId: a.id }}
+                submitLabel="Tải lên"
+                submitVariant="secondary"
+                fields={[{ type: "file", name: "files", label: "Thêm tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true }]}
+              />
+            </div>
+          </Card>
         </div>
 
         <div className="space-y-6">
@@ -125,6 +145,16 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                     Còn {a.ungradedCount} bài chưa chấm. {a.resultsPublishedAt ? "Các bài này" : "Nếu công bố bây giờ, các bài này"} hiện &ldquo;Đang chờ chấm&rdquo; với học sinh cho tới khi bạn chấm xong.
                   </Alert>
                 )}
+                {a.status === "PUBLISHED" && (
+                  <ConfigForm
+                    action={remindUnsubmittedAction}
+                    hidden={{ assignmentId: a.id }}
+                    submitLabel="Nhắc học sinh chưa nộp"
+                    submitVariant="secondary"
+                    confirm="Gửi thông báo nhắc nộp bài cho học sinh chưa nộp và phụ huynh của các em?"
+                    fields={[]}
+                  />
+                )}
                 {!a.resultsPublishedAt && (
                   <ConfigForm
                     action={publishResultsAction}
@@ -149,9 +179,33 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                 { type: "textarea", name: "instructions", label: "Hướng dẫn", maxLength: 5000, rows: 3, defaultValue: a.instructions },
                 { type: "datetime-local", name: "dueAt", label: "Hạn nộp (giờ Việt Nam)", required: true, defaultValue: formatVn(a.dueAt, "yyyy-MM-dd'T'HH:mm") },
                 { type: "checkbox", name: "allowLate", label: "Cho phép nộp muộn", defaultChecked: a.allowLate },
+                { type: "checkbox", name: "acceptsFiles", label: "Nhận bài nộp dạng tệp/ảnh", defaultChecked: a.acceptsFiles },
+                {
+                  type: "number",
+                  name: "manualMaxScore",
+                  label: "Điểm tối đa khi bài không có câu hỏi",
+                  min: "1",
+                  max: "100",
+                  step: "0.25",
+                  defaultValue: a.manualMaxScore === null ? "" : String(a.manualMaxScore),
+                },
               ]}
             />
           </Card>
+
+          {a._count.submissions === 0 && (
+            <Card title="Xóa bài">
+              <p className="mb-3 text-sm text-muted">Chỉ xóa được khi chưa có học sinh nộp. Đã có bài nộp thì hãy đóng bài.</p>
+              <ConfigForm
+                action={deleteAssignmentAction}
+                hidden={{ assignmentId: a.id }}
+                submitLabel="Xóa bài tập"
+                submitVariant="danger"
+                confirm="Xóa bài tập này cùng câu hỏi và tệp đính kèm? Không hoàn tác được."
+                fields={[]}
+              />
+            </Card>
+          )}
         </div>
       </div>
     </>

@@ -32,6 +32,12 @@ const PERMISSIONS = {
   "assignment.author": ["TEACHER"],
   "submission.work": ["STUDENT"],
   "audit.read": ["ADMIN"],
+  // Bổ sung (FR-036..FR-052)
+  "staff.view": ["ADMIN", "STAFF"], // xem danh sách/hồ sơ giáo viên, lịch tổng
+  "document.manage": ["ADMIN", "STAFF"], // giáo trình, phân phối tài liệu
+  "request.handle": ["ADMIN", "STAFF"], // duyệt đề xuất đổi lịch
+  "report.view": ["ADMIN", "STAFF"],
+  "level.manage": ["ADMIN"],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

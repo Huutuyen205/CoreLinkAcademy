@@ -7,6 +7,7 @@ import { assertCanViewClass, isManager, linkedStudentIds } from "@/server/auth/s
 import type { Actor } from "@/server/auth/session";
 import { db, type Tx } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { classAudienceIds, notifyUsers } from "@/server/notifications/service";
 import { isUniqueViolation } from "@/server/users/credentials";
 import { findConflicts, generateSessions, spanOf, type Interval } from "@/lib/schedule";
 import { formatDateTime } from "@/lib/time";
@@ -29,21 +30,24 @@ export type ClassInput = {
 export type ConflictItem = { kind: "teacher" | "room"; classCode: string; startsAt: Date; endsAt: Date };
 
 /** Buổi đã có (không hủy) của GV/phòng chồng với các khoảng mới. */
-async function scheduleConflicts(
+export async function scheduleConflicts(
   tx: Tx,
   candidates: Interval[],
-  who: { teacherId: string; roomId: string | null },
-  excludeSessionId?: string,
+  who: { teacherId: string | null; roomId: string | null },
+  exclude: { sessionId?: string; classId?: string } = {},
 ): Promise<ConflictItem[]> {
   const span = spanOf(candidates);
   if (!span) return [];
+  const who_ = [...(who.teacherId ? [{ teacherId: who.teacherId }] : []), ...(who.roomId ? [{ roomId: who.roomId }] : [])];
+  if (who_.length === 0) return [];
   const existing = await tx.classSession.findMany({
     where: {
       status: { not: "CANCELLED" },
       startsAt: { lt: span.endsAt },
       endsAt: { gt: span.startsAt },
-      OR: [{ teacherId: who.teacherId }, ...(who.roomId ? [{ roomId: who.roomId }] : [])],
-      ...(excludeSessionId ? { id: { not: excludeSessionId } } : {}),
+      OR: who_,
+      ...(exclude.sessionId ? { id: { not: exclude.sessionId } } : {}),
+      ...(exclude.classId ? { classId: { not: exclude.classId } } : {}),
     },
     select: { id: true, startsAt: true, endsAt: true, status: true, teacherId: true, roomId: true, class: { select: { code: true } } },
   });
@@ -84,7 +88,7 @@ export async function createClass(actor: Actor, input: ClassInput): Promise<stri
   const [course, teacher, room] = await Promise.all([
     db.course.findUnique({ where: { id: input.courseId }, select: { id: true } }),
     db.user.findFirst({ where: { id: input.teacherId, role: "TEACHER", status: "ACTIVE" }, select: { id: true } }),
-    input.roomId ? db.room.findUnique({ where: { id: input.roomId }, select: { id: true, capacity: true } }) : null,
+    input.roomId ? db.room.findFirst({ where: { id: input.roomId, isActive: true }, select: { id: true, capacity: true } }) : null,
   ]);
   if (!course) throw new DomainError("INVALID", "Khóa học không hợp lệ.", { courseId: "Chọn khóa học." });
   if (!teacher) throw new DomainError("INVALID", "Giáo viên không hợp lệ.", { teacherId: "Chọn giáo viên." });
@@ -195,6 +199,7 @@ export async function cancelSession(actor: Actor, sessionId: string, reason: str
     if (count === 0) throw new DomainError("INVALID_TRANSITION", "Chỉ hủy được buổi chưa diễn ra.");
     // FR-021, FR-035 (GAP-09): hủy buổi cũng được truy vết như dời buổi.
     await writeAudit({ actorId: actor.id, action: "session.cancel", entity: "ClassSession", entityId: sessionId, detail: { startsAt: s.startsAt.toISOString(), reason } }, tx);
+    await notifySchedule(tx, s.classId, "Nghỉ buổi học", `Buổi ${formatDateTime(s.startsAt)} được nghỉ. Lý do: ${reason}`);
     return s.classId;
   });
 }
@@ -209,18 +214,27 @@ export async function rescheduleSession(actor: Actor, sessionId: string, startsA
     });
     if (!s) throw new ForbiddenError();
     if (s.status !== "SCHEDULED") throw new DomainError("INVALID_TRANSITION", "Chỉ dời được buổi chưa diễn ra.");
-    const conflicts = await scheduleConflicts(tx, [{ startsAt, endsAt }], s, sessionId);
+    const conflicts = await scheduleConflicts(tx, [{ startsAt, endsAt }], s, { sessionId });
     if (conflicts.length > 0) throw new ScheduleConflictError(conflicts);
     await tx.classSession.update({ where: { id: sessionId }, data: { startsAt, endsAt } });
     await writeAudit(
       { actorId: actor.id, action: "session.reschedule", entity: "ClassSession", entityId: sessionId, detail: { from: s.startsAt.toISOString(), to: startsAt.toISOString(), reason } },
       tx,
     );
+    // Admin §7: "Gửi thông báo khi lịch học thay đổi".
+    await notifySchedule(tx, s.classId, "Dời buổi học", `Buổi ${formatDateTime(s.startsAt)} dời sang ${formatDateTime(startsAt)}. Lý do: ${reason}`);
     return s.classId;
   });
 }
 
-const seatCount = { _count: { select: { enrollments: { where: { status: { in: SEAT_STATUSES } } } } } } as const;
+/** Thông báo đổi lịch cho GV, HS, PH của lớp (+ người liên quan thêm, vd. GV dạy thay). */
+export async function notifySchedule(tx: Tx, classId: string, title: string, body: string, extraUserIds: string[] = []) {
+  const klass = await tx.class.findUnique({ where: { id: classId }, select: { code: true } });
+  const ids = [...(await classAudienceIds(tx, classId)), ...extraUserIds];
+  await notifyUsers(tx, ids, { kind: "schedule_change", title: `${title} — lớp ${klass?.code ?? ""}`, body, link: "/lich" });
+}
+
+export const seatCount = { _count: { select: { enrollments: { where: { status: { in: SEAT_STATUSES } } } } } } as const;
 
 /** Danh sách lớp theo phạm vi: quản lý → tất cả; GV → lớp mình dạy. */
 export async function listClasses(actor: Actor, filter: { status?: ClassStatus } = {}) {
@@ -316,7 +330,7 @@ export async function classFormOptions(actor: Actor) {
   const [courses, teachers, rooms] = await Promise.all([
     db.course.findMany({ orderBy: { title: "asc" }, select: { id: true, title: true, totalSessions: true } }),
     db.user.findMany({ where: { role: "TEACHER", status: "ACTIVE" }, orderBy: { fullName: "asc" }, select: { id: true, fullName: true } }),
-    db.room.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true, capacity: true } }),
+    db.room.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true, capacity: true } }),
   ]);
   return { courses, teachers, rooms };
 }

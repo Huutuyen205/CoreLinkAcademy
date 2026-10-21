@@ -114,6 +114,13 @@ export default async function CourseDetailPage({ params }: Props) {
           </ul>
         )}
       </section>
+
+      {/* Điện thoại: nút đăng ký luôn trong tầm tay khi cuộn lộ trình dài (chừa chỗ cho cụm nút nổi bên phải). */}
+      <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-4 right-[5.5rem] z-40 sm:hidden">
+        <ButtonLink href={`/dang-ky-hoc-thu?khoa=${course.slug}`} className="w-full rounded-full shadow-xl">
+          Đăng ký học thử
+        </ButtonLink>
+      </div>
     </article>
   );
 }

@@ -2,7 +2,7 @@
 
 | Mục | Giá trị |
 |---|---|
-| Phiên bản | 3.1 (2026-10-21) — làm rõ tiêu chí FR-006, FR-015, FR-032, FR-033; thêm NFR-009..NFR-012 |
+| Phiên bản | 3.2 (2026-10-21) — thêm FR-036..FR-052 theo danh sách chức năng 4 actor của PO (DECISION-D26) |
 | Trạng thái | Baselined. **Đây là nguồn chuẩn phạm vi** (AGENTS.md). Đặc tả chi tiết từng FR: [02-srs.md](02-srs.md) |
 | Owner | Chủ dự án (phê duyệt) · Trợ lý (BA soạn) |
 
@@ -94,6 +94,30 @@ ID cố định, không đánh số lại. Ưu tiên: **P0** = không có thì s
 | FR-034 | Trang tổng quan theo vai trò | Admin/Staff: lead mới, lead quá hạn, lớp đang tuyển, lớp đang học, cảnh báo vắng · GV: buổi hôm nay, số bài chờ chấm, cảnh báo vắng lớp mình · HS: bài cần làm, lịch tuần, điểm mới · PH: chọn con, lịch, chuyên cần, điểm | P0 | UC-018, UC-011 |
 | FR-035 | Nhật ký audit | Ghi cho: tạo tài khoản, đổi vai trò, khóa/mở khóa, đặt lại mật khẩu, sửa điểm danh ngoài khung, sửa điểm sau công bố, chuyển lead, hủy/dời buổi; Admin xem và lọc theo loại; không ai sửa/xóa được | P1 | UC-019 |
 
+### 2.7 Bổ sung theo danh sách chức năng Admin / Giáo viên / Học sinh / Phụ huynh (v3.2, DECISION-D26)
+
+Nguồn: 4 file PO gửi ngày 2026-10-21 (Admin.md, Giáo viên.md, Phụ huynh.md, Bảng phân loại ưu tiên demo.md). Ưu tiên theo bảng ưu tiên demo. Mục "Giả định – cần xác nhận" trong file PO **không** làm, ghi ở docs/05 §5 (P2-32..P2-41).
+
+| ID | Yêu cầu | Tiêu chí chấp nhận | Ưu tiên | Nguồn |
+|---|---|---|---|---|
+| FR-036 | Hồ sơ giáo viên / học sinh / phụ huynh; cấp học; ngừng sử dụng môn, phòng | Danh sách + tìm kiếm/lọc + chi tiết cho từng nhóm; trạng thái hồ sơ (HS: đang học/bảo lưu/đã nghỉ; GV: đang dạy/tạm nghỉ/đã nghỉ) khác khóa đăng nhập, đổi ghi audit `user.member_status`; lịch sử lớp của HS; Staff sửa hồ sơ HS/PH, chỉ Admin sửa GV; nhập HS hàng loạt ≤ 50 dòng, có lỗi/trùng tài khoản → không tạo dòng nào, mật khẩu tạm hiện một lần; cấp học có khoảng khối, liên kết môn–cấp; môn/phòng ngừng sử dụng không chọn được cho dữ liệu mới, môn ngừng ẩn khỏi trang công khai | P0 | Admin §1–§4, ưu tiên P0/P1 |
+| FR-037 | Sửa lớp, phân công giáo viên phụ trách, đổi phòng | Áp dụng cho buổi chưa diễn ra; buổi đang có GV dạy thay giữ nguyên; chặn trùng lịch GV/phòng với lớp khác; sĩ số ≥ số HS hiện có và ≤ sức chứa phòng; lớp đã kết thúc/hủy không sửa; audit `class.update`; thông báo cho lớp | P0 | Admin §6 |
+| FR-038 | Phân công GV từng buổi, học bù, chuyển lớp, lịch tổng | Dạy thay chỉ buổi chưa diễn ra + chặn trùng GV; buổi học bù thêm vào cuối lớp, chặn trùng GV/phòng; chuyển lớp = ghi danh cũ DROPPED + ghi danh mới qua đủ kiểm tra FR-019 trong một transaction; lịch tổng theo tuần lọc GV/phòng/lớp; mọi thay đổi lịch gửi thông báo cho GV, HS, PH của lớp; audit `session.assign_teacher`, `session.makeup`, `enrollment.transfer` | P0 | Admin §2, §7, §8 |
+| FR-039 | Chi tiết buổi học cho HS/PH | Thời gian, GV (đánh dấu dạy thay), phòng, điểm danh của em, ghi chú GV, tài liệu lớp; chỉ buổi của lớp HS đang/đã học, PH chỉ của con (404) | P0 | Bảng ưu tiên: HS/PH lịch |
+| FR-040 | Nộp bài bằng tệp/ảnh; tệp đề bài | GV bật "nhận bài nộp dạng tệp/ảnh" và đính kèm tệp đề; bài không có câu hỏi giao được và chấm một điểm tổng ∈ [0, điểm tối đa] bước 0,25; HS tải ảnh/PDF/Word trước khi nộp, bài không câu hỏi bắt buộc ≥ 1 tệp; có tệp → chờ chấm; tệp ≤ 4 MB/lần, ≤ 10 tệp, chỉ loại cho phép; tải tệp kiểm tra quyền theo chủ sở hữu (404 nếu sai) | P0 | Bảng ưu tiên: HS bài tập |
+| FR-041 | Xóa bài tập; nhắc nộp bài | Xóa khi chưa có HS nộp (có bài nộp → đóng bài); nhắc nộp gửi thông báo cho HS đang học chưa nộp và PH | P1 | GV §7, §8 |
+| FR-042 | Giáo trình, tài liệu học tập, giáo án | Tạo bằng tệp hoặc đường dẫn; phân loại môn/cấp; chia sẻ/phân phối cho lớp, gỡ chia sẻ; cờ HS/PH được xem; ngừng sử dụng; xóa chỉ khi không còn chia sẻ (giáo án gắn buổi đã diễn ra không xóa); giáo trình chỉ quản lý tạo; giáo án chỉ chủ + quản lý xem; HS/PH chỉ thấy tài liệu chia sẻ cho lớp mình/của con | P1 | Admin §9–§10, GV §3–§5 |
+| FR-043 | Đề xuất đổi lịch của GV | Xin nghỉ hoặc dời buổi (buổi mình dạy, chưa diễn ra, mỗi buổi một đề xuất chờ); sửa/rút khi chờ; giáo vụ duyệt: dời theo đề xuất (kiểm trùng), xin nghỉ → phân công dạy thay hoặc hủy buổi; từ chối kèm lý do; GV nhận thông báo kết quả | P1 | GV §2, Admin §7 |
+| FR-044 | Đơn xin nghỉ của PH | Gửi cho buổi chưa bắt đầu của con; không trùng đơn chờ/đã duyệt; rút khi chờ; GV của lớp/buổi hoặc giáo vụ duyệt → điểm danh "Có phép" kèm lý do (DECISION-D25); PH nhận thông báo kết quả | P1 | PH §2 |
+| FR-045 | PH xem bài tập, lớp của con | Danh sách bài, hạn nộp, trạng thái nộp; điểm + nhận xét chỉ sau công bố và đã chấm (BR-047); lớp con đang học (lịch, GV, phòng) | P1 | PH §1, §4 |
+| FR-046 | GV xem hồ sơ học sinh lớp mình | Điểm đã công bố, chuyên cần trong lớp mình, liên hệ PH; HS lớp khác → 404 | P1 | GV §1 |
+| FR-047 | Tổng quan bổ sung | Quản lý: số đề xuất/đơn nghỉ chờ duyệt, lối tắt; GV: đơn nghỉ chờ duyệt; chuông thông báo chưa đọc ở mọi cổng | P1 | — |
+| FR-048 | Thông báo | Quản lý gửi tới tất cả / quản lý / GV / HS / PH / một lớp; GV gửi cho lớp mình; người nhận tính lúc gửi (DECISION-D28); hộp thư có chưa đọc/đã đọc; danh sách đã gửi kèm số người đã đọc; thông báo hệ thống khi đổi lịch, kết quả đơn/đề xuất, nhắc nộp, công bố kết quả, đánh giá, tài liệu mới | P2 | Admin §12A, GV §10A, PH §7A |
+| FR-049 | Đánh giá định kỳ | GV xem tổng hợp chuyên cần + điểm TB từng HS; viết nháp theo kỳ (duy nhất lớp + HS + kỳ); gửi → HS, PH nhận thông báo; bản đã gửi không sửa; lịch sử đánh giá | P2 | GV §9, PH §5 |
+| FR-050 | Nhắn tin | Nhóm lớp: thành viên tự suy ra từ lớp; nhắn 1-1: quản lý ↔ GV/PH, GV ↔ PH có con học lớp mình, PH ↔ GV của con; tìm kiếm theo tên/lớp/nội dung; số tin chưa đọc; không realtime, tự làm mới (DECISION-D27) | P2 | Admin §12B, GV §10B, PH §7B |
+| FR-051 | Tài khoản cá nhân | Xem thông tin; tự cập nhật email/SĐT/địa chỉ; đổi email/SĐT phải nhập mật khẩu hiện tại, ghi audit `user.contact_change` | P1 | PH §8, GV §11B |
+| FR-052 | Báo cáo – thống kê | Số HS/GV/lớp, lead; chuyên cần, kết quả học tập, hoàn thành bài tập theo lớp; lọc thời gian/lớp/môn; xuất CSV mở bằng Excel (chặn CSV injection) | P2 | Admin §13A |
+
 ## 3. Yêu cầu phi chức năng
 
 | ID | Nhóm | Yêu cầu | Ngưỡng / đo bằng |
@@ -120,4 +144,5 @@ Xem [06-business-rules-and-states.md](06-business-rules-and-states.md).
 | Ngày | Phiên bản | Thay đổi | Lý do |
 |---|---|---|---|
 | 2026-10-21 | 3.0 | Baseline 35 FR | Discovery |
+| 2026-10-21 | 3.2 | Thêm FR-036..FR-052 | PO gửi danh sách chức năng 4 actor và bảng ưu tiên demo, yêu cầu bổ sung vào dự án (DECISION-D26) |
 | 2026-10-21 | 3.1 | FR-006 thêm nhập tay; FR-011 thêm giới hạn IP; FR-015 điều kiện xóa môn; FR-019 chặn HS bị khóa; FR-021 audit hủy buổi; FR-032/033 BR-047; FR-035 liệt kê đủ sự kiện; NFR-009..012 | Đối chiếu code (GAP-REPORT), thuật ngữ và ma trận quyền đã có từ baseline |
