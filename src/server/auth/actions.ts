@@ -1,0 +1,111 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { db } from "@/server/db";
+import type { ActionState } from "@/server/errors";
+import { fieldErrorsOf } from "@/server/validation";
+import { normalizePhone } from "@/lib/phone";
+import { requireActor } from "./guard";
+import { burnPasswordCheck, hashPassword, verifyPassword } from "./password";
+import { HOME_BY_ROLE } from "./policy";
+import { afterFailedLogin, checkPasswordStrength, isLocked, LOCK_MINUTES, parseIdentifier } from "./rules";
+import { createSession, destroyCurrentSession, revokeUserSessions } from "./session";
+
+const INVALID_CREDENTIALS = "Thông tin đăng nhập không đúng.";
+
+const loginSchema = z.object({
+  identifier: z.string().trim().min(1, "Nhập email hoặc số điện thoại.").max(191),
+  password: z.string().min(1, "Nhập mật khẩu.").max(128),
+});
+
+/** API-005 — FR-010, FR-011. */
+export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = loginSchema.safeParse({
+    identifier: formData.get("identifier"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrorsOf(parsed.error) };
+  const { identifier, password } = parsed.data;
+
+  const id = parseIdentifier(identifier);
+  const phone = id.kind === "phone" ? normalizePhone(id.raw) : null;
+  const user =
+    id.kind === "email"
+      ? await db.user.findUnique({ where: { email: id.value } })
+      : phone
+        ? await db.user.findUnique({ where: { phone } })
+        : null;
+
+  if (!user) {
+    await burnPasswordCheck(password);
+    return { ok: false, message: INVALID_CREDENTIALS };
+  }
+
+  const now = new Date();
+  if (isLocked(user.lockedUntil, now)) {
+    return { ok: false, message: `Tài khoản tạm khóa do đăng nhập sai nhiều lần. Vui lòng thử lại sau ${LOCK_MINUTES} phút.` };
+  }
+
+  const passwordOk = await verifyPassword(user.passwordHash, password);
+  if (!passwordOk) {
+    const next = afterFailedLogin(user.failedLoginCount, now);
+    await db.user.update({ where: { id: user.id }, data: next });
+    if (next.lockedUntil) {
+      return { ok: false, message: `Bạn đã nhập sai 5 lần. Tài khoản tạm khóa ${LOCK_MINUTES} phút.` };
+    }
+    return { ok: false, message: INVALID_CREDENTIALS };
+  }
+
+  if (user.status !== "ACTIVE") return { ok: false, message: "Tài khoản đã bị khóa. Vui lòng liên hệ học viện." };
+
+  await db.user.update({ where: { id: user.id }, data: { failedLoginCount: 0, lockedUntil: null } });
+  await createSession(user.id);
+  redirect(user.mustChangePassword ? "/doi-mat-khau" : HOME_BY_ROLE[user.role]);
+}
+
+/** API-006. */
+export async function logout(): Promise<void> {
+  await destroyCurrentSession();
+  redirect("/dang-nhap");
+}
+
+const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Nhập mật khẩu hiện tại.").max(128),
+    newPassword: z.string().max(128),
+    confirm: z.string().max(128),
+  })
+  .superRefine((value, ctx) => {
+    const weak = checkPasswordStrength(value.newPassword);
+    if (weak) ctx.addIssue({ code: "custom", path: ["newPassword"], message: weak });
+    if (value.newPassword !== value.confirm) {
+      ctx.addIssue({ code: "custom", path: ["confirm"], message: "Mật khẩu nhập lại không khớp." });
+    }
+    if (value.newPassword === value.currentPassword) {
+      ctx.addIssue({ code: "custom", path: ["newPassword"], message: "Mật khẩu mới phải khác mật khẩu hiện tại." });
+    }
+  });
+
+/** API-007 — FR-012. */
+export async function changePassword(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireActor({ allowPasswordChange: true });
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: formData.get("currentPassword"),
+    newPassword: formData.get("newPassword"),
+    confirm: formData.get("confirm"),
+  });
+  if (!parsed.success) return { ok: false, fieldErrors: fieldErrorsOf(parsed.error) };
+
+  const user = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { passwordHash: true } });
+  if (!(await verifyPassword(user.passwordHash, parsed.data.currentPassword))) {
+    return { ok: false, fieldErrors: { currentPassword: "Mật khẩu hiện tại không đúng." } };
+  }
+
+  await db.user.update({
+    where: { id: actor.id },
+    data: { passwordHash: await hashPassword(parsed.data.newPassword), mustChangePassword: false },
+  });
+  await revokeUserSessions(actor.id, true);
+  redirect(`${HOME_BY_ROLE[actor.role]}?thongbao=doi-mat-khau`);
+}

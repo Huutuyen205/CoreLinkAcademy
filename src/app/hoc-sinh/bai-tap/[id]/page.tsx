@@ -1,0 +1,85 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { AnswerForm } from "@/components/assessment/answer-form";
+import { Alert, Badge, PageHeader } from "@/components/ui/feedback";
+import { openAssignmentForStudent } from "@/server/assessment/service";
+import { requireRole } from "@/server/auth/guard";
+import { orNotFound } from "@/server/page";
+import { SUBMISSION_STATUS } from "@/lib/labels";
+import { formatDateTime } from "@/lib/time";
+
+export const metadata: Metadata = { title: "Làm bài" };
+
+// UC-009 — FR-029..FR-032. Trước khi công bố, trang không nhận đáp án đúng từ server.
+export default async function StudentAssignmentPage({ params }: { params: Promise<{ id: string }> }) {
+  const actor = await requireRole("STUDENT");
+  const data = await orNotFound(openAssignmentForStudent(actor, (await params).id));
+  const { assignment: a, submission, canWork, pastDueBlocked, resultsPublished, items } = data;
+  const maxScore = items.reduce((s, i) => s + i.question.points, 0);
+
+  return (
+    <>
+      <p className="mb-2 text-sm">
+        <Link href="/hoc-sinh/bai-tap">← Bài tập</Link>
+      </p>
+      <PageHeader
+        title={a.title}
+        description={`Lớp ${a.classCode} · hạn nộp ${formatDateTime(a.dueAt)}${a.allowLate ? " (nhận nộp muộn)" : ""} · ${items.length} câu`}
+        action={
+          submission && (
+            <span className="flex flex-wrap gap-2">
+              <Badge tone={SUBMISSION_STATUS[submission.status].tone}>{submission.status === "GRADED" && !resultsPublished ? "Đã nộp" : SUBMISSION_STATUS[submission.status].label}</Badge>
+              {submission.isLate && <Badge tone="warning">Nộp muộn</Badge>}
+            </span>
+          )
+        }
+      />
+      {a.instructions && <p className="mb-6 whitespace-pre-line">{a.instructions}</p>}
+
+      {canWork ? (
+        <AnswerForm
+          assignmentId={a.id}
+          items={items.map((i) => ({ id: i.question.id, order: i.question.order, type: i.question.type, prompt: i.question.prompt, options: i.question.options, points: i.question.points, response: i.response }))}
+        />
+      ) : (
+        <>
+          {!submission && pastDueBlocked && <Alert tone="warning">Đã quá hạn nộp và bài không nhận nộp muộn.</Alert>}
+          {!submission && !pastDueBlocked && <Alert>Bài đã đóng hoặc bạn không còn đang học lớp này.</Alert>}
+          {submission && submission.status !== "IN_PROGRESS" && !resultsPublished && (
+            <Alert tone="success">Đã nộp bài{submission.submittedAt ? ` lúc ${formatDateTime(submission.submittedAt)}` : ""}. Điểm sẽ hiển thị khi giáo viên công bố kết quả.</Alert>
+          )}
+          {submission && submission.status === "IN_PROGRESS" && <Alert tone="warning">Bài chưa được nộp và không còn nhận bài.</Alert>}
+
+          {resultsPublished && submission && (
+            <Alert tone="info" title={`Điểm: ${submission.score ?? 0}/${Math.round(maxScore * 100) / 100}`} className="mb-6">
+              {submission.teacherComment && <p className="whitespace-pre-line">Nhận xét: {submission.teacherComment}</p>}
+            </Alert>
+          )}
+
+          <ol className="mt-6 space-y-5">
+            {items.map((i) => {
+              const q = i.question;
+              const r = i.result;
+              const shown = q.type === "MCQ" && i.response != null ? q.options?.[Number(i.response)] : i.response;
+              return (
+                <li key={q.id} className="rounded-block border border-line bg-surface p-4">
+                  <p className="text-sm text-muted">
+                    Câu {q.order} · {r ? `${r.points}/${q.points}` : q.points} điểm
+                  </p>
+                  <p className="mt-1 whitespace-pre-line font-medium">{q.prompt}</p>
+                  <p className="mt-2 whitespace-pre-line">
+                    <span className="text-sm text-muted">Bài làm: </span>
+                    {shown || <span className="text-muted">(Bỏ trống)</span>}
+                  </p>
+                  {r && q.type === "MCQ" && r.correctOption !== null && <p className="mt-1 text-sm text-success">Đáp án đúng: {q.options?.[r.correctOption]}</p>}
+                  {r && q.type === "SHORT" && r.acceptedAnswers && <p className="mt-1 text-sm text-success">Đáp án: {r.acceptedAnswers.join(" · ")}</p>}
+                  {r?.feedback && <p className="mt-1 text-sm">Nhận xét: {r.feedback}</p>}
+                </li>
+              );
+            })}
+          </ol>
+        </>
+      )}
+    </>
+  );
+}

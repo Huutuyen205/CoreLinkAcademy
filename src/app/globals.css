@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Design tokens — nguồn sự thật, xem docs/08-ui-ux-and-design-system.md §2 */
+@theme {
+  --color-paper: #faf8f3;
+  --color-surface: #ffffff;
+  --color-ink: #1c2430;
+  --color-muted: #5a6472;
+  --color-line: #e3ded3;
+  --color-primary: #1f3a5f;
+  --color-primary-strong: #152a46;
+  --color-primary-soft: #e8eef5;
+  --color-accent: #a4471e;
+  --color-success: #2f6b47;
+  --color-success-soft: #e7f1ea;
+  --color-warning: #8a5a00;
+  --color-warning-soft: #f7efdc;
+  --color-danger: #a3261b;
+  --color-danger-soft: #f8e6e3;
+
+  --font-serif: var(--font-source-serif), "Georgia", serif;
+  --font-sans: var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif;
+
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+
+  --radius-control: 6px;
+  --radius-block: 10px;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif);
+    line-height: 1.25;
+    font-weight: 600;
+    text-wrap: balance;
+  }
+
+  a {
+    color: var(--color-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}

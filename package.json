@@ -1,27 +1,49 @@
 {
   "name": "corelink-academy",
-  "version": "0.1.0",
+  "version": "3.0.0",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "scripts": {
-    "dev": "pnpm --filter @corelink/api dev",
-    "dev:all": "pnpm --parallel dev",
-    "build": "pnpm --recursive build",
-    "lint": "pnpm --recursive lint",
-    "typecheck": "pnpm --recursive typecheck",
-    "test": "pnpm --recursive test",
-    "db:pull": "prisma db pull",
-    "db:generate": "prisma generate",
-    "seed:admin": "pnpm --filter @corelink/api seed:admin",
-    "seed:demo": "pnpm --filter @corelink/api seed:demo",
-    "clean": "pnpm -r exec rm -rf dist .next node_modules"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
-  "devDependencies": {
-    "dotenv": "^16.4.7",
-    "prisma": "^6.4.1",
-    "typescript": "^5.7.3"
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@prisma/client": "^6.4.1"
+    "@date-fns/tz": "^1.5.0",
+    "@node-rs/argon2": "^2.2.2",
+    "@prisma/client": "6",
+    "clsx": "^2.1.1",
+    "date-fns": "4",
+    "next": "15",
+    "react": "19",
+    "react-dom": "19",
+    "zod": "3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.3.7",
+    "@tailwindcss/postcss": "4",
+    "@types/node": "22",
+    "@types/react": "19",
+    "@types/react-dom": "19",
+    "eslint": "9",
+    "eslint-config-next": "15",
+    "postcss": "^8.5.31",
+    "prisma": "6",
+    "tailwindcss": "4",
+    "tsx": "^4.23.15",
+    "typescript": "5",
+    "vitest": "3"
   }
 }

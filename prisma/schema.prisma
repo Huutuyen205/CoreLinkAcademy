@@ -1,3 +1,6 @@
+// CoreLink Academy v3 — nguồn sự thật cho dữ liệu. Tài liệu: docs/10-database-and-erd.md
+// Mọi thời gian lưu UTC.
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,2325 +10,408 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model absence_requests {
-  id             String         @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  session_id     String         @db.Char(36)
-  student_id     String         @db.Char(36)
-  requested_by   String         @db.Char(36)
-  reason         String         @db.VarChar(500)
-  created_at     DateTime       @default(now())
-  class_sessions class_sessions @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_abs_session")
-  students       students       @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_abs_student")
-  users          users          @relation(fields: [requested_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_abs_user")
-
-  @@unique([session_id, student_id], map: "uq_abs")
-  @@index([student_id], map: "fk_abs_student")
-  @@index([requested_by], map: "fk_abs_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model ai_jobs {
-  id                     String                   @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id              String                   @db.Char(36)
-  feature                String                   @db.VarChar(20)
-  provider               String                   @db.VarChar(30)
-  model                  String                   @db.VarChar(60)
-  status                 ai_jobs_status           @default(queued)
-  input_tokens           Int                      @default(0)
-  output_tokens          Int                      @default(0)
-  audio_seconds          Int                      @default(0)
-  cost_usd               Decimal                  @default(0.00000) @db.Decimal(10, 5)
-  entity                 String?                  @db.VarChar(60)
-  entity_id              String?                  @db.Char(36)
-  request_log            Json?
-  response_log           Json?
-  error_message          String?                  @db.VarChar(1000)
-  created_by             String?                  @db.Char(36)
-  created_at             DateTime                 @default(now())
-  finished_at            DateTime?
-  branches               branches                 @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ai_jobs_branch")
-  users                  users?                   @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ai_jobs_user")
-  answers                answers[]
-  chat_turns             chat_turns[]
-  curriculum_suggestions curriculum_suggestions[]
-  monthly_reports        monthly_reports[]
-  videos                 videos[]
-
-  @@index([created_by], map: "fk_ai_jobs_user")
-  @@index([branch_id, created_at], map: "ix_ai_jobs_cost")
-  @@index([entity, entity_id], map: "ix_ai_jobs_entity")
-}
-
-model announcement_reads {
-  announcement_id String        @db.Char(36)
-  user_id         String        @db.Char(36)
-  read_at         DateTime      @default(now())
-  announcements   announcements @relation(fields: [announcement_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ar_ann")
-  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ar_user")
-
-  @@id([announcement_id, user_id])
-  @@index([user_id], map: "fk_ar_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model announcements {
-  id                 String               @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  class_id           String               @db.Char(36)
-  author_id          String               @db.Char(36)
-  title              String               @db.VarChar(200)
-  body               String               @db.Text
-  attachments        Json?
-  created_at         DateTime             @default(now())
-  deleted_at         DateTime?
-  announcement_reads announcement_reads[]
-  users              users                @relation(fields: [author_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ann_author")
-  classes            classes              @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ann_class")
-
-  @@index([author_id], map: "fk_ann_author")
-  @@index([class_id, created_at], map: "ix_ann_class")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model answers {
-  id           String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  attempt_id   String    @db.Char(36)
-  question_id  String    @db.Char(36)
-  response     Json?
-  file_id      String?   @db.Char(36)
-  transcript   String?   @db.Text
-  is_correct   Boolean?
-  auto_points  Decimal?  @db.Decimal(6, 2)
-  ai_points    Decimal?  @db.Decimal(6, 2)
-  ai_feedback  Json?
-  final_points Decimal?  @db.Decimal(6, 2)
-  ai_job_id    String?   @db.Char(36)
-  updated_at   DateTime  @default(now())
-  attempts     attempts  @relation(fields: [attempt_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ans_attempt")
-  files        files?    @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ans_file")
-  ai_jobs      ai_jobs?  @relation(fields: [ai_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ans_job")
-  questions    questions @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ans_q")
-
-  @@unique([attempt_id, question_id], map: "uq_answer")
-  @@index([file_id], map: "fk_ans_file")
-  @@index([ai_job_id], map: "fk_ans_job")
-  @@index([question_id], map: "fk_ans_q")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model assignment_questions {
-  assignment_id String      @db.Char(36)
-  question_id   String      @db.Char(36)
-  sort_order    Int         @default(0)
-  points        Decimal?    @db.Decimal(6, 2)
-  assignments   assignments @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_aq_asg")
-  questions     questions   @relation(fields: [question_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_aq_q")
-
-  @@id([assignment_id, question_id])
-  @@index([question_id], map: "fk_aq_q")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-model assignment_targets {
-  id            String                         @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  assignment_id String                         @db.Char(36)
-  target_type   assignment_targets_target_type
-  class_id      String?                        @db.Char(36)
-  group_id      String?                        @db.Char(36)
-  student_id    String?                        @db.Char(36)
-  assignments   assignments                    @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_at_asg")
-  classes       classes?                       @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_at_class")
-  study_groups  study_groups?                  @relation(fields: [group_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_at_group")
-  students      students?                      @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_at_student")
-
-  @@index([class_id], map: "fk_at_class")
-  @@index([group_id], map: "fk_at_group")
-  @@index([assignment_id], map: "ix_at_asg")
-  @@index([student_id], map: "ix_at_student")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model assignments {
-  id                   String                       @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id            String                       @db.Char(36)
-  class_id             String?                      @db.Char(36)
-  title                String                       @db.VarChar(300)
-  kind                 assignments_kind
-  instructions         String?                      @db.Text
-  opens_at             DateTime?
-  due_at               DateTime?
-  time_limit_min       Int?
-  attempts_allowed     Int                          @default(1)
-  shuffle              Boolean                      @default(false)
-  show_answer_mode     assignments_show_answer_mode @default(after_publish)
-  published_at         DateTime?
-  created_by           String                       @db.Char(36)
-  created_at           DateTime                     @default(now())
-  updated_at           DateTime                     @default(now())
-  deleted_at           DateTime?
-  assignment_questions assignment_questions[]
-  assignment_targets   assignment_targets[]
-  branches             branches                     @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_asg_branch")
-  classes              classes?                     @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_asg_class")
-  users                users                        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_asg_creator")
-  attempts             attempts[]
-
-  @@index([branch_id], map: "fk_asg_branch")
-  @@index([created_by], map: "fk_asg_creator")
-  @@index([class_id, due_at], map: "ix_asg_class_due")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model attempts {
-  id                String                @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  assignment_id     String                @db.Char(36)
-  student_id        String?               @db.Char(36)
-  lead_id           String?               @db.Char(36)
-  attempt_no        Int                   @default(1)
-  started_at        DateTime              @default(now())
-  submitted_at      DateTime?
-  submit_mode       attempts_submit_mode?
-  auto_score        Decimal?              @db.Decimal(7, 2)
-  ai_score          Decimal?              @db.Decimal(7, 2)
-  final_score       Decimal?              @db.Decimal(7, 2)
-  max_score         Decimal?              @db.Decimal(7, 2)
-  band              String?               @db.VarChar(10)
-  graded_by         String?               @db.Char(36)
-  graded_at         DateTime?
-  tab_leaves        Int                   @default(0)
-  teacher_feedback  String?               @db.Text
-  created_at        DateTime              @default(now())
-  updated_at        DateTime              @default(now())
-  answers           answers[]
-  assignments       assignments           @relation(fields: [assignment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_atp_asg")
-  users             users?                @relation(fields: [graded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_atp_grader")
-  leads             leads?                @relation(fields: [lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_atp_lead")
-  students          students?             @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_atp_student")
-  competency_scores competency_scores[]
-  regrade_requests  regrade_requests?
-
-  @@unique([assignment_id, student_id, attempt_no], map: "uq_attempt")
-  @@index([graded_by], map: "fk_atp_grader")
-  @@index([lead_id], map: "fk_atp_lead")
-  @@index([student_id, submitted_at], map: "ix_att_student_time")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model attendance {
-  id                   String            @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  session_id           String            @db.Char(36)
-  student_id           String            @db.Char(36)
-  status               attendance_status
-  method               attendance_method
-  checkin_at           DateTime?
-  note                 String?           @db.VarChar(255)
-  recorded_by          String?           @db.Char(36)
-  guardian_notified_at DateTime?
-  created_at           DateTime          @default(now())
-  updated_at           DateTime          @default(now())
-  users                users?            @relation(fields: [recorded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_att_recorder")
-  class_sessions       class_sessions    @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_att_session")
-  students             students          @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_att_student")
-
-  @@unique([session_id, student_id], map: "uq_att_session_student")
-  @@index([recorded_by], map: "fk_att_recorder")
-  @@index([student_id, created_at], map: "ix_att_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model audit_logs {
-  id          BigInt   @id @default(autoincrement())
-  branch_id   String?  @db.Char(36)
-  actor_id    String?  @db.Char(36)
-  action      String   @db.VarChar(80)
-  entity      String   @db.VarChar(60)
-  entity_id   String?  @db.VarChar(64)
-  before_data Json?
-  after_data  Json?
-  reason      String?  @db.VarChar(500)
-  ip_address  String?  @db.VarChar(45)
-  created_at  DateTime @default(now())
-  users       users?   @relation(fields: [actor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_audit_actor")
-
-  @@index([actor_id, created_at], map: "ix_audit_actor")
-  @@index([entity, entity_id], map: "ix_audit_entity")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model branches {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  code             String             @unique(map: "uq_branches_code") @db.VarChar(20)
-  name             String             @db.VarChar(150)
-  address          String?            @db.VarChar(255)
-  latitude         Decimal?           @db.Decimal(9, 6)
-  longitude        Decimal?           @db.Decimal(9, 6)
-  checkin_radius_m Int                @default(150)
-  is_active        Boolean            @default(true)
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @default(now())
-  ai_jobs          ai_jobs[]
-  assignments      assignments[]
-  campaigns        campaigns[]
-  chat_sessions    chat_sessions[]
-  class_sessions   class_sessions[]
-  classes          classes[]
-  conversations    conversations[]
-  curricula        curricula[]
-  enrollments      enrollments[]
-  fee_plans        fee_plans[]
-  files            files[]
-  guardians        guardians[]
-  holidays         holidays[]
-  imports          imports[]
-  invoices         invoices[]
-  kb_documents     kb_documents[]
-  leads            leads[]
-  lesson_plans     lesson_plans[]
-  materials        materials[]
-  payroll_periods  payroll_periods[]
-  programs         programs[]
-  questions        questions[]
-  receipt_counters receipt_counters[]
-  rooms            rooms[]
-  rubrics          rubrics[]
-  settings         settings[]
-  students         students[]
-  surveys          surveys[]
-  teachers         teachers[]
-  users            users[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model campaigns {
-  id               String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id        String    @db.Char(36)
-  name             String    @db.VarChar(150)
-  utm_campaign     String?   @db.VarChar(80)
-  channel          String?   @db.VarChar(40)
-  cost_vnd         BigInt    @default(0)
-  discount_code    String?   @unique(map: "uq_campaigns_code") @db.VarChar(30)
-  discount_percent Decimal?  @db.Decimal(5, 2)
-  starts_on        DateTime? @db.Date
-  ends_on          DateTime? @db.Date
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @default(now())
-  branches         branches  @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_campaigns_branch")
-  leads            leads[]
-
-  @@index([branch_id], map: "fk_campaigns_branch")
-  @@index([utm_campaign], map: "ix_campaigns_utm")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model chat_access_requests {
-  id              String                      @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  guardian_id     String                      @db.Char(36)
-  student_id      String                      @db.Char(36)
-  conversation_id String                      @db.Char(36)
-  reason          String                      @db.VarChar(1000)
-  status          chat_access_requests_status @default(pending)
-  decided_by      String?                     @db.Char(36)
-  decision_note   String?                     @db.VarChar(500)
-  decided_at      DateTime?
-  expires_at      DateTime?
-  created_at      DateTime                    @default(now())
-  conversations   conversations               @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_car_conv")
-  users           users?                      @relation(fields: [decided_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_car_decider")
-  guardians       guardians                   @relation(fields: [guardian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_car_guardian")
-  students        students                    @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_car_student")
-
-  @@index([conversation_id], map: "fk_car_conv")
-  @@index([decided_by], map: "fk_car_decider")
-  @@index([guardian_id], map: "fk_car_guardian")
-  @@index([student_id], map: "fk_car_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model chat_sessions {
-  id            String       @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id     String       @db.Char(36)
-  visitor_key   String       @db.VarChar(64)
-  lead_id       String?      @db.Char(36)
-  user_id       String?      @db.Char(36)
-  handed_off_at DateTime?
-  utm_source    String?      @db.VarChar(80)
-  utm_campaign  String?      @db.VarChar(80)
-  created_at    DateTime     @default(now())
-  branches      branches     @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cs_branch")
-  leads         leads?       @relation(fields: [lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cs_lead")
-  users         users?       @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cs_user")
-  chat_turns    chat_turns[]
-
-  @@index([branch_id], map: "fk_cs_branch")
-  @@index([user_id], map: "fk_cs_user")
-  @@index([lead_id], map: "ix_cs_lead")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model chat_turns {
-  id              BigInt          @id @default(autoincrement())
-  session_id      String          @db.Char(36)
-  role            chat_turns_role
-  content         String          @db.Text
-  cited_chunk_ids Json?
-  ai_job_id       String?         @db.Char(36)
-  created_at      DateTime        @default(now())
-  ai_jobs         ai_jobs?        @relation(fields: [ai_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ct_job")
-  chat_sessions   chat_sessions   @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ct_session")
-
-  @@index([ai_job_id], map: "fk_ct_job")
-  @@index([session_id, id], map: "ix_ct_session")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model class_sessions {
-  id                                                          String                        @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                                                   String                        @db.Char(36)
-  class_id                                                    String                        @db.Char(36)
-  session_no                                                  Int
-  starts_at                                                   DateTime
-  ends_at                                                     DateTime
-  room_id                                                     String?                       @db.Char(36)
-  meeting_url                                                 String?                       @db.VarChar(500)
-  teacher_id                                                  String                        @db.Char(36)
-  substitute_for_teacher_id                                   String?                       @db.Char(36)
-  lesson_node_id                                              String?                       @db.Char(36)
-  status                                                      class_sessions_status         @default(scheduled)
-  verified_at                                                 DateTime?
-  verify_method                                               class_sessions_verify_method?
-  created_at                                                  DateTime                      @default(now())
-  updated_at                                                  DateTime                      @default(now())
-  absence_requests                                            absence_requests[]
-  attendance                                                  attendance[]
-  branches                                                    branches                      @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cls_branch")
-  classes                                                     classes                       @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cls_class")
-  curriculum_nodes                                            curriculum_nodes?             @relation(fields: [lesson_node_id], references: [id], onUpdate: NoAction, map: "fk_cls_lesson")
-  rooms                                                       rooms?                        @relation(fields: [room_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cls_room")
-  teachers_class_sessions_substitute_for_teacher_idToteachers teachers?                     @relation("class_sessions_substitute_for_teacher_idToteachers", fields: [substitute_for_teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cls_subfor")
-  teachers_class_sessions_teacher_idToteachers                teachers                      @relation("class_sessions_teacher_idToteachers", fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cls_teacher")
-  evaluations                                                 evaluations[]
-  materials                                                   materials[]
-  payroll_sessions                                            payroll_sessions?
-  reschedule_requests                                         reschedule_requests[]
-  session_qr_tokens                                           session_qr_tokens[]
-  teacher_checkins                                            teacher_checkins[]
-
-  @@unique([class_id, session_no], map: "uq_cs_class_no")
-  @@index([lesson_node_id], map: "fk_cls_lesson")
-  @@index([substitute_for_teacher_id], map: "fk_cls_subfor")
-  @@index([room_id, starts_at], map: "ix_cs_room_time")
-  @@index([teacher_id, starts_at], map: "ix_cs_teacher_time")
-  @@index([branch_id, starts_at], map: "ix_cs_time")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model class_teachers {
-  class_id            String              @db.Char(36)
-  teacher_id          String              @db.Char(36)
-  role                class_teachers_role @default(main)
-  from_date           DateTime            @db.Date
-  to_date             DateTime?           @db.Date
-  conflict_ack_reason String?             @db.VarChar(500)
-  classes             classes             @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_clt_class")
-  teachers            teachers            @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_clt_teacher")
-
-  @@id([class_id, teacher_id, from_date])
-  @@index([teacher_id], map: "ix_ct_teacher")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model classes {
-  id                  String               @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id           String               @db.Char(36)
-  program_id          String               @db.Char(36)
-  code                String               @db.VarChar(30)
-  name                String               @db.VarChar(150)
-  mode                classes_mode         @default(offline)
-  room_id             String?              @db.Char(36)
-  meeting_url         String?              @db.VarChar(500)
-  capacity            Int                  @default(12)
-  start_date          DateTime             @db.Date
-  end_date            DateTime             @db.Date
-  recurrence          Json
-  homeroom_teacher_id String?              @db.Char(36)
-  status              classes_status       @default(planned)
-  created_by          String               @db.Char(36)
-  created_at          DateTime             @default(now())
-  updated_at          DateTime             @default(now())
-  deleted_at          DateTime?
-  announcements       announcements[]
-  assignment_targets  assignment_targets[]
-  assignments         assignments[]
-  class_sessions      class_sessions[]
-  class_teachers      class_teachers[]
-  branches            branches             @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_classes_branch")
-  users               users                @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_classes_creator")
-  teachers            teachers?            @relation(fields: [homeroom_teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_classes_homeroom")
-  programs            programs             @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_classes_program")
-  rooms               rooms?               @relation(fields: [room_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_classes_room")
-  enrollments         enrollments[]
-  evaluations         evaluations[]
-  materials           materials[]
-  study_groups        study_groups[]
-  survey_responses    survey_responses[]
-
-  @@unique([branch_id, code], map: "uq_classes_code")
-  @@index([created_by], map: "fk_classes_creator")
-  @@index([homeroom_teacher_id], map: "fk_classes_homeroom")
-  @@index([program_id], map: "fk_classes_program")
-  @@index([room_id], map: "fk_classes_room")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model competency_scores {
-  id                String                      @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  student_id        String                      @db.Char(36)
-  skill             competency_scores_skill
-  framework         competency_scores_framework
-  score             Decimal                     @db.Decimal(6, 2)
-  level_code        String?                     @db.VarChar(20)
-  source_attempt_id String                      @db.Char(36)
-  measured_at       DateTime
-  attempts          attempts                    @relation(fields: [source_attempt_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comp_attempt")
-  students          students                    @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_comp_student")
-
-  @@index([source_attempt_id], map: "fk_comp_attempt")
-  @@index([student_id, skill, measured_at], map: "ix_cs_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model consents {
-  id                 String         @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id            String         @db.Char(36)
-  subject_student_id String?        @db.Char(36)
-  policy_version     String         @db.VarChar(20)
-  scope              consents_scope
-  given_at           DateTime       @default(now())
-  withdrawn_at       DateTime?
-  ip_address         String?        @db.VarChar(45)
-  students           students?      @relation(fields: [subject_student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_consents_student")
-  users              users          @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_consents_user")
-
-  @@index([subject_student_id], map: "fk_consents_student")
-  @@index([user_id, scope], map: "ix_consents_user")
-}
-
-model conversation_participants {
-  conversation_id String        @db.Char(36)
-  user_id         String        @db.Char(36)
-  last_read_at    DateTime?
-  muted           Boolean       @default(false)
-  conversations   conversations @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cp_conv")
-  users           users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cp_user")
-
-  @@id([conversation_id, user_id])
-  @@index([user_id], map: "ix_cp_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model conversations {
-  id                        String                      @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                 String                      @db.Char(36)
-  kind                      conversations_kind
-  student_id                String?                     @db.Char(36)
-  last_message_at           DateTime?
-  locked_at                 DateTime?
-  created_at                DateTime                    @default(now())
-  chat_access_requests      chat_access_requests[]
-  conversation_participants conversation_participants[]
-  branches                  branches                    @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_conv_branch")
-  students                  students?                   @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_conv_student")
-  messages                  messages[]
-
-  @@index([branch_id], map: "fk_conv_branch")
-  @@index([student_id], map: "ix_conv_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model curricula {
-  id                                                                    String                @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                                                             String                @db.Char(36)
-  program_id                                                            String?               @db.Char(36)
-  title                                                                 String                @db.VarChar(200)
-  current_version_id                                                    String?               @db.Char(36)
-  created_by                                                            String                @db.Char(36)
-  created_at                                                            DateTime              @default(now())
-  updated_at                                                            DateTime              @default(now())
-  deleted_at                                                            DateTime?
-  branches                                                              branches              @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cur_branch")
-  users                                                                 users                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cur_creator")
-  curriculum_versions_curricula_current_version_idTocurriculum_versions curriculum_versions?  @relation("curricula_current_version_idTocurriculum_versions", fields: [current_version_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cur_current_version")
-  programs                                                              programs?             @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cur_program")
-  curriculum_versions_curriculum_versions_curriculum_idTocurricula      curriculum_versions[] @relation("curriculum_versions_curriculum_idTocurricula")
-
-  @@index([branch_id], map: "fk_cur_branch")
-  @@index([created_by], map: "fk_cur_creator")
-  @@index([current_version_id], map: "fk_cur_current_version")
-  @@index([program_id], map: "fk_cur_program")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model curriculum_nodes {
-  id                     String                     @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  version_id             String                     @db.Char(36)
-  parent_id              String?                    @db.Char(36)
-  node_type              curriculum_nodes_node_type
-  sort_order             Int                        @default(0)
-  title                  String                     @db.VarChar(300)
-  content                String?                    @db.Text
-  skill                  curriculum_nodes_skill?
-  cefr_level             String?                    @db.VarChar(10)
-  standard_id            String?                    @db.Char(36)
-  source_page            Int?
-  is_ai                  Boolean                    @default(false)
-  created_at             DateTime                   @default(now())
-  class_sessions         class_sessions[]
-  curriculum_nodes       curriculum_nodes?          @relation("curriculum_nodesTocurriculum_nodes", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cn_parent")
-  other_curriculum_nodes curriculum_nodes[]         @relation("curriculum_nodesTocurriculum_nodes")
-  standards              standards?                 @relation(fields: [standard_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cn_standard")
-  curriculum_versions    curriculum_versions        @relation(fields: [version_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cn_version")
-  curriculum_suggestions curriculum_suggestions[]
-  lesson_plans           lesson_plans[]
-
-  @@index([parent_id], map: "fk_cn_parent")
-  @@index([standard_id], map: "fk_cn_standard")
-  @@index([version_id, parent_id, sort_order], map: "ix_cn_version")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model curriculum_suggestions {
-  id                  String                        @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  version_id          String                        @db.Char(36)
-  after_node_id       String?                       @db.Char(36)
-  standard_id         String?                       @db.Char(36)
-  title               String                        @db.VarChar(300)
-  proposed_content    String                        @db.Text
-  rationale           String                        @db.Text
-  status              curriculum_suggestions_status @default(pending)
-  decided_by          String?                       @db.Char(36)
-  decided_at          DateTime?
-  ai_job_id           String?                       @db.Char(36)
-  created_at          DateTime                      @default(now())
-  curriculum_nodes    curriculum_nodes?             @relation(fields: [after_node_id], references: [id], onUpdate: NoAction, map: "fk_csg_after")
-  users               users?                        @relation(fields: [decided_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_csg_decider")
-  ai_jobs             ai_jobs?                      @relation(fields: [ai_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_csg_job")
-  standards           standards?                    @relation(fields: [standard_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_csg_standard")
-  curriculum_versions curriculum_versions           @relation(fields: [version_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_csg_version")
-
-  @@index([after_node_id], map: "fk_csg_after")
-  @@index([decided_by], map: "fk_csg_decider")
-  @@index([ai_job_id], map: "fk_csg_job")
-  @@index([standard_id], map: "fk_csg_standard")
-  @@index([version_id], map: "fk_csg_version")
-}
-
-model curriculum_versions {
-  id                                                          String                     @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  curriculum_id                                               String                     @db.Char(36)
-  version_no                                                  Int
-  file_id                                                     String?                    @db.Char(36)
-  status                                                      curriculum_versions_status @default(draft)
-  change_note                                                 String?                    @db.VarChar(500)
-  created_by                                                  String                     @db.Char(36)
-  approved_by                                                 String?                    @db.Char(36)
-  approved_at                                                 DateTime?
-  created_at                                                  DateTime                   @default(now())
-  curricula_curricula_current_version_idTocurriculum_versions curricula[]                @relation("curricula_current_version_idTocurriculum_versions")
-  curriculum_nodes                                            curriculum_nodes[]
-  curriculum_suggestions                                      curriculum_suggestions[]
-  users_curriculum_versions_approved_byTousers                users?                     @relation("curriculum_versions_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cv_approver")
-  users_curriculum_versions_created_byTousers                 users                      @relation("curriculum_versions_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cv_creator")
-  curricula_curriculum_versions_curriculum_idTocurricula      curricula                  @relation("curriculum_versions_curriculum_idTocurricula", fields: [curriculum_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cv_cur")
-  files                                                       files?                     @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_cv_file")
-
-  @@unique([curriculum_id, version_no], map: "uq_cv")
-  @@index([approved_by], map: "fk_cv_approver")
-  @@index([created_by], map: "fk_cv_creator")
-  @@index([file_id], map: "fk_cv_file")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model daily_summaries {
-  id           String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  student_id   String    @db.Char(36)
-  summary_date DateTime  @db.Date
-  facts        Json
-  text_vi      String    @db.Text
-  sent_at      DateTime?
-  created_at   DateTime  @default(now())
-  students     students  @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ds_student")
-
-  @@unique([student_id, summary_date], map: "uq_ds")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model enrollments {
-  id                           String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                    String             @db.Char(36)
-  class_id                     String             @db.Char(36)
-  student_id                   String             @db.Char(36)
-  status                       enrollments_status @default(active)
-  enrolled_on                  DateTime           @db.Date
-  ended_on                     DateTime?          @db.Date
-  transferred_to_enrollment_id String?            @db.Char(36)
-  fee_plan_id                  String?            @db.Char(36)
-  conflict_ack_reason          String?            @db.VarChar(500)
-  created_by                   String             @db.Char(36)
-  created_at                   DateTime           @default(now())
-  updated_at                   DateTime           @default(now())
-  branches                     branches           @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_branch")
-  classes                      classes            @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_class")
-  users                        users              @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_creator")
-  fee_plans                    fee_plans?         @relation(fields: [fee_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_fee")
-  students                     students           @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_student")
-  enrollments                  enrollments?       @relation("enrollmentsToenrollments", fields: [transferred_to_enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_enr_transfer")
-  other_enrollments            enrollments[]      @relation("enrollmentsToenrollments")
-  invoices                     invoices[]
-
-  @@index([branch_id], map: "fk_enr_branch")
-  @@index([created_by], map: "fk_enr_creator")
-  @@index([fee_plan_id], map: "fk_enr_fee")
-  @@index([transferred_to_enrollment_id], map: "fk_enr_transfer")
-  @@index([class_id, status], map: "ix_enr_class")
-  @@index([student_id, status], map: "ix_enr_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model evaluations {
-  id             String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  student_id     String             @db.Char(36)
-  class_id       String             @db.Char(36)
-  session_id     String?            @db.Char(36)
-  teacher_id     String             @db.Char(36)
-  period         evaluations_period
-  attitude       Int?               @db.TinyInt
-  focus          Int?               @db.TinyInt
-  progress       Int?               @db.TinyInt
-  comment        String?            @db.Text
-  template_code  String?            @db.VarChar(40)
-  created_at     DateTime           @default(now())
-  classes        classes            @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ev_class")
-  class_sessions class_sessions?    @relation(fields: [session_id], references: [id], onUpdate: NoAction, map: "fk_ev_session")
-  students       students           @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ev_student")
-  teachers       teachers           @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ev_teacher")
-
-  @@index([class_id], map: "fk_ev_class")
-  @@index([session_id], map: "fk_ev_session")
-  @@index([teacher_id], map: "fk_ev_teacher")
-  @@index([student_id, created_at], map: "ix_ev_student")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model fee_plans {
-  id                String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id         String                 @db.Char(36)
-  name              String                 @db.VarChar(150)
-  billing_unit      fee_plans_billing_unit
-  amount_vnd        BigInt
-  sessions_included Int?
-  is_active         Boolean                @default(true)
-  created_at        DateTime               @default(now())
-  updated_at        DateTime               @default(now())
-  enrollments       enrollments[]
-  branches          branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_fp_branch")
-  invoices          invoices[]
-  programs          programs[]
-
-  @@index([branch_id], map: "fk_fp_branch")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model files {
-  id                                       String                  @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                                String?                 @db.Char(36)
-  storage_key                              String                  @db.VarChar(500)
-  original_name                            String                  @db.VarChar(255)
-  mime_type                                String                  @db.VarChar(100)
-  size_bytes                               BigInt
-  purpose                                  files_purpose
-  copyright_source                         files_copyright_source?
-  expires_at                               DateTime?
-  uploaded_by                              String?                 @db.Char(36)
-  created_at                               DateTime                @default(now())
-  deleted_at                               DateTime?
-  answers                                  answers[]
-  curriculum_versions                      curriculum_versions[]
-  branches                                 branches?               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_files_branch")
-  users_files_uploaded_byTousers           users?                  @relation("files_uploaded_byTousers", fields: [uploaded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_files_uploaded_by")
-  imports_imports_error_file_idTofiles     imports[]               @relation("imports_error_file_idTofiles")
-  imports_imports_file_idTofiles           imports[]               @relation("imports_file_idTofiles")
-  lesson_plans                             lesson_plans[]
-  materials                                materials[]
-  questions_questions_audio_file_idTofiles questions[]             @relation("questions_audio_file_idTofiles")
-  questions_questions_image_file_idTofiles questions[]             @relation("questions_image_file_idTofiles")
-  receipts                                 receipts[]
-  teacher_checkins                         teacher_checkins[]
-  users_users_avatar_file_idTofiles        users[]                 @relation("users_avatar_file_idTofiles")
-  videos_videos_file_idTofiles             videos[]                @relation("videos_file_idTofiles")
-  videos_videos_subtitle_file_idTofiles    videos[]                @relation("videos_subtitle_file_idTofiles")
-
-  @@index([branch_id], map: "fk_files_branch")
-  @@index([uploaded_by], map: "fk_files_uploaded_by")
-  @@index([expires_at], map: "ix_files_expires")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model guardians {
-  id                   String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id              String                 @unique(map: "uq_guardians_user") @db.Char(36)
-  branch_id            String                 @db.Char(36)
-  referral_code        String?                @unique(map: "uq_guardians_referral") @db.VarChar(20)
-  created_at           DateTime               @default(now())
-  updated_at           DateTime               @default(now())
-  chat_access_requests chat_access_requests[]
-  branches             branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_guardians_branch")
-  users                users                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_guardians_user")
-  guardianships        guardianships[]
-  leads                leads[]
-
-  @@index([branch_id], map: "fk_guardians_branch")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model guardianships {
-  student_id          String                 @db.Char(36)
-  guardian_id         String                 @db.Char(36)
-  relation            guardianships_relation
-  can_view_results    Boolean                @default(true)
-  can_message         Boolean                @default(true)
-  receives_fee_notice Boolean                @default(true)
-  created_at          DateTime               @default(now())
-  guardians           guardians              @relation(fields: [guardian_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gs_guardian")
-  students            students               @relation(fields: [student_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_gs_student")
-
-  @@id([student_id, guardian_id])
-  @@index([guardian_id], map: "ix_gs_guardian")
-}
-
-model holidays {
-  id         String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id  String   @db.Char(36)
-  holiday_on DateTime @db.Date
-  name       String   @db.VarChar(100)
-  branches   branches @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_holidays_branch")
-
-  @@unique([branch_id, holiday_on], map: "uq_holidays")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model imports {
-  id                                 String         @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                          String         @db.Char(36)
-  entity                             imports_entity
-  file_id                            String         @db.Char(36)
-  idempotency_key                    String         @unique(map: "uq_imports_key") @db.VarChar(64)
-  column_mapping                     Json?
-  total_rows                         Int            @default(0)
-  ok_rows                            Int            @default(0)
-  error_rows                         Int            @default(0)
-  error_file_id                      String?        @db.Char(36)
-  status                             imports_status @default(uploaded)
-  created_by                         String         @db.Char(36)
-  created_at                         DateTime       @default(now())
-  branches                           branches       @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_imports_branch")
-  files_imports_error_file_idTofiles files?         @relation("imports_error_file_idTofiles", fields: [error_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_imports_errfile")
-  files_imports_file_idTofiles       files          @relation("imports_file_idTofiles", fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_imports_file")
-  users                              users          @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_imports_user")
-
-  @@index([branch_id], map: "fk_imports_branch")
-  @@index([error_file_id], map: "fk_imports_errfile")
-  @@index([file_id], map: "fk_imports_file")
-  @@index([created_by], map: "fk_imports_user")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model invoices {
-  id              String          @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id       String          @db.Char(36)
-  student_id      String          @db.Char(36)
-  enrollment_id   String?         @db.Char(36)
-  fee_plan_id     String?         @db.Char(36)
-  description     String          @db.VarChar(255)
-  amount_vnd      BigInt
-  discount_vnd    BigInt          @default(0)
-  discount_reason String?         @db.VarChar(255)
-  paid_vnd        BigInt          @default(0)
-  due_date        DateTime        @db.Date
-  status          invoices_status @default(unpaid)
-  created_by      String          @db.Char(36)
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @default(now())
-  branches        branches        @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_inv_branch")
-  users           users           @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_inv_creator")
-  enrollments     enrollments?    @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_inv_enr")
-  fee_plans       fee_plans?      @relation(fields: [fee_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_inv_fee")
-  students        students        @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_inv_student")
-  payments        payments[]
-
-  @@index([created_by], map: "fk_inv_creator")
-  @@index([enrollment_id], map: "fk_inv_enr")
-  @@index([fee_plan_id], map: "fk_inv_fee")
-  @@index([branch_id, status, due_date], map: "ix_inv_due")
-  @@index([student_id, status], map: "ix_inv_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model kb_chunks {
-  id              String       @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  document_id     String       @db.Char(36)
-  chunk_index     Int
-  content         String       @db.Text
-  embedding       Json?
-  embedding_model String?      @db.VarChar(60)
-  created_at      DateTime     @default(now())
-  kb_documents    kb_documents @relation(fields: [document_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_kbc_doc")
-
-  @@unique([document_id, chunk_index], map: "uq_kbc_doc_idx")
-  @@fulltext([content], map: "ft_kbc_content")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model kb_documents {
-  id          String                @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id   String                @db.Char(36)
-  title       String                @db.VarChar(200)
-  category    kb_documents_category
-  content     String                @db.MediumText
-  status      kb_documents_status   @default(draft)
-  approved_by String?               @db.Char(36)
-  approved_at DateTime?
-  created_at  DateTime              @default(now())
-  updated_at  DateTime              @default(now())
-  kb_chunks   kb_chunks[]
-  users       users?                @relation(fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_kb_approver")
-  branches    branches              @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_kb_branch")
-
-  @@index([approved_by], map: "fk_kb_approver")
-  @@index([branch_id, status], map: "ix_kb_status")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model lead_activities {
-  id          String               @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  lead_id     String               @db.Char(36)
-  actor_id    String?              @db.Char(36)
-  type        lead_activities_type
-  content     String?              @db.Text
-  from_status String?              @db.VarChar(20)
-  to_status   String?              @db.VarChar(20)
-  remind_at   DateTime?
-  created_at  DateTime             @default(now())
-  users       users?               @relation(fields: [actor_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_la_actor")
-  leads       leads                @relation(fields: [lead_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_la_lead")
-
-  @@index([actor_id], map: "fk_la_actor")
-  @@index([lead_id, created_at], map: "ix_la_lead")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model leads {
-  id                                            String            @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                                     String            @db.Char(36)
-  parent_name                                   String?           @db.VarChar(150)
-  phone                                         String            @db.VarChar(20)
-  child_name                                    String?           @db.VarChar(150)
-  child_age                                     Int?              @db.TinyInt
-  child_grade                                   Int?              @db.TinyInt
-  goal                                          String?           @db.VarChar(255)
-  free_slots                                    String?           @db.VarChar(255)
-  source                                        String            @default("website") @db.VarChar(40)
-  utm_source                                    String?           @db.VarChar(80)
-  utm_medium                                    String?           @db.VarChar(80)
-  utm_campaign                                  String?           @db.VarChar(80)
-  referrer_url                                  String?           @db.VarChar(500)
-  campaign_id                                   String?           @db.Char(36)
-  referred_by_guardian_id                       String?           @db.Char(36)
-  status                                        leads_status      @default(new)
-  lost_reason                                   String?           @db.VarChar(255)
-  owner_id                                      String?           @db.Char(36)
-  first_contacted_at                            DateTime?
-  converted_student_id                          String?           @db.Char(36)
-  consent_given_at                              DateTime
-  created_at                                    DateTime          @default(now())
-  updated_at                                    DateTime          @default(now())
-  deleted_at                                    DateTime?
-  attempts                                      attempts[]
-  chat_sessions                                 chat_sessions[]
-  lead_activities                               lead_activities[]
-  branches                                      branches          @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_leads_branch")
-  campaigns                                     campaigns?        @relation(fields: [campaign_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_leads_campaign")
-  users                                         users?            @relation(fields: [owner_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_leads_owner")
-  guardians                                     guardians?        @relation(fields: [referred_by_guardian_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_leads_referrer")
-  students_leads_converted_student_idTostudents students?         @relation("leads_converted_student_idTostudents", fields: [converted_student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_leads_student")
-  students_students_source_lead_idToleads       students[]        @relation("students_source_lead_idToleads")
-
-  @@unique([branch_id, phone], map: "uq_leads_branch_phone")
-  @@index([campaign_id], map: "fk_leads_campaign")
-  @@index([owner_id], map: "fk_leads_owner")
-  @@index([referred_by_guardian_id], map: "fk_leads_referrer")
-  @@index([converted_student_id], map: "fk_leads_student")
-  @@index([branch_id, source, created_at], map: "ix_leads_source")
-  @@index([branch_id, status, created_at], map: "ix_leads_status")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model lesson_plans {
-  id               String              @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id        String              @db.Char(36)
-  lesson_node_id   String?             @db.Char(36)
-  teacher_id       String              @db.Char(36)
-  title            String              @db.VarChar(300)
-  content          String?             @db.MediumText
-  file_id          String?             @db.Char(36)
-  status           lesson_plans_status @default(draft)
-  approved_by      String?             @db.Char(36)
-  approved_at      DateTime?
-  created_at       DateTime            @default(now())
-  updated_at       DateTime            @default(now())
-  deleted_at       DateTime?
-  users            users?              @relation(fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lp_approver")
-  branches         branches            @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lp_branch")
-  files            files?              @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lp_file")
-  curriculum_nodes curriculum_nodes?   @relation(fields: [lesson_node_id], references: [id], onUpdate: NoAction, map: "fk_lp_node")
-  teachers         teachers            @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_lp_teacher")
-  materials        materials[]
-  videos           videos[]
-
-  @@index([approved_by], map: "fk_lp_approver")
-  @@index([branch_id], map: "fk_lp_branch")
-  @@index([file_id], map: "fk_lp_file")
-  @@index([lesson_node_id], map: "fk_lp_node")
-  @@index([teacher_id], map: "fk_lp_teacher")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model levels {
-  id         String     @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  code       String     @unique(map: "uq_levels_code") @db.VarChar(20)
-  name       String     @db.VarChar(100)
-  sort_order Int        @default(0)
-  programs   programs[]
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model materials {
-  id                                  String           @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                           String           @db.Char(36)
-  class_id                            String?          @db.Char(36)
-  session_id                          String?          @db.Char(36)
-  lesson_plan_id                      String?          @db.Char(36)
-  type                                materials_type
-  title                               String           @db.VarChar(300)
-  body                                String?          @db.MediumText
-  file_id                             String?          @db.Char(36)
-  url                                 String?          @db.VarChar(500)
-  allow_download                      Boolean          @default(true)
-  is_ai                               Boolean          @default(false)
-  status                              materials_status @default(draft)
-  published_by                        String?          @db.Char(36)
-  published_at                        DateTime?
-  created_by                          String           @db.Char(36)
-  created_at                          DateTime         @default(now())
-  updated_at                          DateTime         @default(now())
-  deleted_at                          DateTime?
-  branches                            branches         @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mat_branch")
-  classes                             classes?         @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mat_class")
-  users_materials_created_byTousers   users            @relation("materials_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mat_creator")
-  files                               files?           @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mat_file")
-  lesson_plans                        lesson_plans?    @relation(fields: [lesson_plan_id], references: [id], onUpdate: NoAction, map: "fk_mat_lp")
-  users_materials_published_byTousers users?           @relation("materials_published_byTousers", fields: [published_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mat_publisher")
-  class_sessions                      class_sessions?  @relation(fields: [session_id], references: [id], onUpdate: NoAction, map: "fk_mat_session")
-
-  @@index([branch_id], map: "fk_mat_branch")
-  @@index([created_by], map: "fk_mat_creator")
-  @@index([file_id], map: "fk_mat_file")
-  @@index([lesson_plan_id], map: "fk_mat_lp")
-  @@index([published_by], map: "fk_mat_publisher")
-  @@index([session_id], map: "fk_mat_session")
-  @@index([class_id, status], map: "ix_mat_class")
-  @@fulltext([title], map: "ft_mat_title")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model message_edits {
-  id            BigInt   @id @default(autoincrement())
-  message_id    String   @db.Char(36)
-  previous_body String?  @db.Text
-  edited_at     DateTime @default(now())
-  messages      messages @relation(fields: [message_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_me_msg")
-
-  @@index([message_id], map: "ix_me_msg")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model message_reports {
-  id                                       String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  message_id                               String                 @db.Char(36)
-  reported_by                              String                 @db.Char(36)
-  reason                                   String                 @db.VarChar(500)
-  status                                   message_reports_status @default(open)
-  handled_by                               String?                @db.Char(36)
-  resolution                               String?                @db.VarChar(1000)
-  created_at                               DateTime               @default(now())
-  users_message_reports_handled_byTousers  users?                 @relation("message_reports_handled_byTousers", fields: [handled_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mr_handler")
-  messages                                 messages               @relation(fields: [message_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mr_msg")
-  users_message_reports_reported_byTousers users                  @relation("message_reports_reported_byTousers", fields: [reported_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mr_reporter")
-
-  @@index([handled_by], map: "fk_mr_handler")
-  @@index([message_id], map: "fk_mr_msg")
-  @@index([reported_by], map: "fk_mr_reporter")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model messages {
-  id              String            @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  conversation_id String            @db.Char(36)
-  sender_id       String            @db.Char(36)
-  body            String?           @db.Text
-  attachments     Json?
-  is_urgent       Boolean           @default(false)
-  edited_at       DateTime?
-  created_at      DateTime          @default(now())
-  message_edits   message_edits[]
-  message_reports message_reports[]
-  conversations   conversations     @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_msg_conv")
-  users           users             @relation(fields: [sender_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_msg_sender")
-
-  @@index([sender_id], map: "fk_msg_sender")
-  @@index([conversation_id, created_at], map: "ix_msg_conv")
-  @@fulltext([body], map: "ft_msg_body")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model monthly_reports {
-  id                String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  student_id        String                 @db.Char(36)
-  report_month      String                 @db.Char(7)
-  facts             Json
-  ai_draft          String?                @db.Text
-  final_text        String?                @db.Text
-  status            monthly_reports_status @default(drafted)
-  approved_by       String?                @db.Char(36)
-  approved_at       DateTime?
-  sent_at           DateTime?
-  guardian_feedback String?                @db.Text
-  ai_job_id         String?                @db.Char(36)
-  created_at        DateTime               @default(now())
-  users             users?                 @relation(fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mrep_approver")
-  ai_jobs           ai_jobs?               @relation(fields: [ai_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mrep_job")
-  students          students               @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_mrep_student")
-
-  @@unique([student_id, report_month], map: "uq_mr")
-  @@index([approved_by], map: "fk_mrep_approver")
-  @@index([ai_job_id], map: "fk_mrep_job")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model notification_preferences {
-  user_id  String  @db.Char(36)
-  category String  @db.VarChar(40)
-  push_on  Boolean @default(true)
-  users    users   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_np_user")
-
-  @@id([user_id, category])
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model notifications {
-  id            String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id       String    @db.Char(36)
-  category      String    @db.VarChar(40)
-  title         String    @db.VarChar(200)
-  body          String?   @db.VarChar(1000)
-  link          String?   @db.VarChar(500)
-  student_id    String?   @db.Char(36)
-  is_mandatory  Boolean   @default(false)
-  scheduled_for DateTime?
-  pushed_at     DateTime?
-  read_at       DateTime?
-  created_at    DateTime  @default(now())
-  students      students? @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_notif_student")
-  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notif_user")
-
-  @@index([student_id], map: "fk_notif_student")
-  @@index([pushed_at, scheduled_for], map: "ix_notif_queue")
-  @@index([user_id, read_at, created_at], map: "ix_notif_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model password_resets {
-  id         String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id    String    @db.Char(36)
-  token_hash String    @unique(map: "uq_pr_hash") @db.Char(64)
-  expires_at DateTime
-  used_at    DateTime?
-  created_at DateTime  @default(now())
-  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_pr_user")
-
-  @@index([user_id], map: "fk_pr_user")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model pay_rates {
-  id             String                @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  teacher_id     String?               @db.Char(36)
-  class_mode     pay_rates_class_mode?
-  program_id     String?               @db.Char(36)
-  rate_vnd       BigInt
-  effective_from DateTime              @db.Date
-  effective_to   DateTime?             @db.Date
-  created_by     String                @db.Char(36)
-  created_at     DateTime              @default(now())
-  users          users                 @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prt_creator")
-  programs       programs?             @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prt_program")
-  teachers       teachers?             @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_prt_teacher")
-
-  @@index([created_by], map: "fk_prt_creator")
-  @@index([program_id], map: "fk_prt_program")
-  @@index([teacher_id, effective_from], map: "ix_pr_teacher")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model payments {
-  id             String          @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  invoice_id     String          @db.Char(36)
-  amount_vnd     BigInt
-  method         payments_method
-  gateway_txn_id String?         @unique(map: "uq_pay_gateway") @db.VarChar(100)
-  paid_at        DateTime
-  recorded_by    String?         @db.Char(36)
-  note           String?         @db.VarChar(255)
-  created_at     DateTime        @default(now())
-  invoices       invoices        @relation(fields: [invoice_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pay_inv")
-  users          users?          @relation(fields: [recorded_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pay_user")
-  receipts       receipts?
-
-  @@index([invoice_id], map: "fk_pay_inv")
-  @@index([recorded_by], map: "fk_pay_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model payroll_items {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  period_id        String             @db.Char(36)
-  teacher_id       String             @db.Char(36)
-  sessions_count   Int                @default(0)
-  rate_vnd         BigInt
-  adjustments_vnd  BigInt             @default(0)
-  adjustment_note  String?            @db.VarChar(500)
-  total_vnd        BigInt
-  teacher_feedback String?            @db.VarChar(1000)
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @default(now())
-  payroll_periods  payroll_periods    @relation(fields: [period_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pi_period")
-  teachers         teachers           @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pi_teacher")
-  payroll_sessions payroll_sessions[]
-
-  @@unique([period_id, teacher_id], map: "uq_pi")
-  @@index([teacher_id], map: "fk_pi_teacher")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model payroll_periods {
-  id            String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id     String                 @db.Char(36)
-  period_month  String                 @db.Char(7)
-  status        payroll_periods_status @default(open)
-  closed_by     String?                @db.Char(36)
-  closed_at     DateTime?
-  created_at    DateTime               @default(now())
-  payroll_items payroll_items[]
-  branches      branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pp_branch")
-  users         users?                 @relation(fields: [closed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_pp_closer")
-
-  @@unique([branch_id, period_month], map: "uq_pp")
-  @@index([closed_by], map: "fk_pp_closer")
-}
-
-model payroll_sessions {
-  payroll_item_id String         @db.Char(36)
-  session_id      String         @unique(map: "uq_ps_session") @db.Char(36)
-  payroll_items   payroll_items  @relation(fields: [payroll_item_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ps_item")
-  class_sessions  class_sessions @relation(fields: [session_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ps_session")
-
-  @@id([payroll_item_id, session_id])
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model permissions {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  code             String             @unique(map: "uq_permissions_code") @db.VarChar(80)
-  description      String?            @db.VarChar(255)
-  role_permissions role_permissions[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model programs {
-  id                   String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id            String             @db.Char(36)
-  level_id             String             @db.Char(36)
-  code                 String             @db.VarChar(30)
-  name                 String             @db.VarChar(150)
-  framework            programs_framework
-  target_level         String?            @db.VarChar(20)
-  description          String?            @db.Text
-  outcomes             String?            @db.Text
-  total_sessions       Int?
-  default_fee_plan_id  String?            @db.Char(36)
-  is_public            Boolean            @default(true)
-  is_school_curriculum Boolean            @default(false)
-  created_at           DateTime           @default(now())
-  updated_at           DateTime           @default(now())
-  deleted_at           DateTime?
-  classes              classes[]
-  curricula            curricula[]
-  pay_rates            pay_rates[]
-  branches             branches           @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_programs_branch")
-  fee_plans            fee_plans?         @relation(fields: [default_fee_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_programs_fee")
-  levels               levels             @relation(fields: [level_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_programs_level")
-
-  @@unique([branch_id, code], map: "uq_programs_code")
-  @@index([default_fee_plan_id], map: "fk_programs_fee")
-  @@index([level_id], map: "fk_programs_level")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model push_subscriptions {
-  id            String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id       String    @db.Char(36)
-  endpoint      String    @db.VarChar(700)
-  endpoint_hash String    @unique(map: "uq_push_endpoint") @db.Char(64)
-  p256dh        String    @db.VarChar(255)
-  auth          String    @db.VarChar(255)
-  user_agent    String?   @db.VarChar(255)
-  created_at    DateTime  @default(now())
-  last_ok_at    DateTime?
-  users         users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_push_user")
-
-  @@index([user_id], map: "fk_push_user")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model questions {
-  id                                   String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                            String                 @db.Char(36)
-  type                                 questions_type
-  stem                                 String                 @db.Text
-  options                              Json?
-  answer_key                           Json?
-  explanation                          String?                @db.Text
-  audio_file_id                        String?                @db.Char(36)
-  image_file_id                        String?                @db.Char(36)
-  skill                                questions_skill
-  difficulty                           Int                    @default(2) @db.TinyInt
-  framework                            questions_framework
-  level_code                           String                 @db.VarChar(20)
-  topic                                String?                @db.VarChar(100)
-  rubric_id                            String?                @db.Char(36)
-  points                               Decimal                @default(1.00) @db.Decimal(6, 2)
-  is_ai                                Boolean                @default(false)
-  status                               questions_status       @default(draft)
-  approved_by                          String?                @db.Char(36)
-  created_by                           String                 @db.Char(36)
-  created_at                           DateTime               @default(now())
-  updated_at                           DateTime               @default(now())
-  deleted_at                           DateTime?
-  answers                              answers[]
-  assignment_questions                 assignment_questions[]
-  users_questions_approved_byTousers   users?                 @relation("questions_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_approver")
-  files_questions_audio_file_idTofiles files?                 @relation("questions_audio_file_idTofiles", fields: [audio_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_audio")
-  branches                             branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_branch")
-  users_questions_created_byTousers    users                  @relation("questions_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_creator")
-  files_questions_image_file_idTofiles files?                 @relation("questions_image_file_idTofiles", fields: [image_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_image")
-  rubrics                              rubrics?               @relation(fields: [rubric_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_q_rubric")
-
-  @@index([approved_by], map: "fk_q_approver")
-  @@index([audio_file_id], map: "fk_q_audio")
-  @@index([created_by], map: "fk_q_creator")
-  @@index([image_file_id], map: "fk_q_image")
-  @@index([rubric_id], map: "fk_q_rubric")
-  @@index([branch_id, status, skill, framework, level_code, difficulty], map: "ix_q_filter")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model receipt_counters {
-  branch_id String   @db.Char(36)
-  year_no   Int      @db.SmallInt
-  last_no   Int      @default(0)
-  branches  branches @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rc_branch")
-
-  @@id([branch_id, year_no])
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model receipts {
-  id         String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  payment_id String    @unique(map: "uq_receipt_payment") @db.Char(36)
-  receipt_no String    @unique(map: "uq_receipt_no") @db.VarChar(30)
-  file_id    String?   @db.Char(36)
-  sent_at    DateTime?
-  created_at DateTime  @default(now())
-  files      files?    @relation(fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rcp_file")
-  payments   payments  @relation(fields: [payment_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rcp_pay")
-
-  @@index([file_id], map: "fk_rcp_file")
-}
-
-model refresh_tokens {
-  id         String    @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id    String    @db.Char(36)
-  token_hash String    @unique(map: "uq_rt_hash") @db.Char(64)
-  user_agent String?   @db.VarChar(255)
-  expires_at DateTime
-  revoked_at DateTime?
-  created_at DateTime  @default(now())
-  users      users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rt_user")
-
-  @@index([user_id], map: "ix_rt_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model regrade_requests {
-  id                                         String                  @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  attempt_id                                 String                  @unique(map: "uq_regrade_once") @db.Char(36)
-  requested_by                               String                  @db.Char(36)
-  reason                                     String                  @db.VarChar(1000)
-  status                                     regrade_requests_status @default(pending)
-  old_score                                  Decimal?                @db.Decimal(7, 2)
-  new_score                                  Decimal?                @db.Decimal(7, 2)
-  response                                   String?                 @db.VarChar(1000)
-  resolved_by                                String?                 @db.Char(36)
-  resolved_at                                DateTime?
-  escalated_at                               DateTime?
-  created_at                                 DateTime                @default(now())
-  attempts                                   attempts                @relation(fields: [attempt_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rg_attempt")
-  users_regrade_requests_requested_byTousers users                   @relation("regrade_requests_requested_byTousers", fields: [requested_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rg_requester")
-  users_regrade_requests_resolved_byTousers  users?                  @relation("regrade_requests_resolved_byTousers", fields: [resolved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rg_resolver")
-
-  @@index([requested_by], map: "fk_rg_requester")
-  @@index([resolved_by], map: "fk_rg_resolver")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model reschedule_requests {
-  id                                            String                     @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  session_id                                    String                     @db.Char(36)
-  requested_by                                  String                     @db.Char(36)
-  type                                          reschedule_requests_type
-  new_starts_at                                 DateTime?
-  new_ends_at                                   DateTime?
-  substitute_teacher_id                         String?                    @db.Char(36)
-  reason                                        String                     @db.VarChar(500)
-  status                                        reschedule_requests_status @default(pending)
-  decided_by                                    String?                    @db.Char(36)
-  decided_at                                    DateTime?
-  created_at                                    DateTime                   @default(now())
-  users_reschedule_requests_decided_byTousers   users?                     @relation("reschedule_requests_decided_byTousers", fields: [decided_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rr_decider")
-  users_reschedule_requests_requested_byTousers users                      @relation("reschedule_requests_requested_byTousers", fields: [requested_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rr_requester")
-  class_sessions                                class_sessions             @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rr_session")
-  teachers                                      teachers?                  @relation(fields: [substitute_teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rr_sub")
-
-  @@index([decided_by], map: "fk_rr_decider")
-  @@index([requested_by], map: "fk_rr_requester")
-  @@index([session_id], map: "fk_rr_session")
-  @@index([substitute_teacher_id], map: "fk_rr_sub")
-}
-
-model role_permissions {
-  role_id       String      @db.Char(36)
-  permission_id String      @db.Char(36)
-  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rp_perm")
-  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_rp_role")
-
-  @@id([role_id, permission_id])
-  @@index([permission_id], map: "fk_rp_perm")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model roles {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  code             String             @unique(map: "uq_roles_code") @db.VarChar(30)
-  name             String             @db.VarChar(100)
-  is_system        Boolean            @default(true)
-  created_at       DateTime           @default(now())
-  role_permissions role_permissions[]
-  user_roles       user_roles[]
-}
-
-model rooms {
-  id             String           @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id      String           @db.Char(36)
-  name           String           @db.VarChar(50)
-  capacity       Int              @default(15)
-  is_active      Boolean          @default(true)
-  created_at     DateTime         @default(now())
-  updated_at     DateTime         @default(now())
-  class_sessions class_sessions[]
-  classes        classes[]
-  branches       branches         @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rooms_branch")
-
-  @@unique([branch_id, name], map: "uq_rooms_branch_name")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model rubrics {
-  id         String        @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id  String        @db.Char(36)
-  name       String        @db.VarChar(150)
-  skill      rubrics_skill
-  criteria   Json
-  created_by String        @db.Char(36)
-  created_at DateTime      @default(now())
-  questions  questions[]
-  branches   branches      @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rub_branch")
-  users      users         @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rub_creator")
-
-  @@index([branch_id], map: "fk_rub_branch")
-  @@index([created_by], map: "fk_rub_creator")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model session_qr_tokens {
-  id               String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  session_id       String                 @db.Char(36)
-  kind             session_qr_tokens_kind
-  nonce            String                 @unique(map: "uq_qr_nonce") @db.Char(32)
-  valid_from       DateTime
-  valid_until      DateTime
-  created_at       DateTime               @default(now())
-  class_sessions   class_sessions         @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_qr_session")
-  teacher_checkins teacher_checkins[]
-
-  @@unique([session_id, kind], map: "uq_qr_session_kind")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model settings {
-  branch_id     String   @db.Char(36)
-  setting_key   String   @db.VarChar(80)
-  setting_value Json
-  updated_by    String?  @db.Char(36)
-  updated_at    DateTime @default(now())
-  branches      branches @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_settings_branch")
-  users         users?   @relation(fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_settings_user")
-
-  @@id([branch_id, setting_key])
-  @@index([updated_by], map: "fk_settings_user")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model standards {
-  id                     String                   @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  framework              standards_framework
-  level_code             String                   @db.VarChar(20)
-  skill                  standards_skill
-  code                   String                   @db.VarChar(40)
-  description            String                   @db.Text
-  curriculum_nodes       curriculum_nodes[]
-  curriculum_suggestions curriculum_suggestions[]
-
-  @@unique([framework, code], map: "uq_standards_code")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model students {
-  id                                         String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id                                    String                 @unique(map: "uq_students_user") @db.Char(36)
-  branch_id                                  String                 @db.Char(36)
-  code                                       String                 @unique(map: "uq_students_code") @db.VarChar(20)
-  date_of_birth                              DateTime?              @db.Date
-  school_name                                String?                @db.VarChar(200)
-  school_class                               String?                @db.VarChar(20)
-  grade_level                                Int?                   @db.TinyInt
-  goal                                       String?                @db.VarChar(255)
-  is_young_account                           Boolean                @default(false)
-  status                                     students_status        @default(active)
-  source_lead_id                             String?                @db.Char(36)
-  custom_fields                              Json?
-  created_at                                 DateTime               @default(now())
-  updated_at                                 DateTime               @default(now())
-  deleted_at                                 DateTime?
-  absence_requests                           absence_requests[]
-  assignment_targets                         assignment_targets[]
-  attempts                                   attempts[]
-  attendance                                 attendance[]
-  chat_access_requests                       chat_access_requests[]
-  competency_scores                          competency_scores[]
-  consents                                   consents[]
-  conversations                              conversations[]
-  daily_summaries                            daily_summaries[]
-  enrollments                                enrollments[]
-  evaluations                                evaluations[]
-  guardianships                              guardianships[]
-  invoices                                   invoices[]
-  leads_leads_converted_student_idTostudents leads[]                @relation("leads_converted_student_idTostudents")
-  monthly_reports                            monthly_reports[]
-  notifications                              notifications[]
-  branches                                   branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_branch")
-  leads_students_source_lead_idToleads       leads?                 @relation("students_source_lead_idToleads", fields: [source_lead_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_lead")
-  users                                      users                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_students_user")
-  study_group_members                        study_group_members[]
-
-  @@index([branch_id], map: "fk_students_branch")
-  @@index([source_lead_id], map: "fk_students_lead")
-}
-
-model study_group_members {
-  group_id     String       @db.Char(36)
-  student_id   String       @db.Char(36)
-  study_groups study_groups @relation(fields: [group_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sgm_group")
-  students     students     @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sgm_student")
-
-  @@id([group_id, student_id])
-  @@index([student_id], map: "fk_sgm_student")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model study_groups {
-  id                                    String                @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  class_id                              String                @db.Char(36)
-  name                                  String                @db.VarChar(100)
-  purpose                               String?               @db.VarChar(255)
-  created_by                            String                @db.Char(36)
-  status                                study_groups_status   @default(pending)
-  approved_by                           String?               @db.Char(36)
-  approved_at                           DateTime?
-  created_at                            DateTime              @default(now())
-  assignment_targets                    assignment_targets[]
-  study_group_members                   study_group_members[]
-  users_study_groups_approved_byTousers users?                @relation("study_groups_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sg_approver")
-  classes                               classes               @relation(fields: [class_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sg_class")
-  users_study_groups_created_byTousers  users                 @relation("study_groups_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sg_creator")
-
-  @@index([approved_by], map: "fk_sg_approver")
-  @@index([class_id], map: "fk_sg_class")
-  @@index([created_by], map: "fk_sg_creator")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model survey_responses {
-  id              String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  survey_id       String   @db.Char(36)
-  respondent_hash String   @db.Char(64)
-  teacher_id      String   @db.Char(36)
-  class_id        String?  @db.Char(36)
-  answers         Json
-  avg_stars       Decimal? @db.Decimal(3, 2)
-  created_at      DateTime @default(now())
-  classes         classes? @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sr_class")
-  surveys         surveys  @relation(fields: [survey_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sr_survey")
-  teachers        teachers @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sr_teacher")
-
-  @@unique([survey_id, respondent_hash, teacher_id], map: "uq_sr_once")
-  @@index([class_id], map: "fk_sr_class")
-  @@index([teacher_id], map: "ix_sr_teacher")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model surveys {
-  id               String             @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id        String             @db.Char(36)
-  title            String             @db.VarChar(200)
-  audience         surveys_audience
-  questions        Json
-  period_code      String             @db.VarChar(20)
-  opens_at         DateTime
-  closes_at        DateTime
-  created_by       String             @db.Char(36)
-  created_at       DateTime           @default(now())
-  survey_responses survey_responses[]
-  branches         branches           @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sv_branch")
-  users            users              @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_sv_creator")
-
-  @@index([branch_id], map: "fk_sv_branch")
-  @@index([created_by], map: "fk_sv_creator")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model teacher_availability {
-  id         String   @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  teacher_id String   @db.Char(36)
-  weekday    Int      @db.TinyInt
-  start_time DateTime @db.Time(0)
-  end_time   DateTime @db.Time(0)
-  teachers   teachers @relation(fields: [teacher_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ta_teacher")
-
-  @@index([teacher_id, weekday], map: "ix_ta_teacher")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model teacher_checkins {
-  id                String                  @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  session_id        String                  @db.Char(36)
-  teacher_id        String                  @db.Char(36)
-  qr_token_id       String?                 @db.Char(36)
-  photo_file_id     String?                 @db.Char(36)
-  latitude          Decimal?                @db.Decimal(9, 6)
-  longitude         Decimal?                @db.Decimal(9, 6)
-  distance_m        Int?
-  result            teacher_checkins_result
-  manual_reason     String?                 @db.VarChar(500)
-  reviewed_by       String?                 @db.Char(36)
-  created_at        DateTime                @default(now())
-  files             files?                  @relation(fields: [photo_file_id], references: [id], onUpdate: NoAction, map: "fk_tci_photo")
-  session_qr_tokens session_qr_tokens?      @relation(fields: [qr_token_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tci_qr")
-  users             users?                  @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tci_reviewer")
-  class_sessions    class_sessions          @relation(fields: [session_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_tci_session")
-  teachers          teachers                @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tci_teacher")
-
-  @@index([photo_file_id], map: "fk_tci_photo")
-  @@index([qr_token_id], map: "fk_tci_qr")
-  @@index([reviewed_by], map: "fk_tci_reviewer")
-  @@index([teacher_id], map: "fk_tci_teacher")
-  @@index([session_id], map: "ix_tc_session")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model teacher_metrics {
-  teacher_id            String   @db.Char(36)
-  metric_month          String   @db.Char(7)
-  survey_avg            Decimal? @db.Decimal(3, 2)
-  survey_count          Int      @default(0)
-  class_attendance_rate Decimal? @db.Decimal(5, 4)
-  student_progress_avg  Decimal? @db.Decimal(6, 2)
-  reply_median_min      Int?
-  on_time_grading_rate  Decimal? @db.Decimal(5, 4)
-  computed_at           DateTime @default(now())
-  teachers              teachers @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_tm_teacher")
-
-  @@id([teacher_id, metric_month])
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model teachers {
-  id                                                                String                 @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  user_id                                                           String                 @unique(map: "uq_teachers_user") @db.Char(36)
-  branch_id                                                         String                 @db.Char(36)
-  bio_public                                                        String?                @db.Text
-  certificates                                                      Json?
-  levels_taught                                                     Json?
-  other_workplace                                                   String?                @db.VarChar(200)
-  is_head_of_dept                                                   Boolean                @default(false)
-  is_public                                                         Boolean                @default(true)
-  created_at                                                        DateTime               @default(now())
-  updated_at                                                        DateTime               @default(now())
-  deleted_at                                                        DateTime?
-  class_sessions_class_sessions_substitute_for_teacher_idToteachers class_sessions[]       @relation("class_sessions_substitute_for_teacher_idToteachers")
-  class_sessions_class_sessions_teacher_idToteachers                class_sessions[]       @relation("class_sessions_teacher_idToteachers")
-  class_teachers                                                    class_teachers[]
-  classes                                                           classes[]
-  evaluations                                                       evaluations[]
-  lesson_plans                                                      lesson_plans[]
-  pay_rates                                                         pay_rates[]
-  payroll_items                                                     payroll_items[]
-  reschedule_requests                                               reschedule_requests[]
-  survey_responses                                                  survey_responses[]
-  teacher_availability                                              teacher_availability[]
-  teacher_checkins                                                  teacher_checkins[]
-  teacher_metrics                                                   teacher_metrics[]
-  branches                                                          branches               @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_teachers_branch")
-  users                                                             users                  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_teachers_user")
-
-  @@index([branch_id], map: "fk_teachers_branch")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model user_roles {
-  user_id                            String   @db.Char(36)
-  role_id                            String   @db.Char(36)
-  granted_by                         String?  @db.Char(36)
-  granted_at                         DateTime @default(now())
-  users_user_roles_granted_byTousers users?   @relation("user_roles_granted_byTousers", fields: [granted_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ur_granted_by")
-  roles                              roles    @relation(fields: [role_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_ur_role")
-  users_user_roles_user_idTousers    users    @relation("user_roles_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_ur_user")
-
-  @@id([user_id, role_id])
-  @@index([granted_by], map: "fk_ur_granted_by")
-  @@index([role_id], map: "fk_ur_role")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model users {
-  id                                                          String                      @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  branch_id                                                   String                      @db.Char(36)
-  full_name                                                   String                      @db.VarChar(150)
-  phone                                                       String?                     @unique(map: "uq_users_phone") @db.VarChar(20)
-  email                                                       String?                     @unique(map: "uq_users_email") @db.VarChar(190)
-  username                                                    String?                     @unique(map: "uq_users_username") @db.VarChar(50)
-  password_hash                                               String                      @db.VarChar(255)
-  must_change_password                                        Boolean                     @default(true)
-  temp_password_expires_at                                    DateTime?
-  twofa_secret                                                String?                     @db.VarChar(255)
-  status                                                      users_status                @default(active)
-  failed_login_count                                          Int                         @default(0)
-  locked_until                                                DateTime?
-  avatar_file_id                                              String?                     @db.Char(36)
-  last_login_at                                               DateTime?
-  created_at                                                  DateTime                    @default(now())
-  updated_at                                                  DateTime                    @default(now())
-  deleted_at                                                  DateTime?
-  absence_requests                                            absence_requests[]
-  ai_jobs                                                     ai_jobs[]
-  announcement_reads                                          announcement_reads[]
-  announcements                                               announcements[]
-  assignments                                                 assignments[]
-  attempts                                                    attempts[]
-  attendance                                                  attendance[]
-  audit_logs                                                  audit_logs[]
-  chat_access_requests                                        chat_access_requests[]
-  chat_sessions                                               chat_sessions[]
-  classes                                                     classes[]
-  consents                                                    consents[]
-  conversation_participants                                   conversation_participants[]
-  curricula                                                   curricula[]
-  curriculum_suggestions                                      curriculum_suggestions[]
-  curriculum_versions_curriculum_versions_approved_byTousers  curriculum_versions[]       @relation("curriculum_versions_approved_byTousers")
-  curriculum_versions_curriculum_versions_created_byTousers   curriculum_versions[]       @relation("curriculum_versions_created_byTousers")
-  enrollments                                                 enrollments[]
-  files_files_uploaded_byTousers                              files[]                     @relation("files_uploaded_byTousers")
-  guardians                                                   guardians?
-  imports                                                     imports[]
-  invoices                                                    invoices[]
-  kb_documents                                                kb_documents[]
-  lead_activities                                             lead_activities[]
-  leads                                                       leads[]
-  lesson_plans                                                lesson_plans[]
-  materials_materials_created_byTousers                       materials[]                 @relation("materials_created_byTousers")
-  materials_materials_published_byTousers                     materials[]                 @relation("materials_published_byTousers")
-  message_reports_message_reports_handled_byTousers           message_reports[]           @relation("message_reports_handled_byTousers")
-  message_reports_message_reports_reported_byTousers          message_reports[]           @relation("message_reports_reported_byTousers")
-  messages                                                    messages[]
-  monthly_reports                                             monthly_reports[]
-  notification_preferences                                    notification_preferences[]
-  notifications                                               notifications[]
-  password_resets                                             password_resets[]
-  pay_rates                                                   pay_rates[]
-  payments                                                    payments[]
-  payroll_periods                                             payroll_periods[]
-  push_subscriptions                                          push_subscriptions[]
-  questions_questions_approved_byTousers                      questions[]                 @relation("questions_approved_byTousers")
-  questions_questions_created_byTousers                       questions[]                 @relation("questions_created_byTousers")
-  refresh_tokens                                              refresh_tokens[]
-  regrade_requests_regrade_requests_requested_byTousers       regrade_requests[]          @relation("regrade_requests_requested_byTousers")
-  regrade_requests_regrade_requests_resolved_byTousers        regrade_requests[]          @relation("regrade_requests_resolved_byTousers")
-  reschedule_requests_reschedule_requests_decided_byTousers   reschedule_requests[]       @relation("reschedule_requests_decided_byTousers")
-  reschedule_requests_reschedule_requests_requested_byTousers reschedule_requests[]       @relation("reschedule_requests_requested_byTousers")
-  rubrics                                                     rubrics[]
-  settings                                                    settings[]
-  students                                                    students?
-  study_groups_study_groups_approved_byTousers                study_groups[]              @relation("study_groups_approved_byTousers")
-  study_groups_study_groups_created_byTousers                 study_groups[]              @relation("study_groups_created_byTousers")
-  surveys                                                     surveys[]
-  teacher_checkins                                            teacher_checkins[]
-  teachers                                                    teachers?
-  user_roles_user_roles_granted_byTousers                     user_roles[]                @relation("user_roles_granted_byTousers")
-  user_roles_user_roles_user_idTousers                        user_roles[]                @relation("user_roles_user_idTousers")
-  files_users_avatar_file_idTofiles                           files?                      @relation("users_avatar_file_idTofiles", fields: [avatar_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_avatar")
-  branches                                                    branches                    @relation(fields: [branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_branch")
-  videos_videos_approved_byTousers                            videos[]                    @relation("videos_approved_byTousers")
-  videos_videos_created_byTousers                             videos[]                    @relation("videos_created_byTousers")
-  videos_videos_script_approved_byTousers                     videos[]                    @relation("videos_script_approved_byTousers")
-
-  @@index([avatar_file_id], map: "fk_users_avatar")
-  @@index([branch_id], map: "fk_users_branch")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model videos {
-  id                                     String        @id @default(dbgenerated("(uuid())")) @db.Char(36)
-  lesson_plan_id                         String        @db.Char(36)
-  level                                  videos_level  @default(slides_tts)
-  script                                 Json?
-  script_approved_by                     String?       @db.Char(36)
-  script_approved_at                     DateTime?
-  file_id                                String?       @db.Char(36)
-  subtitle_file_id                       String?       @db.Char(36)
-  duration_s                             Int?
-  status                                 videos_status @default(scripting)
-  approved_by                            String?       @db.Char(36)
-  ai_job_id                              String?       @db.Char(36)
-  created_by                             String        @db.Char(36)
-  created_at                             DateTime      @default(now())
-  updated_at                             DateTime      @default(now())
-  users_videos_approved_byTousers        users?        @relation("videos_approved_byTousers", fields: [approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_approver")
-  users_videos_created_byTousers         users         @relation("videos_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_creator")
-  files_videos_file_idTofiles            files?        @relation("videos_file_idTofiles", fields: [file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_file")
-  ai_jobs                                ai_jobs?      @relation(fields: [ai_job_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_job")
-  lesson_plans                           lesson_plans  @relation(fields: [lesson_plan_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_lp")
-  users_videos_script_approved_byTousers users?        @relation("videos_script_approved_byTousers", fields: [script_approved_by], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_sapprover")
-  files_videos_subtitle_file_idTofiles   files?        @relation("videos_subtitle_file_idTofiles", fields: [subtitle_file_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_vid_sub")
-
-  @@index([approved_by], map: "fk_vid_approver")
-  @@index([created_by], map: "fk_vid_creator")
-  @@index([file_id], map: "fk_vid_file")
-  @@index([ai_job_id], map: "fk_vid_job")
-  @@index([lesson_plan_id], map: "fk_vid_lp")
-  @@index([script_approved_by], map: "fk_vid_sapprover")
-  @@index([subtitle_file_id], map: "fk_vid_sub")
-}
-
-enum standards_framework {
-  YLE
-  CEFR
-  GDPT2018
-  IELTS
-}
-
-enum assignment_targets_target_type {
-  class
-  group
-  student
-}
-
-enum chat_turns_role {
-  visitor
-  bot
-  consultant
-}
-
-enum class_teachers_role {
-  main
-  assistant
-}
-
-enum competency_scores_skill {
-  listening
-  speaking
-  reading
-  writing
-  grammar
-  vocabulary
-}
-
-enum conversations_kind {
-  guardian_teacher
-  student_teacher
-  guardian_staff
-}
-
-enum guardianships_relation {
-  father
-  mother
-  grandparent
-  guardian
-  other
-}
-
-enum imports_entity {
-  students
-  guardians
-  teachers
-  classes
-  grades
-}
-
-enum pay_rates_class_mode {
-  offline
-  online
-  hybrid
-}
-
-enum questions_type {
-  single_choice
-  multi_choice
-  true_false
-  fill_blank
-  matching
-  ordering
-  listening
-  speaking
-  essay
-  file_upload
-}
-
-enum session_qr_tokens_kind {
-  offline
-  online
-}
-
-enum videos_level {
-  slides_tts
-  avatar
-}
-
-enum attendance_status {
-  present
-  late
-  excused
-  absent
-}
-
-enum competency_scores_framework {
-  YLE
-  CEFR
-  GDPT2018
-  IELTS
-}
-
-enum curriculum_nodes_node_type {
-  unit
-  lesson
-  objective
-  activity
-}
-
-enum fee_plans_billing_unit {
-  course
-  month
-  session
-}
-
-enum kb_documents_category {
-  course
-  fee
-  schedule
-  teacher
-  policy
-  faq
-  about
-}
-
-enum lead_activities_type {
-  form
-  chat
-  call
-  note
-  status_change
-  trial
-  test_result
-  resubmit
-}
-
-enum payments_method {
-  cash
-  bank_transfer
-  gateway
-}
-
-enum payroll_periods_status {
-  open
-  review
-  closed
-}
-
-enum reschedule_requests_type {
-  reschedule
-  substitute
-  cancel
-}
-
-enum rubrics_skill {
-  speaking
-  writing
-}
-
-enum standards_skill {
-  listening
-  speaking
-  reading
-  writing
-  grammar
-  vocabulary
-}
-
-enum surveys_audience {
-  guardian
-  student
-}
-
-enum assignments_kind {
-  homework
-  practice
-  test
-  placement
-  skill_test
-  recommended
-}
-
-enum attendance_method {
-  teacher
-  qr_student
-  online_link
-  absence_request
-  system
-}
-
-enum consents_scope {
-  data_processing
-  ai_processing
-  photo_public
-  marketing
-}
-
-enum curriculum_versions_status {
-  draft
-  analyzing
-  review
-  approved
-  superseded
-}
-
-enum enrollments_status {
-  active
-  transferred
-  paused
-  stopped
-  completed
-}
-
-enum message_reports_status {
-  open
-  reviewing
-  resolved
-  dismissed
-}
-
-enum regrade_requests_status {
-  pending
-  accepted
-  rejected
-}
-
-enum ai_jobs_status {
-  queued
-  running
-  done
-  failed
-  cancelled
-}
-
-enum chat_access_requests_status {
-  pending
-  approved
-  rejected
-  expired
-}
-
-enum classes_mode {
-  offline
-  online
-  hybrid
-}
-
-enum evaluations_period {
-  session
-  month
-  course
-}
-
-enum kb_documents_status {
-  draft
-  approved
-  archived
-}
-
-enum materials_type {
-  worksheet
-  vocabulary
-  slides
-  image
-  document
-  link
-  video
-}
-
-enum programs_framework {
-  YLE
-  CEFR
-  GDPT2018
-  IELTS
-  OTHER
-}
-
-enum study_groups_status {
-  pending
-  approved
-  rejected
-  archived
-}
-
-enum files_purpose {
-  curriculum
-  material
-  video
-  attendance_photo
-  submission
-  audio
-  chat
-  avatar
-  import
-  export
-  other
-}
-
-enum monthly_reports_status {
-  drafted
-  approved
-  sent
-}
-
-enum attempts_submit_mode {
-  manual
-  timeout
-}
-
-enum curriculum_nodes_skill {
-  listening
-  speaking
-  reading
-  writing
-  grammar
-  vocabulary
-}
-
-enum curriculum_suggestions_status {
-  pending
-  accepted
-  rejected
-}
-
-enum files_copyright_source {
-  center
-  teacher
-  public_domain
-  third_party
-}
-
-enum lesson_plans_status {
-  draft
-  submitted
-  approved
-  rejected
-}
-
-enum reschedule_requests_status {
-  pending
-  approved
-  rejected
-}
-
-enum teacher_checkins_result {
-  accepted
-  rejected_distance
-  rejected_no_location
-  rejected_qr
-  manual_pending
-  manual_approved
-}
-
-enum questions_skill {
-  listening
-  speaking
-  reading
-  writing
-  grammar
-  vocabulary
-}
-
-enum videos_status {
-  scripting
-  script_review
-  rendering
-  video_review
-  published
-  failed
-}
-
-enum imports_status {
-  uploaded
-  previewed
-  importing
-  done
-  failed
-}
-
-enum students_status {
-  active
-  paused
-  stopped
-  completed
-}
-
-enum users_status {
-  active
-  locked
-  disabled
-}
-
-enum assignments_show_answer_mode {
-  immediately
-  after_due
-  after_publish
-}
-
-enum class_sessions_status {
-  scheduled
-  in_progress
-  done
-  cancelled
-  holiday
-}
-
-enum invoices_status {
-  unpaid
-  partial
-  paid
-  void
-}
-
-enum questions_framework {
-  YLE
-  CEFR
-  GDPT2018
-  IELTS
-}
-
-enum materials_status {
-  draft
-  published
-  archived
-}
-
-enum class_sessions_verify_method {
-  qr_offline
-  online_open
-  manual
-}
-
-enum classes_status {
-  planned
-  running
-  finished
-  cancelled
-}
-
-enum leads_status {
-  new
-  contacted
-  trial_booked
-  trial_done
-  enrolled
-  lost
-}
-
-enum questions_status {
-  draft
-  approved
-  archived
+enum Role {
+  ADMIN
+  STAFF
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  TRIAL_SCHEDULED
+  TRIAL_DONE
+  ENROLLED
+  LOST
+}
+
+enum LeadActivityType {
+  CREATED
+  RESUBMITTED
+  NOTE
+  STATUS_CHANGE
+  CONVERTED
+}
+
+enum ClassStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  PAUSED
+  DROPPED
+  COMPLETED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+  EXCUSED
+}
+
+enum AssignmentStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum QuestionType {
+  MCQ
+  SHORT
+  ESSAY
+}
+
+enum SubmissionStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+model User {
+  id                 String     @id @default(cuid())
+  email              String?    @unique @db.VarChar(191)
+  phone              String?    @unique @db.VarChar(20)
+  fullName           String     @db.VarChar(120)
+  passwordHash       String     @db.VarChar(255)
+  role               Role
+  status             UserStatus @default(ACTIVE)
+  mustChangePassword Boolean    @default(false)
+  failedLoginCount   Int        @default(0)
+  lockedUntil        DateTime?
+  studentCode        String?    @unique @db.VarChar(16)
+  gradeLevel         Int?       @db.TinyInt
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+
+  sessions          Session[]
+  childLinks        Guardianship[]  @relation("ParentLinks")
+  parentLinks       Guardianship[]  @relation("StudentLinks")
+  teachingClasses   Class[]         @relation("ClassTeacher")
+  teachingSessions  ClassSession[]  @relation("SessionTeacher")
+  enrollments       Enrollment[]
+  attendances       Attendance[]    @relation("AttendanceStudent")
+  attendanceMarks   Attendance[]    @relation("AttendanceMarker")
+  assignedLeads     Lead[]          @relation("LeadAssignee")
+  convertedLeads    Lead[]          @relation("LeadConvertedStudent")
+  leadActivities    LeadActivity[]
+  createdAssignments Assignment[]
+  submissions       Submission[]    @relation("SubmissionStudent")
+  gradedSubmissions Submission[]    @relation("SubmissionGrader")
+  auditLogs         AuditLog[]
+
+  @@index([role])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @db.VarChar(64) // sha256(token) dạng hex
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Guardianship {
+  parentId  String
+  studentId String
+  relation  String   @default("Phụ huynh") @db.VarChar(40)
+  createdAt DateTime @default(now())
+  parent    User     @relation("ParentLinks", fields: [parentId], references: [id], onDelete: Cascade)
+  student   User     @relation("StudentLinks", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([parentId, studentId])
+  @@index([studentId])
+  @@map("guardianships")
+}
+
+model Subject {
+  id          String   @id @default(cuid())
+  name        String   @db.VarChar(80)
+  slug        String   @unique @db.VarChar(80)
+  description String   @db.Text
+  sortOrder   Int      @default(0)
+  courses     Course[]
+  leads       Lead[]
+
+  @@map("subjects")
+}
+
+model Course {
+  id             String   @id @default(cuid())
+  subjectId      String
+  title          String   @db.VarChar(160)
+  slug           String   @unique @db.VarChar(160)
+  summary        String   @db.VarChar(300)
+  description    String   @db.Text
+  gradeFrom      Int      @db.TinyInt
+  gradeTo        Int      @db.TinyInt
+  level          String   @db.VarChar(60)
+  totalSessions  Int      @db.SmallInt
+  sessionMinutes Int      @db.SmallInt
+  tuitionVnd     Int?
+  outcomes       Json // string[]
+  syllabus       Json // { title: string; detail: string }[]
+  isPublished    Boolean  @default(false)
+  isFeatured     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  subject        Subject  @relation(fields: [subjectId], references: [id])
+  classes        Class[]
+  leads          Lead[]
+
+  @@index([subjectId, isPublished])
+  @@map("courses")
+}
+
+model Room {
+  id       String         @id @default(cuid())
+  name     String         @unique @db.VarChar(60)
+  capacity Int            @db.SmallInt
+  classes  Class[]
+  sessions ClassSession[]
+
+  @@map("rooms")
+}
+
+model Class {
+  id            String       @id @default(cuid())
+  code          String       @unique @db.VarChar(30)
+  courseId      String
+  teacherId     String
+  roomId        String?
+  startDate     DateTime     @db.Date
+  weekdays      String       @db.VarChar(20) // "1,3,5" — 1 = Thứ Hai … 7 = Chủ nhật
+  startTime     String       @db.Char(5) // "18:00" giờ Việt Nam
+  endTime       String       @db.Char(5)
+  totalSessions Int          @db.SmallInt
+  capacity      Int          @db.SmallInt
+  status        ClassStatus  @default(OPEN)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  course        Course       @relation(fields: [courseId], references: [id])
+  teacher       User         @relation("ClassTeacher", fields: [teacherId], references: [id])
+  room          Room?        @relation(fields: [roomId], references: [id])
+  sessions      ClassSession[]
+  enrollments   Enrollment[]
+  assignments   Assignment[]
+
+  @@index([teacherId])
+  @@index([courseId, status])
+  @@map("classes")
+}
+
+model ClassSession {
+  id           String        @id @default(cuid())
+  classId      String
+  index        Int           @db.SmallInt
+  startsAt     DateTime
+  endsAt       DateTime
+  teacherId    String
+  roomId       String?
+  status       SessionStatus @default(SCHEDULED)
+  cancelReason String?       @db.VarChar(255)
+  class        Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  teacher      User          @relation("SessionTeacher", fields: [teacherId], references: [id])
+  room         Room?         @relation(fields: [roomId], references: [id])
+  attendances  Attendance[]
+
+  @@unique([classId, index])
+  @@index([teacherId, startsAt])
+  @@index([roomId, startsAt])
+  @@index([startsAt])
+  @@map("class_sessions")
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  classId    String
+  studentId  String
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  class      Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student    User             @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  @@index([studentId, status])
+  @@map("enrollments")
+}
+
+model Attendance {
+  id          String           @id @default(cuid())
+  sessionId   String
+  studentId   String
+  status      AttendanceStatus
+  note        String?          @db.VarChar(255)
+  markedById  String
+  markedAt    DateTime         @default(now())
+  session     ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student     User             @relation("AttendanceStudent", fields: [studentId], references: [id])
+  markedBy    User             @relation("AttendanceMarker", fields: [markedById], references: [id])
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+  @@map("attendances")
+}
+
+model Lead {
+  id                 String         @id @default(cuid())
+  parentName         String         @db.VarChar(120)
+  phone              String         @db.VarChar(20)
+  email              String?        @db.VarChar(191)
+  studentName        String         @db.VarChar(120)
+  gradeLevel         Int?           @db.TinyInt
+  subjectId          String?
+  courseId           String?
+  note               String?        @db.Text
+  source             String         @default("web_form") @db.VarChar(40)
+  utm                Json?
+  status             LeadStatus     @default(NEW)
+  lostReason         String?        @db.VarChar(255)
+  assignedToId       String?
+  convertedStudentId String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  subject            Subject?       @relation(fields: [subjectId], references: [id])
+  course             Course?        @relation(fields: [courseId], references: [id])
+  assignedTo         User?          @relation("LeadAssignee", fields: [assignedToId], references: [id])
+  convertedStudent   User?          @relation("LeadConvertedStudent", fields: [convertedStudentId], references: [id])
+  activities         LeadActivity[]
+
+  @@index([phone])
+  @@index([status, createdAt])
+  @@map("leads")
+}
+
+model LeadActivity {
+  id        String           @id @default(cuid())
+  leadId    String
+  actorId   String?
+  type      LeadActivityType
+  content   String           @db.Text
+  createdAt DateTime         @default(now())
+  lead      Lead             @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actor     User?            @relation(fields: [actorId], references: [id])
+
+  @@index([leadId, createdAt])
+  @@map("lead_activities")
+}
+
+model Assignment {
+  id                 String           @id @default(cuid())
+  classId            String
+  createdById        String
+  title              String           @db.VarChar(200)
+  instructions       String           @db.Text
+  dueAt              DateTime
+  allowLate          Boolean          @default(false)
+  status             AssignmentStatus @default(DRAFT)
+  resultsPublishedAt DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  class              Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  createdBy          User             @relation(fields: [createdById], references: [id])
+  questions          Question[]
+  submissions        Submission[]
+
+  @@index([classId, status])
+  @@map("assignments")
+}
+
+model Question {
+  id              String       @id @default(cuid())
+  assignmentId    String
+  order           Int          @db.SmallInt
+  type            QuestionType
+  prompt          String       @db.Text
+  options         Json? // string[] cho MCQ
+  correctOption   Int?         @db.TinyInt // chỉ số 0-based cho MCQ
+  acceptedAnswers Json? // string[] cho SHORT
+  points          Float
+  assignment      Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  answers         Answer[]
+
+  @@index([assignmentId, order])
+  @@map("questions")
+}
+
+model Submission {
+  id             String           @id @default(cuid())
+  assignmentId   String
+  studentId      String
+  status         SubmissionStatus @default(IN_PROGRESS)
+  startedAt      DateTime         @default(now())
+  submittedAt    DateTime?
+  isLate         Boolean          @default(false)
+  score          Float?
+  teacherComment String?          @db.Text
+  gradedAt       DateTime?
+  gradedById     String?
+  assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student        User             @relation("SubmissionStudent", fields: [studentId], references: [id])
+  gradedBy       User?            @relation("SubmissionGrader", fields: [gradedById], references: [id])
+  answers        Answer[]
+
+  @@unique([assignmentId, studentId])
+  @@index([studentId])
+  @@map("submissions")
+}
+
+model Answer {
+  id            String     @id @default(cuid())
+  submissionId  String
+  questionId    String
+  response      String?    @db.Text
+  autoPoints    Float?
+  teacherPoints Float?
+  feedback      String?    @db.Text
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question      Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([submissionId, questionId])
+  @@map("answers")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String   @db.VarChar(60)
+  entity    String   @db.VarChar(40)
+  entityId  String   @db.VarChar(40)
+  detail    Json?
+  createdAt DateTime @default(now())
+  actor     User?    @relation(fields: [actorId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model RateLimitBucket {
+  key     String   @id @db.VarChar(120)
+  count   Int
+  resetAt DateTime
+
+  @@map("rate_limit_buckets")
 }

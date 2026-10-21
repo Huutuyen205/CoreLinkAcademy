@@ -1,0 +1,111 @@
+// Quản trị danh mục (FR-015, FR-016) — chỉ ADMIN.
+import { assertCan } from "@/server/auth/policy";
+import type { Actor } from "@/server/auth/session";
+import { db } from "@/server/db";
+import { DomainError, ForbiddenError } from "@/server/errors";
+import { isUniqueViolation } from "@/server/users/credentials";
+
+export type SubjectInput = { name: string; slug: string; description: string; sortOrder: number };
+
+export type CourseInput = {
+  subjectId: string;
+  title: string;
+  slug: string;
+  summary: string;
+  description: string;
+  gradeFrom: number;
+  gradeTo: number;
+  level: string;
+  totalSessions: number;
+  sessionMinutes: number;
+  tuitionVnd: number | null;
+  outcomes: string[];
+  syllabus: { title: string; detail: string }[];
+  isPublished: boolean;
+  isFeatured: boolean;
+};
+
+const duplicateSlug = () => new DomainError("DUPLICATE_SLUG", "Đường dẫn (slug) đã được dùng.", { slug: "Slug đã tồn tại." });
+
+export async function listSubjectsAdmin(actor: Actor) {
+  assertCan(actor, "catalog.manage");
+  return db.subject.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }], include: { _count: { select: { courses: true } } } });
+}
+
+/** API-010. */
+export async function saveSubject(actor: Actor, id: string | null, input: SubjectInput): Promise<void> {
+  assertCan(actor, "catalog.manage");
+  try {
+    if (id) await db.subject.update({ where: { id }, data: input });
+    else await db.subject.create({ data: input });
+  } catch (error) {
+    if (isUniqueViolation(error, "slug")) throw duplicateSlug();
+    throw error;
+  }
+}
+
+export async function listCoursesAdmin(actor: Actor) {
+  assertCan(actor, "catalog.manage");
+  return db.course.findMany({
+    orderBy: [{ subject: { sortOrder: "asc" } }, { title: "asc" }],
+    select: { id: true, title: true, slug: true, isPublished: true, isFeatured: true, gradeFrom: true, gradeTo: true, subject: { select: { name: true } }, _count: { select: { classes: true } } },
+  });
+}
+
+export async function getCourseAdmin(actor: Actor, id: string) {
+  assertCan(actor, "catalog.manage");
+  const course = await db.course.findUnique({ where: { id }, include: { _count: { select: { classes: true } } } });
+  if (!course) throw new ForbiddenError();
+  return course;
+}
+
+/** API-010 — FR-015: slug duy nhất. */
+export async function saveCourse(actor: Actor, id: string | null, input: CourseInput): Promise<string> {
+  assertCan(actor, "catalog.manage");
+  const subject = await db.subject.findUnique({ where: { id: input.subjectId }, select: { id: true } });
+  if (!subject) throw new DomainError("INVALID", "Môn học không hợp lệ.", { subjectId: "Chọn môn." });
+  try {
+    if (id) {
+      await db.course.update({ where: { id }, data: input });
+      return id;
+    }
+    return (await db.course.create({ data: input })).id;
+  } catch (error) {
+    if (isUniqueViolation(error, "slug")) throw duplicateSlug();
+    throw error;
+  }
+}
+
+/** FR-015: khóa đang có lớp không xóa được (chỉ ẩn). */
+export async function deleteCourse(actor: Actor, id: string): Promise<void> {
+  assertCan(actor, "catalog.manage");
+  const course = await db.course.findUnique({ where: { id }, select: { _count: { select: { classes: true } } } });
+  if (!course) throw new ForbiddenError();
+  if (course._count.classes > 0) throw new DomainError("HAS_CLASSES", "Khóa đã có lớp nên không xóa được. Hãy tắt xuất bản để ẩn khóa.");
+  await db.$transaction([db.lead.updateMany({ where: { courseId: id }, data: { courseId: null } }), db.course.delete({ where: { id } })]);
+}
+
+export async function listRoomsAdmin(actor: Actor) {
+  assertCan(actor, "room.manage");
+  return db.room.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { classes: true, sessions: true } } } });
+}
+
+/** API-010 — FR-016: tên phòng duy nhất. */
+export async function saveRoom(actor: Actor, id: string | null, input: { name: string; capacity: number }): Promise<void> {
+  assertCan(actor, "room.manage");
+  try {
+    if (id) await db.room.update({ where: { id }, data: input });
+    else await db.room.create({ data: input });
+  } catch (error) {
+    if (isUniqueViolation(error, "name")) throw new DomainError("DUPLICATE_NAME", "Tên phòng đã tồn tại.", { name: "Tên phòng đã tồn tại." });
+    throw error;
+  }
+}
+
+export async function deleteRoom(actor: Actor, id: string): Promise<void> {
+  assertCan(actor, "room.manage");
+  const room = await db.room.findUnique({ where: { id }, select: { _count: { select: { classes: true, sessions: true } } } });
+  if (!room) throw new ForbiddenError();
+  if (room._count.classes + room._count.sessions > 0) throw new DomainError("IN_USE", "Phòng đang được dùng cho lớp/buổi học nên không xóa được.");
+  await db.room.delete({ where: { id } });
+}
