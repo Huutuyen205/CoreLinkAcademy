@@ -30,7 +30,7 @@ export default async function ManagementDashboard({ searchParams }: { searchPara
         {stats.map((s) => (
           <li key={s.label}>
             <Link href={s.href} className={`block rounded-block border bg-surface p-4 text-ink no-underline hover:border-primary ${s.warn ? "border-warning" : "border-line"}`}>
-              <span className={`block font-serif text-3xl ${s.warn ? "text-warning" : "text-primary"}`}>{s.value}</span>
+              <span className={`block font-heading text-3xl font-bold ${s.warn ? "text-warning" : "text-primary"}`}>{s.value}</span>
               <span className="mt-1 block text-sm text-muted">{s.label}</span>
             </Link>
           </li>

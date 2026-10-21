@@ -2,17 +2,20 @@ import Link from "next/link";
 import type { ComponentProps } from "react";
 import { cn } from "@/lib/format";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+/** `inverse` / `outline-inverse`: dùng trên nền xanh thương hiệu (khối giới thiệu, chân trang). */
+type Variant = "primary" | "secondary" | "ghost" | "danger" | "inverse" | "outline-inverse";
 type Size = "sm" | "md";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-control font-medium no-underline transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-control font-semibold no-underline transition-colors disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants: Record<Variant, string> = {
   primary: "bg-primary text-white hover:bg-primary-strong",
-  secondary: "border border-line bg-surface text-ink hover:border-primary hover:text-primary",
+  secondary: "border border-primary/30 bg-surface text-primary hover:border-primary hover:bg-primary-soft",
   ghost: "text-primary hover:bg-primary-soft",
   danger: "bg-danger text-white hover:brightness-90",
+  inverse: "bg-white text-primary hover:bg-brand-tint",
+  "outline-inverse": "border border-white/70 text-white hover:bg-white/10",
 };
 
 const sizes: Record<Size, string> = {

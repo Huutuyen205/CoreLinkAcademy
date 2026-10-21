@@ -4,26 +4,27 @@ import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
   subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-be-vietnam",
   display: "swap",
 });
 
+// Chỉ dùng cho wordmark "CORE LINK" (logo dùng chữ có chân).
 const serif = Source_Serif_4({
   subsets: ["latin", "vietnamese"],
-  weight: ["500", "600", "700"],
+  weight: ["600", "700"],
   variable: "--font-source-serif",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
-  title: { default: "CoreLink Academy — Học viện đào tạo phổ thông", template: "%s · CoreLink Academy" },
+  title: { default: "Core Link Academy — Học viện đào tạo phổ thông", template: "%s · Core Link Academy" },
   description:
-    "CoreLink Academy đào tạo Toán, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Tin học cho học sinh phổ thông. Đăng ký học thử miễn phí.",
+    "Core Link Academy đào tạo Toán, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Tin học cho học sinh phổ thông. Đăng ký học thử miễn phí.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1F3A5F" };
+export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1C2D95" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

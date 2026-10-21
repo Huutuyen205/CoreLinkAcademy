@@ -2,6 +2,81 @@
 
 Ghi theo phiên, mới nhất ở trên. Kết quả lệnh là output thực tế, không ước lượng.
 
+## 2026-10-21 (phiên 3, tiếp) — Redesign giao diện trang web với Banner & Logo chính thức + Animation động
+
+### Đã làm
+- **Tài sản hình ảnh thương hiệu**: Lưu 2 ảnh PO cung cấp thành `/brand/banner.png` (435 KB) và `/brand/logo.png` (372 KB); đồng bộ `src/app/icon.png` và `apple-icon.png` theo logo chính thức.
+- **Hệ thống Animation & CSS Tokens (`src/app/globals.css`)**:
+  - Keyframes: `float-gentle`, `float-gentle-delayed`, `pulse-subtle`, `shimmer-sweep`.
+  - Utility classes: `.animate-float`, `.animate-float-delayed`, `.animate-pulse-subtle`, `.card-interactive` (elevation + border glow khi hover), `.btn-shimmer` (vệt sáng lướt qua nút CTA), `.banner-glow-frame` (viền hào quang xanh đa tầng bao quanh banner).
+  - Tuân thủ WCAG 2.1 AA: `@media (prefers-reduced-motion: reduce)` tắt toàn bộ chuyển động khi người dùng yêu cầu.
+- **Redesign Header & Shell (`src/components/layout/public-shell.tsx`, `brand.tsx`)**:
+  - Thanh thông báo tuyển sinh đầu trang với đèn chớp ping xanh ngọc (`animate-ping`).
+  - Header kính mờ dính (`sticky`, `backdrop-blur-md`, `bg-surface/90`, viền `border-line/80`).
+  - Component `Brand`: hiệu ứng hover phóng to nhẹ (`group-hover:scale-105`), bóng đổ mềm, viền sáng và ánh kim trên logo.
+  - Chân trang gradient thương hiệu (`#142170` → `#0B1348`), họa tiết vòm cầu `BridgeArc` phát sáng nhẹ, 3 khối nội dung và liên kết Fanpage.
+- **Redesign Trang Chủ (`src/app/(public)/page.tsx`)**:
+  - **Hero Showcase**: Trưng bày banner chính thức khổ lớn với khung ánh sáng `banner-glow-frame`, 2 huy hiệu kính mờ bay lơ lửng (`animate-float`) thể hiện "10+ Năm Kinh Nghiệm" và "Sĩ Số 7–12 HS/Lớp".
+  - **Tứ Trụ Chất Lượng**: 4 card tương tác trực tiếp lấy từ nội dung cốt lõi của banner (10+ năm kinh nghiệm, 7–12 học sinh/lớp, Cam kết chất lượng đầu ra, Đào tạo liên cấp Tiền TH – THPT).
+  - **Lưới Môn Học**: Bộ icon SVG riêng biệt cho 6 môn (Toán, Văn, Anh, Lý, Hóa, Tin) trong `src/components/catalog/subject-icons.tsx`, card tương tác lướt chuột nổi bật.
+  - **Khóa Học Nổi Bật**: Card khóa học cải tiến với hiệu ứng nổi `card-interactive` và mũi tên trượt.
+  - **Hệ Sinh Thái Cổng Số**: Giới thiệu 3 cổng chuyên biệt (Phụ huynh, Học sinh, Giáo viên) với thông tin minh bạch.
+  - **Quy Trình 3 Bước**: Lộ trình đánh số có vòng tròn gradient tỏa sáng.
+  - **CTA Banner Cuối Trang**: Nền gradient xanh thương hiệu, họa tiết vòm cầu và nút shimmer nổi bật.
+
+### Kết quả (chạy thật)
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm typecheck` | Pass |
+| `pnpm lint` | Pass, 0 lỗi, 0 cảnh báo |
+| `pnpm test` | 14 file, **76/76** pass |
+| `pnpm build` | Pass, 39 route |
+| Smoke HTTP server dev | `/`, `/khoa-hoc`, `/dang-ky-hoc-thu`, `/dang-nhap` đều trả về HTTP **200** |
+| Static assets | `/brand/logo.png` (200), `/brand/banner.png` (200) |
+
+---
+
+## 2026-10-21 (phiên 3, tiếp) — Giao diện theo nhận diện thương hiệu (DECISION-D21)
+
+### Đã làm
+- Đo màu từ logo + banner chính thức (System.Drawing): `#1C2D95` (nền logo/banner), `#1D46D4` (ô nhấn), `#D7E6FF` (nền ô "Cam kết"). Facebook chặn khi chưa đăng nhập → không đọc được trang, chỉ dùng 2 ảnh PO gửi.
+- Token mới trong `globals.css`; mọi cặp chữ/nền ≥ 4,5:1, viền ô nhập 3,58:1 (đo bằng công thức WCAG — docs/08 §4.1).
+- Logo `public/brand/logo.png`, favicon `src/app/icon.png` (512) + `apple-icon.png` (180); component `Brand` + họa tiết `BridgeArc` (`components/layout/brand.tsx`).
+- Áp cho mọi khu: header/footer công khai (footer nền xanh, liên kết Facebook), trang chủ (khối giới thiệu nền xanh + ô nhấn kiểu banner, chỉ dùng dữ liệu thật), thẻ khóa học, chi tiết khóa, đăng nhập (khối logo), đổi mật khẩu, 404, sidebar/thanh trên nội bộ nền xanh cho Quản lý/GV/HS/PH, thanh đáy điện thoại, nút (`inverse`, `outline-inverse`, secondary viền xanh), tiêu đề trang màu thương hiệu.
+
+### Kết quả (chạy thật)
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` | Pass · Pass · 76/76 · Pass (thêm route `/icon.png`, `/apple-icon.png`) |
+| Smoke `next start` + Supabase | `/`, `/khoa-hoc`, chi tiết khóa, `/dang-ky-hoc-thu`, `/dang-nhap` 200 và có logo/wordmark; `/brand/logo.png`, `/icon.png` 200; URL lạ 404 |
+
+### Chưa kiểm
+- **Chưa xem trực quan** (không có trình duyệt trong phiên): cần PO mở thử ở 360px và desktop, nhất là các trang nội bộ sau đăng nhập.
+- QUESTION-Q12: nội dung banner (Toán–Văn–Anh, 7–12 HS/lớp, 10+ năm) khác phạm vi hiện tại — chưa đưa lên web.
+
+## 2026-10-21 (phiên 3, tiếp) — Chuyển sang PostgreSQL/Supabase (ADR-005, DECISION-D20)
+
+### Lý do
+Vercel `core-link-academy.vercel.app` trả 500 ở trang đọc DB (`/`), `/dang-nhap` vẫn 200 → `DATABASE_URL` trỏ MySQL local, Vercel không với tới.
+
+### Đã làm
+- `schema.prisma` → `postgresql` + `directUrl`; `TinyInt` → `SmallInt`. Migration mới `20261021100000_init` (373 dòng, 11 enum + 18 bảng); migration MySQL cũ chuyển sang `prisma/migrations-mysql-archive/`.
+- SQL thô `FOR UPDATE` đổi cú pháp PostgreSQL (`limiter.ts`, `enrollment.ts`, `users/service.ts`); tìm kiếm `contains` thêm `mode: "insensitive"`.
+- `.env.example` (mẫu, không có mật khẩu thật), `.env` mới cho Supabase (bản cũ lưu `.env.mysql.bak`, đều bị ignore), `scripts/check-db.mjs` thông báo theo Supabase, `src/test/integration-setup.ts` chặn trỏ trùng DB.
+
+### Kết quả (chạy thật)
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm db:migrate` (Supabase) | Applied `20261021100000_init` |
+| `pnpm db:seed` (Supabase) | 6 môn, 8 khóa, 3 phòng, 15 tài khoản demo, 3 lớp + buổi, điểm danh, bài tập |
+| `pnpm db:check` | Pass |
+| `pnpm typecheck` · `pnpm lint` · `pnpm test` · `pnpm build` | Pass · Pass · 76/76 · Pass |
+| Smoke `next start` + Supabase | `/` 200, `/khoa-hoc` 200, `/khoa-hoc/toan-9-on-thi-vao-10` 200 (có dữ liệu), khóa ẩn 404 |
+
+### Còn lại
+- Chủ dự án: thêm `DATABASE_URL`, `DIRECT_URL`, `APP_URL` trên Vercel (Project → Settings → Environment Variables), commit + push, Redeploy.
+- Dev và production đang dùng chung một DB Supabase (RISK-013). Mật khẩu DB trùng mật khẩu MySQL từng lộ trong lịch sử git → nên đổi.
+
 ## 2026-10-21 (phiên 3) — Pha 1e: tài liệu chi tiết theo từng phía + bổ sung code theo báo cáo đối chiếu
 
 Yêu cầu chủ dự án (DECISION-D19): giữ 35 FR; viết lại tài liệu chi tiết theo vai trò dự án **và** theo cổng người dùng; sau đó bổ sung code theo báo cáo; **không commit**; chủ dự án tự chạy `pnpm db:reset`.

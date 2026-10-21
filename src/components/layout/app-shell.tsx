@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
+import { Brand, BridgeArc } from "./brand";
 import { BottomNav, SideNav, type NavItem } from "./nav-links";
 
 type Props = {
@@ -14,18 +15,22 @@ type Props = {
   children: ReactNode;
 };
 
-/** Vỏ khu nội bộ: sidebar 240px trên ≥1024px; dưới đó là thanh trên + ngăn kéo (docs/08 §3). */
+/**
+ * Vỏ khu nội bộ: sidebar 240px nền xanh thương hiệu trên ≥1024px; dưới đó là thanh trên xanh + ngăn kéo (docs/08 §5).
+ */
 export function AppShell({ actor, rootHref, nav, bottomNav, children }: Props) {
   const account = (
-    <div className="space-y-3 border-t border-line pt-4">
+    <div className="space-y-3 border-t border-white/15 pt-4">
       <div>
-        <p className="font-medium text-ink">{actor.fullName}</p>
-        <p className="text-sm text-muted">{ROLE_LABELS[actor.role]}</p>
+        <p className="font-semibold text-white">{actor.fullName}</p>
+        <p className="text-sm text-on-brand-muted">{ROLE_LABELS[actor.role]}</p>
       </div>
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link href="/doi-mat-khau">Đổi mật khẩu</Link>
+        <Link href="/doi-mat-khau" className="underline underline-offset-2">
+          Đổi mật khẩu
+        </Link>
         <form action={logout}>
-          <button type="submit" className="text-primary underline">
+          <button type="submit" className="text-white underline underline-offset-2">
             Đăng xuất
           </button>
         </form>
@@ -33,35 +38,30 @@ export function AppShell({ actor, rootHref, nav, bottomNav, children }: Props) {
     </div>
   );
 
-  const brand = (
-    <Link href={rootHref} className="font-serif text-lg font-semibold text-ink no-underline">
-      CoreLink <span className="text-primary">Academy</span>
-    </Link>
-  );
-
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[248px_1fr]">
       <a href="#noi-dung" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:bg-surface focus:px-3 focus:py-2">
         Bỏ qua tới nội dung
       </a>
-      <aside className="hidden border-r border-line bg-surface lg:flex lg:min-h-dvh lg:flex-col lg:gap-6 lg:p-5">
-        {brand}
-        <nav aria-label="Điều hướng nội bộ" className="flex-1">
+      <aside className="on-brand relative hidden overflow-hidden bg-primary lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-8 lg:p-5">
+        <BridgeArc className="pointer-events-none absolute -bottom-4 -left-10 w-[340px] text-white/10" />
+        <Brand href={rootHref} tone="light" className="relative" />
+        <nav aria-label="Điều hướng nội bộ" className="relative flex-1 overflow-y-auto">
           <SideNav items={nav} rootHref={rootHref} />
         </nav>
-        {account}
+        <div className="relative">{account}</div>
       </aside>
 
-      <header className="sticky top-0 z-30 border-b border-line bg-surface lg:hidden">
+      <header className="on-brand sticky top-0 z-30 bg-primary lg:hidden">
         <details className="group">
-          <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
-            {brand}
-            <span className="rounded-control border border-line px-3 py-1.5 text-sm text-ink">
+          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
+            <Brand href={rootHref} tone="light" />
+            <span className="rounded-control border border-white/40 px-3 py-1.5 text-sm font-medium">
               <span className="group-open:hidden">Menu</span>
               <span className="hidden group-open:inline">Đóng</span>
             </span>
           </summary>
-          <div className="space-y-4 border-t border-line px-4 pb-5 pt-3">
+          <div className="space-y-4 border-t border-white/15 px-4 pb-5 pt-3">
             <nav aria-label="Điều hướng nội bộ">
               <SideNav items={nav} rootHref={rootHref} />
             </nav>

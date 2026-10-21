@@ -59,4 +59,5 @@ Giới hạn trung thực: các vai trò "AI" là một trợ lý kiêm nhiệm 
 | RISK-009 | Rate limit theo IP bị né/giả mạo sau proxy | TB | TB | Proxy production ghi đè `X-Forwarded-For` | Lead spam tăng | PO | Thêm CAPTCHA (Pha 2) |
 | RISK-010 | Phiên hết hạn tích tụ trong `sessions` | Cao | Thấp | Dọn định kỳ (Pha 2); dung lượng nhỏ | Bảng > 100k dòng | AI | `DELETE … WHERE expiresAt < NOW()` thủ công |
 | RISK-011 | Backup chưa từng thử restore | TB | Cao | Thử restore vào DB tạm ở Pha 1.5 | Sự cố cần restore | PO | — |
+| RISK-013 | Dev và production dùng chung một DB Supabase → test/seed ở máy làm thay đổi dữ liệu web thật | Cao | TB | Tạo project Supabase thứ hai cho dev khi có người dùng thật | Có dữ liệu thật trên web | PO | Tách DB, đổi `.env` dev |
 | RISK-012 | Một người kiêm mọi vai trò → thiếu review độc lập | Cao | TB | PO review GAP-REPORT, quyết định D15–D18, UAT | Lỗi lọt qua | PO | Nhờ người ngoài review trước production |

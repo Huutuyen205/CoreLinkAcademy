@@ -1,17 +1,24 @@
 @import "tailwindcss";
 
-/* Design tokens — nguồn sự thật, xem docs/08-ui-ux-and-design-system.md §2 */
+/*
+ * Design tokens — nguồn sự thật, xem docs/08-ui-ux-and-design-system.md §4.
+ * Bảng màu lấy từ logo + banner chính thức của Core Link Academy (DECISION-D21):
+ *   xanh thương hiệu #1C2D95 (nền logo/banner), xanh sáng #1D46D4 (ô nhấn trên banner), xanh nhạt #D7E6FF.
+ * Tương phản đã đo theo WCAG 2.1 (docs/08 §4.1).
+ */
 @theme {
-  --color-paper: #faf8f3;
+  --color-paper: #f5f7fc; /* nền trang — trắng ngả xanh, hợp tông thương hiệu */
   --color-surface: #ffffff;
-  --color-ink: #1c2430;
-  --color-muted: #5a6472;
-  --color-line: #e3ded3; /* đường kẻ trang trí — 1,34:1, không dùng làm viền ô nhập */
-  --color-line-strong: #8c8578; /* viền ô nhập/chọn — 3,66:1 trên surface (WCAG 1.4.11) */
-  --color-primary: #1f3a5f;
-  --color-primary-strong: #152a46;
-  --color-primary-soft: #e8eef5;
-  --color-accent: #a4471e;
+  --color-ink: #141b3d; /* 15,63:1 trên paper */
+  --color-muted: #4e5874; /* 6,59:1 trên paper */
+  --color-line: #dde3f0; /* đường kẻ trang trí — không dùng làm viền ô nhập */
+  --color-line-strong: #7d87a3; /* viền ô nhập/chọn — 3,58:1 trên surface (WCAG 1.4.11) */
+  --color-primary: #1c2d95; /* xanh thương hiệu — 11,30:1 với chữ trắng */
+  --color-primary-strong: #142170; /* hover/active, nền chân trang */
+  --color-primary-soft: #e6ecff; /* nền mục đang chọn, Alert info */
+  --color-accent: #1d46d4; /* xanh sáng của banner — điểm nhấn, số bước; 6,81:1 trên paper */
+  --color-brand-tint: #d7e6ff; /* nền ô nhấn kiểu banner */
+  --color-on-brand-muted: #c9d4ff; /* chữ phụ trên nền xanh thương hiệu — 7,72:1 */
   --color-success: #2f6b47;
   --color-success-soft: #e7f1ea;
   --color-warning: #8a5a00;
@@ -19,7 +26,8 @@
   --color-danger: #a3261b;
   --color-danger-soft: #f8e6e3;
 
-  --font-serif: var(--font-source-serif), "Georgia", serif;
+  --font-heading: var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif; /* tiêu đề đậm như banner */
+  --font-serif: var(--font-source-serif), "Georgia", serif; /* chỉ cho wordmark "CORE LINK" như logo */
   --font-sans: var(--font-be-vietnam), "Segoe UI", system-ui, sans-serif;
 
   --text-sm: 0.875rem;
@@ -30,8 +38,8 @@
   --text-3xl: 2.25rem;
   --text-4xl: 3rem;
 
-  --radius-control: 6px;
-  --radius-block: 10px;
+  --radius-control: 8px;
+  --radius-block: 14px;
 }
 
 @layer base {
@@ -50,9 +58,10 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
+    font-family: var(--font-heading);
     line-height: 1.25;
-    font-weight: 600;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     text-wrap: balance;
   }
 
@@ -63,6 +72,131 @@
   :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+  }
+
+  /* Vùng nền xanh thương hiệu: chữ trắng, liên kết trắng, vòng focus trắng để luôn thấy. */
+  .on-brand {
+    color: #ffffff;
+  }
+  .on-brand a {
+    color: #ffffff;
+  }
+  .on-brand :focus-visible {
+    outline-color: #ffffff;
+  }
+
+  @keyframes float-gentle {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-6px);
+    }
+  }
+
+  @keyframes float-gentle-delayed {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%,
+    100% {
+      opacity: 0.35;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.75;
+      transform: scale(1.04);
+    }
+  }
+
+  @keyframes shimmer-sweep {
+    0% {
+      transform: translateX(-120%) skewX(-20deg);
+    }
+    100% {
+      transform: translateX(250%) skewX(-20deg);
+    }
+  }
+
+  .animate-float {
+    animation: float-gentle 4s ease-in-out infinite;
+  }
+
+  .animate-float-delayed {
+    animation: float-gentle-delayed 5s ease-in-out 1.2s infinite;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulse-subtle 3.5s ease-in-out infinite;
+  }
+
+  .card-interactive {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -6px rgba(28, 45, 149, 0.12),
+      0 4px 10px -2px rgba(28, 45, 149, 0.05);
+    border-color: rgba(29, 70, 212, 0.4);
+  }
+
+  .btn-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-shimmer::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    animation: shimmer-sweep 3.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+  }
+
+  .banner-glow-frame {
+    position: relative;
+  }
+
+  .banner-glow-frame::before {
+    content: "";
+    position: absolute;
+    inset: -12px;
+    background: radial-gradient(
+      circle at 50% 50%,
+      rgba(29, 70, 212, 0.32),
+      rgba(28, 45, 149, 0.12),
+      transparent 70%
+    );
+    border-radius: 28px;
+    z-index: -1;
+    filter: blur(14px);
+    opacity: 0.8;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  .banner-glow-frame:hover::before {
+    opacity: 1;
   }
 
   @media (prefers-reduced-motion: reduce) {

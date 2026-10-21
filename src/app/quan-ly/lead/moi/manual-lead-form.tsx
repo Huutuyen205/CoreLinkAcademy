@@ -34,7 +34,7 @@ export function ManualLeadForm({ subjects, courses }: { subjects: Option[]; cour
         error={e.source}
       />
       <fieldset className="space-y-4">
-        <legend className="mb-1 font-serif text-lg font-semibold">Phụ huynh</legend>
+        <legend className="mb-1 font-heading text-lg font-bold text-primary">Phụ huynh</legend>
         <TextField name="parentName" label="Họ tên phụ huynh" required maxLength={120} defaultValue={v.parentName} error={e.parentName} />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField name="phone" type="tel" inputMode="tel" label="Số điện thoại" required maxLength={20} hint="Ví dụ: 0912 345 678" defaultValue={v.phone} error={e.phone} />
@@ -42,7 +42,7 @@ export function ManualLeadForm({ subjects, courses }: { subjects: Option[]; cour
         </div>
       </fieldset>
       <fieldset className="space-y-4">
-        <legend className="mb-1 font-serif text-lg font-semibold">Học sinh</legend>
+        <legend className="mb-1 font-heading text-lg font-bold text-primary">Học sinh</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField name="studentName" label="Họ tên học sinh" required maxLength={120} defaultValue={v.studentName} error={e.studentName} />
           <SelectField name="gradeLevel" label="Khối lớp" placeholder="Chưa rõ" options={GRADE_OPTIONS} defaultValue={v.gradeLevel ?? ""} error={e.gradeLevel} />

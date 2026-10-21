@@ -29,6 +29,11 @@
 | DECISION-D18 | 2026-10-21 | **Đề xuất — chờ PO xác nhận** | Môn học xóa được khi chưa có khóa; lead tham chiếu môn → bỏ tham chiếu | Không cho xóa môn | Ma trận quyền ghi Admin CRUD môn; FK `courses.subjectId` RESTRICT bảo vệ | AI → PO |
 | DECISION-D19 | 2026-10-21 | Chốt (PO) | Phiên 3: giữ 35 FR, viết tài liệu chi tiết theo vai trò dự án **và** theo cổng người dùng, sau đó bổ sung code theo báo cáo đối chiếu; trợ lý **không commit**; PO tự chạy `pnpm db:reset` | Mở lại discovery; viết lại code | Theo trả lời của chủ dự án | PO |
 
+| DECISION-D20 | 2026-10-21 | Chốt (PO) | Dùng PostgreSQL trên Supabase (project `uqyslddttlxnkdxginej`) thay MySQL local, cho cả dev và Vercel | MySQL cloud (TiDB/Aiven) | Vercel không truy cập được DB local; PO đã có Supabase — [ADR-005](09-architecture/adr/ADR-005-postgresql-supabase.md). Trả lời QUESTION-Q04 một phần (hosting = Vercel + Supabase) | PO |
+
+| DECISION-D21 | 2026-10-21 | Chốt (PO) | Giao diện theo nhận diện thương hiệu: logo + banner chính thức (xanh `#1C2D95`, xanh sáng `#1D46D4`, trắng); thay DECISION-D07 (navy `#1F3A5F`, nền giấy ngà) | Giữ D07 | PO yêu cầu đồng bộ tone màu logo, banner và fanpage Facebook — docs/08 §2, §4 | PO |
+| QUESTION-Q12 | 2026-10-21 | **Mở** | Banner ghi "Toán – Văn – Anh", "Tiền tiểu học – THPT", "tối đa 7–12 học sinh/lớp", "10+ năm kinh nghiệm" — khác tài liệu hiện tại (6 môn D02, lớp 1–12 A02, sĩ số mặc định 16). Có cập nhật phạm vi/nội dung theo banner không? | Chưa đưa các con số banner lên web | Thay đổi phạm vi/dữ liệu seed → cần PO quyết | PO |
+
 ## 2. Giả định
 
 | ID | Giả định | Tác động nếu sai | Cách xác minh | Hạn |

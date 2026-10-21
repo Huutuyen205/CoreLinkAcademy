@@ -30,7 +30,7 @@ export function TrialForm({ subjects, courses, subjectSlugToId, presetCourse, pr
       {state.message && <Alert tone="danger">{state.message}</Alert>}
 
       <fieldset className="space-y-4">
-        <legend className="mb-1 font-serif text-lg font-semibold">Thông tin phụ huynh</legend>
+        <legend className="mb-1 font-heading text-lg font-bold text-primary">Thông tin phụ huynh</legend>
         <TextField name="parentName" defaultValue={v.parentName} label="Họ tên phụ huynh" autoComplete="name" required maxLength={120} error={e.parentName} />
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField
@@ -49,7 +49,7 @@ export function TrialForm({ subjects, courses, subjectSlugToId, presetCourse, pr
       </fieldset>
 
       <fieldset className="space-y-4">
-        <legend className="mb-1 font-serif text-lg font-semibold">Thông tin học sinh</legend>
+        <legend className="mb-1 font-heading text-lg font-bold text-primary">Thông tin học sinh</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <TextField name="studentName" defaultValue={v.studentName} label="Họ tên học sinh" required maxLength={120} error={e.studentName} />
           <SelectField name="gradeLevel" defaultValue={v.gradeLevel ?? ""} label="Khối lớp" required placeholder="Chọn khối" options={GRADE_OPTIONS} error={e.gradeLevel} />

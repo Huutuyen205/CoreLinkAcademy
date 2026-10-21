@@ -75,7 +75,7 @@ export default async function CourseDetailPage({ params }: Props) {
             <ol className="mt-4 space-y-4">
               {course.syllabus.map((s, i) => (
                 <li key={`${i}-${s.title}`} className="grid grid-cols-[2rem_1fr] gap-2">
-                  <span className="font-serif text-xl text-accent">{i + 1}</span>
+                  <span className="flex size-8 items-center justify-center rounded-full bg-brand-tint text-sm font-bold text-primary">{i + 1}</span>
                   <div>
                     <p className="font-medium">{s.title}</p>
                     {s.detail && <p className="text-muted">{s.detail}</p>}

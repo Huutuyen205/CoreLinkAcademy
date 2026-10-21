@@ -7,17 +7,18 @@ Website công khai + hệ thống quản lý cho học viện đào tạo đa m�
 - Quy tắc làm việc cho trợ lý AI: [AGENTS.md](AGENTS.md)
 
 ## Công nghệ
-Next.js 15 (App Router, Server Actions) · React 19 · TypeScript strict · Tailwind CSS 4 · Prisma 6 · MySQL 8 · Vitest. Lý do: [ADR-001](docs/09-architecture/adr/ADR-001-stack-selection.md).
+Next.js 15 (App Router, Server Actions) · React 19 · TypeScript strict · Tailwind CSS 4 · Prisma 6 · PostgreSQL (Supabase, [ADR-005](docs/09-architecture/adr/ADR-005-postgresql-supabase.md)) · Vitest. Lý do: [ADR-001](docs/09-architecture/adr/ADR-001-stack-selection.md).
 
 ## Cài đặt từ máy mới (Windows + PowerShell)
 
-Yêu cầu: Node ≥ 22, pnpm 9 (`corepack enable`), MySQL 8 đang chạy.
+Yêu cầu: Node ≥ 22, pnpm 9 (`corepack enable`), một project Supabase (lấy chuỗi kết nối ở Dashboard → Connect → ORMs → Prisma).
 
 ```powershell
 pnpm install
-Copy-Item .env.example .env      # rồi điền DATABASE_URL (không commit .env)
+Copy-Item .env.example .env      # rồi điền DATABASE_URL + DIRECT_URL của Supabase (không commit .env)
 pnpm db:check                    # kiểm tra trạng thái migration (không phá hủy)
-pnpm db:reset                    # LẦN ĐẦU trên dev: xóa toàn bộ bảng, tạo bảng v3, nạp dữ liệu demo giả
+pnpm db:migrate                  # tạo bảng trên Supabase
+pnpm db:seed                     # nạp dữ liệu demo giả (chạy lại được)
 pnpm dev                         # http://localhost:3000
 ```
 

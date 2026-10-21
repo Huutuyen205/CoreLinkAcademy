@@ -20,10 +20,12 @@ Khả năng tiếp cận: WCAG 2.1 AA (NFR-003); thiết bị ưu tiên: điện
 
 ## 2. Visual direction
 
-**Sáng, học thuật, tối giản — "học bạ được trình bày cẩn thận".**
+**Nhận diện Core Link Academy — xanh thương hiệu, trắng, rõ ràng (DECISION-D21, thay D07).**
 
-- **Lý do:** học viện bán niềm tin vào chất lượng dạy, không bán sự hào nhoáng. Phụ huynh cần cảm giác nghiêm túc, rõ ràng, đáng tin.
-- **Ẩn dụ thị giác:** nền giấy ngà (`paper`), một màu mực navy (`primary`) cho hành động và liên kết, chữ có chân cho tiêu đề (như tiêu đề sách giáo khoa), đường kẻ mảnh thay cho bóng đổ, điểm nhấn gạch đỏ gạch hiếm (`accent`) cho số thứ tự bước/lộ trình.
+- **Nguồn:** logo và banner chính thức của trung tâm (trang Facebook CoreLinkAcademy). Màu lấy bằng cách đo pixel ảnh gốc: nền logo/banner `#1C2D95`, ô nhấn trên banner `#1D46D4`, nền ô "Cam kết" `#D7E6FF`.
+- **Lý do:** website phải nhìn ra ngay là cùng một trung tâm với logo, banner, fanpage mà phụ huynh đã thấy; xanh đậm + trắng tạo cảm giác nghiêm túc, đáng tin.
+- **Ẩn dụ thị giác:** cây cầu trong logo ("Core Link" = nối kết) → họa tiết vòm cầu mảnh (`BridgeArc`, trắng 10%) ở khối giới thiệu, chân trang, sidebar, trang đăng nhập. Khối nền xanh đặc + chữ trắng đậm như banner; "ô nhấn" = ô trắng với từ khóa trong ô xanh sáng như "10+ năm" trên banner. Wordmark "CORE LINK / ACADEMY" chữ có chân giống logo; tiêu đề nội dung chữ không chân đậm giống banner.
+- **Thay đổi so với bản trước:** bỏ nền giấy ngà và màu nhấn đỏ gạch (không hợp tông xanh thương hiệu); tiêu đề chuyển từ chữ có chân sang chữ không chân đậm.
 - **Tính cách thương hiệu:** điềm tĩnh, chính xác, ấm áp vừa phải. Tone viết: lịch sự ("quý phụ huynh"), câu ngắn, động từ rõ, không cảm thán, không biệt ngữ kỹ thuật.
 - **Tham khảo tinh thần (không sao chép):** trang khoa của trường đại học, tạp chí học thuật — hierarchy bằng typography và khoảng trắng, không bằng màu.
 - **Tránh (DESIGN_QUALITY_NOT_AI):** gradient tím/xanh, glassmorphism, glow, emoji làm icon, floating blobs, card lồng card, bóng đổ dày, hero + 3 card giống nhau vô nghĩa, số liệu bịa ("10.000+ học viên"), badge "AI" trang trí, ảnh stock học sinh cười giả tạo, animation trang trí.
@@ -81,16 +83,18 @@ Sitemap: [07 §1](07-user-flows-and-logic-diagrams.md#1-sitemap). Trạng thái 
 
 | Token | Giá trị | Vai trò | Tương phản (đo 2026-10-21) |
 |---|---|---|---|
-| `--color-paper` | `#FAF8F3` | Nền trang | — |
+| `--color-paper` | `#F5F7FC` | Nền trang (trắng ngả xanh) | — |
 | `--color-surface` | `#FFFFFF` | Bề mặt card/bảng/form | — |
-| `--color-ink` | `#1C2430` | Chữ chính | 14,72:1 trên paper · 15,62:1 trên surface |
-| `--color-muted` | `#5A6472` | Chữ phụ, nhãn bảng, gợi ý | 5,65:1 paper · 6,00:1 surface · 5,14:1 trên primary-soft |
-| `--color-line` | `#E3DED3` | Đường kẻ, viền card (trang trí) | 1,34:1 surface — **không dùng cho ranh giới điều khiển** |
-| `--color-line-strong` | `#8C8578` | Viền ô nhập/chọn/textarea (WCAG 1.4.11) | 3,66:1 surface · 3,45:1 paper |
-| `--color-primary` | `#1F3A5F` | Nút chính, liên kết, focus ring, mục đang chọn | 10,82:1 paper · 11,48:1 surface · chữ trắng trên primary 11,48:1 |
-| `--color-primary-strong` | `#152A46` | Hover/active nút chính, chữ trên nền nhạt | chữ trắng 14,47:1 · 12,39:1 trên primary-soft |
-| `--color-primary-soft` | `#E8EEF5` | Nền nhấn nhẹ (mục đang chọn, Alert info) | primary trên nó 9,83:1 |
-| `--color-accent` | `#A4471E` | Điểm nhấn hiếm: số bước, số lộ trình, "404" | 5,66:1 paper |
+| `--color-ink` | `#141B3D` | Chữ chính | 15,63:1 trên paper · 16,75:1 trên surface |
+| `--color-muted` | `#4E5874` | Chữ phụ, nhãn bảng, gợi ý | 6,59:1 paper · 7,07:1 surface · 5,99:1 trên primary-soft |
+| `--color-line` | `#DDE3F0` | Đường kẻ, viền card (trang trí) | 1,29:1 surface — **không dùng cho ranh giới điều khiển** |
+| `--color-line-strong` | `#7D87A3` | Viền ô nhập/chọn/textarea (WCAG 1.4.11) | 3,58:1 surface · 3,34:1 paper |
+| `--color-primary` | `#1C2D95` | **Xanh thương hiệu (logo).** Nút chính, liên kết, tiêu đề trang, sidebar, khối giới thiệu, focus ring | 10,54:1 paper · 11,30:1 surface · chữ trắng 11,30:1 |
+| `--color-primary-strong` | `#142170` | Hover nút chính, nền chân trang | chữ trắng 14,18:1 |
+| `--color-primary-soft` | `#E6ECFF` | Nền nhấn nhẹ (Alert info, nút phụ khi hover) | primary trên nó 9,58:1 |
+| `--color-accent` | `#1D46D4` | **Xanh sáng của banner.** Ô từ khóa, viền nhấn, "404" | 6,81:1 paper · 7,29:1 surface · chữ trắng 7,29:1 |
+| `--color-brand-tint` | `#D7E6FF` | Nền nhãn môn, số bước (như ô "Cam kết" trên banner) | primary trên nó 8,96:1 |
+| `--color-on-brand-muted` | `#C9D4FF` | Chữ phụ trên nền xanh thương hiệu | 7,72:1 trên primary |
 | `--color-success` / `-soft` | `#2F6B47` / `#E7F1EA` | Có mặt, đạt, đã xuất bản | 5,48:1 trên soft · 6,33:1 surface |
 | `--color-warning` / `-soft` | `#8A5A00` / `#F7EFDC` | Muộn, quá hạn, mật khẩu tạm | 5,17:1 trên soft · 5,93:1 surface |
 | `--color-danger` / `-soft` | `#A3261B` / `#F8E6E3` | Vắng, lỗi, thao tác phá hủy | 6,11:1 trên soft · 7,37:1 surface · chữ trắng trên danger 7,37:1 |
@@ -101,8 +105,9 @@ Mọi cặp chữ/nền đang dùng ≥ 4,5:1 (AA chữ thường). Trạng thá
 
 | Vai trò | Font | Cỡ (token) | Weight | Dùng cho |
 |---|---|---|---|---|
-| Tiêu đề trang (h1) | Source Serif 4 (`--font-serif`) | 28px (`2xl`) → 36px (`3xl`) ≥ 640px; trang chủ 36 → 48 | 600 | PageHeader |
-| Tiêu đề khối (h2) | Source Serif 4 | 18–28px | 600 | Card, section |
+| Wordmark "CORE LINK" | Source Serif 4 (`--font-serif`), chữ hoa | 18px | 700 | `Brand` (header, sidebar, chân trang) — giống logo |
+| Tiêu đề trang (h1) | Be Vietnam Pro (`--font-heading`), màu primary | 28px (`2xl`) → 36px (`3xl`) ≥ 640px | 700 | PageHeader — giống tiêu đề banner |
+| Tiêu đề khối (h2) | Be Vietnam Pro | 18–28px | 700 | Card, section |
 | Body | Be Vietnam Pro (`--font-sans`) | 16px, line-height 1,6 | 400 | Nội dung |
 | Nhãn, phụ | Be Vietnam Pro | 14px (`sm`) | 500 (nhãn) / 400 | Label, hint, bảng |
 | Số liệu dashboard | Source Serif 4 | 36px | 600 | Ô số liệu |
@@ -114,10 +119,11 @@ Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2
 | Nhóm | Quy tắc |
 |---|---|
 | Spacing | Bội số 4px (Tailwind). Khoảng giữa section trang chủ 64px; giữa card 24px; trong card 20px; giữa ô form 16–20px |
-| Radius | `--radius-control` 6px (input, nút, badge viên thuốc dùng `full`); `--radius-block` 10px (card, khối) |
-| Viền / elevation | Viền 1px `line` cho card; **không** dùng bóng đổ. Lớp nổi duy nhất: header dính và thanh nút dính đáy (viền trên) |
+| Logo / banner / favicon | `public/brand/logo.png` (1000×1000), `public/brand/banner.png` (banner chính thức), `src/app/icon.png`, `src/app/apple-icon.png`; component `Brand` (ô logo 44px + wordmark) |
+| Vùng nền xanh | Lớp `.on-brand`: chữ, liên kết và vòng focus chuyển trắng; nút dùng biến thể `inverse` / `outline-inverse` |
+| Viền / elevation | Viền 1px `line` cho card; `.card-interactive` nâng nhẹ và đổ bóng mềm khi hover; `.banner-glow-frame` tỏa sáng hào quang xanh đa tầng |
 | Focus | `outline: 2px solid primary; offset 2px` cho mọi `:focus-visible`; radio/checkbox trong nhãn dùng `has-[:focus-visible]` |
-| Motion | Chỉ `transition-colors` ở nút; `prefers-reduced-motion` tắt mọi transition/animation |
+| Motion & Animation | Micro-animations: `.animate-float`, `.animate-float-delayed`, `.animate-pulse-subtle`, `.btn-shimmer`, `card-interactive`; `prefers-reduced-motion` tắt toàn bộ transition/animation bảo đảm WCAG 2.1 AA |
 | Breakpoint | `sm` 640px (2 cột form), `md` 768px (DataTable thành bảng), `lg` 1024px (sidebar 240px, lưới 7 cột lịch tuần). Nội dung tối đa 1120px |
 | Vùng chạm | ≥ 44px (`min-h-11`) cho nút, ô nhập, liên kết điều hướng, radio điểm danh; thanh đáy 56px |
 
