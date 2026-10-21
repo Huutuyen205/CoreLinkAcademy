@@ -1,5 +1,12 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-21 — Production chậm: Vercel Functions chạy ở Mỹ, DB ở Singapore
+
+- Đo `core-link-academy.vercel.app`: `X-Vercel-Id: hkg1::iad1::…` (function ở `iad1`), `/khoa-hoc` TTFB 1,45–1,70 s, `/dang-nhap` 0,37–0,64 s.
+- Thêm `vercel.json` `"regions": ["sin1"]` (cùng region Supabase `ap-southeast-1`); ghi docs/14 §2. **Chưa đo lại** — cần push + redeploy.
+- Việc PO: push; trên Vercel đặt `DATABASE_URL` có `connection_limit=3`; chạy `pnpm db:migrate` nếu chưa.
+
+
 Ghi theo phiên, mới nhất ở trên. Kết quả lệnh là output thực tế, không ước lượng.
 
 ## 2026-10-22 — Rà soát và tối ưu Backend khu quản lý (DECISION-D23, chờ PO xác nhận)

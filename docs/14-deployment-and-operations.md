@@ -33,6 +33,8 @@ Mẫu: `.env.example`. `.env` có trong `.gitignore`. File `.env` hiện tại c
 
 **`connection_limit` trong `DATABASE_URL`:** `=1` làm mọi query của một request chạy nối tiếp và các request chờ nhau. Đo 2026-10-22 (`pnpm bench:admin`): trang tổng quan 888 ms với `=1` so với 321 ms với `=5`. Dev đặt `5`; Vercel đặt `3` (xem `.env.example`).
 
+**Region của Vercel Functions phải cùng region với DB.** Supabase ở Singapore (`ap-southeast-1`) → `vercel.json` đặt `"regions": ["sin1"]`. Mặc định Vercel chạy ở `iad1` (Mỹ): đo 2026-10-21 header `X-Vercel-Id: hkg1::iad1::…`, `/khoa-hoc` TTFB 1,4–1,7 s vì mỗi query đi Mỹ ↔ Singapore. Kiểm tra sau deploy: phần giữa của `X-Vercel-Id` phải là `sin1`.
+
 ## 3. Lệnh (PowerShell, tại thư mục gốc)
 
 | Lệnh | Tác dụng | Phá hủy? |
