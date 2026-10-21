@@ -73,4 +73,15 @@ export const USER_STATUS: Record<UserStatus, Labeled> = {
   DISABLED: { label: "Đã khóa", tone: "danger" },
 };
 
-export const GRADE_OPTIONS = Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Lớp ${i + 1}` }));
+/** BR-012: nguồn lead do Staff nhập tay (`web_form` chỉ dành cho form công khai). */
+export const MANUAL_LEAD_SOURCES = ["phone", "walk_in", "referral", "other"] as const;
+
+export const LEAD_SOURCE_LABELS: Record<string, string> = {
+  web_form: "Form website",
+  phone: "Gọi điện",
+  walk_in: "Đến trực tiếp",
+  referral: "Được giới thiệu",
+  other: "Khác",
+};
+
+export const GRADE_OPTIONS =Array.from({ length: 12 }, (_, i) => ({ value: String(i + 1), label: `Lớp ${i + 1}` }));

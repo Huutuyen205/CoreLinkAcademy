@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Làm bài" };
 export default async function StudentAssignmentPage({ params }: { params: Promise<{ id: string }> }) {
   const actor = await requireRole("STUDENT");
   const data = await orNotFound(openAssignmentForStudent(actor, (await params).id));
-  const { assignment: a, submission, canWork, pastDueBlocked, resultsPublished, items } = data;
+  const { assignment: a, submission, canWork, pastDueBlocked, resultsPublished, awaitingGrade, items } = data;
   const maxScore = items.reduce((s, i) => s + i.question.points, 0);
 
   return (
@@ -45,9 +45,10 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
         <>
           {!submission && pastDueBlocked && <Alert tone="warning">Đã quá hạn nộp và bài không nhận nộp muộn.</Alert>}
           {!submission && !pastDueBlocked && <Alert>Bài đã đóng hoặc bạn không còn đang học lớp này.</Alert>}
-          {submission && submission.status !== "IN_PROGRESS" && !resultsPublished && (
+          {submission && submission.status !== "IN_PROGRESS" && !resultsPublished && !awaitingGrade && (
             <Alert tone="success">Đã nộp bài{submission.submittedAt ? ` lúc ${formatDateTime(submission.submittedAt)}` : ""}. Điểm sẽ hiển thị khi giáo viên công bố kết quả.</Alert>
           )}
+          {awaitingGrade && <Alert tone="info">Bài của bạn đang chờ giáo viên chấm.</Alert>}
           {submission && submission.status === "IN_PROGRESS" && <Alert tone="warning">Bài chưa được nộp và không còn nhận bài.</Alert>}
 
           {resultsPublished && submission && (

@@ -44,6 +44,15 @@ export async function saveSubject(actor: Actor, id: string | null, input: Subjec
   }
 }
 
+/** API-022 — FR-015, BR-050: môn đang có khóa không xóa được; lead tham chiếu → null (FK SET NULL). */
+export async function deleteSubject(actor: Actor, id: string): Promise<void> {
+  assertCan(actor, "catalog.manage");
+  const subject = await db.subject.findUnique({ where: { id }, select: { _count: { select: { courses: true } } } });
+  if (!subject) throw new ForbiddenError();
+  if (subject._count.courses > 0) throw new DomainError("HAS_COURSES", "Môn đang có khóa học nên không xóa được.");
+  await db.subject.delete({ where: { id } });
+}
+
 export async function listCoursesAdmin(actor: Actor) {
   assertCan(actor, "catalog.manage");
   return db.course.findMany({

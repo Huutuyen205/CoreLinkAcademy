@@ -14,6 +14,7 @@ import {
   resultsVisible,
   round2,
   statusAfterSubmit,
+  submissionResultVisible,
   toStudentQuestion,
   totalScore,
   validateQuestion,
@@ -129,7 +130,9 @@ export async function getAssignmentForTeacher(actor: Actor, assignmentId: string
       _count: { select: { submissions: { where: { status: { not: "IN_PROGRESS" } } } } },
     },
   });
-  return { ...a, questions: a.questions.map(toQuestionData) };
+  // FR-032 / DECISION-D15: báo số bài chưa chấm trước khi công bố.
+  const ungradedCount = await db.submission.count({ where: { assignmentId, status: "SUBMITTED" } });
+  return { ...a, questions: a.questions.map(toQuestionData), ungradedCount };
 }
 
 export async function listClassAssignments(actor: Actor, classId: string) {
@@ -253,14 +256,17 @@ export async function getGradebook(actor: Actor, classId: string) {
   };
 }
 
+/** FR-034: tổng số bài chờ chấm + 20 bài cũ nhất (GAP-11). */
 export async function countPendingGrading(actor: Actor) {
   if (actor.role !== "TEACHER") throw new ForbiddenError();
-  return db.submission.findMany({
-    where: { status: "SUBMITTED", assignment: { class: { teacherId: actor.id } } },
+  const where = { status: "SUBMITTED" as const, assignment: { class: { teacherId: actor.id } } };
+  const [total, items] = await Promise.all([db.submission.count({ where }), db.submission.findMany({
+    where,
     orderBy: { submittedAt: "asc" },
     take: 20,
     select: { id: true, submittedAt: true, student: { select: { fullName: true } }, assignment: { select: { title: true, class: { select: { code: true } } } } },
-  });
+  })]);
+  return { total, items };
 }
 
 /* ───────────── Học sinh ───────────── */
@@ -289,7 +295,7 @@ export async function listMyAssignments(actor: Actor) {
   });
   return rows.map(({ submissions, resultsPublishedAt, class: c, ...a }) => {
     const sub = submissions[0] ?? null;
-    const visible = resultsVisible({ resultsPublishedAt });
+    const visible = submissionResultVisible({ resultsPublishedAt }, sub?.status ?? null);
     return {
       ...a,
       classCode: c.code,
@@ -298,7 +304,8 @@ export async function listMyAssignments(actor: Actor) {
       submissionStatus: sub?.status ?? null,
       isLate: sub?.isLate ?? false,
       resultsPublished: visible,
-      // BR-046: điểm chỉ trả khi đã công bố.
+      awaitingGrade: resultsVisible({ resultsPublishedAt }) && sub?.status === "SUBMITTED",
+      // BR-046, BR-047: điểm chỉ trả khi đã công bố và bài đã chấm.
       score: visible ? (sub?.score ?? null) : null,
     };
   });
@@ -328,7 +335,8 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
       .catch(async () => db.submission.findUniqueOrThrow({ where: { assignmentId_studentId: { assignmentId, studentId: actor.id } }, include: { answers: true } }));
   }
 
-  const visible = resultsVisible(a);
+  // BR-047: đã công bố nhưng bài nộp chưa chấm → chưa trả điểm/đáp án.
+  const visible = submissionResultVisible(a, submission?.status ?? null);
   const questions = a.questions.map(toQuestionData);
   const answers = new Map((submission?.answers ?? []).map((x) => [x.questionId, x]));
   return {
@@ -339,6 +347,7 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
     canWork,
     pastDueBlocked,
     resultsPublished: visible,
+    awaitingGrade: resultsVisible(a) && submission?.status === "SUBMITTED",
     items: questions.map((q) => {
       const ans = answers.get(q.id);
       return {
@@ -445,14 +454,14 @@ export async function submitAssignment(actor: Actor, assignmentId: string, raw: 
 
 /* ───────────── Kết quả đã công bố (HS/PH/quản lý) ───────────── */
 
-/** FR-033: điểm đã công bố của một học sinh. */
+/** FR-033: điểm đã công bố của một học sinh (chỉ bài đã chấm — BR-047). */
 export async function listPublishedResults(actor: Actor, studentId: string) {
   await assertCanViewStudent(actor, studentId);
   const subs = await db.submission.findMany({
     where: {
       studentId,
       assignment: { resultsPublishedAt: { not: null }, ...(actor.role === "TEACHER" ? { class: { teacherId: actor.id } } : {}) },
-      status: { not: "IN_PROGRESS" },
+      status: "GRADED", // BR-047
     },
     orderBy: { assignment: { resultsPublishedAt: "desc" } },
     select: {

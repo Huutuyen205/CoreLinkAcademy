@@ -8,6 +8,7 @@ const MESSAGES: Record<string, string> = {
   "tao-bai": "Đã tạo bài tập. Thêm câu hỏi rồi giao cho lớp.",
   luu: "Đã lưu.",
   "xoa-khoa": "Đã xóa khóa học.",
+  "tao-lead": "Đã tạo lead.",
 };
 
 export function Flash({ code }: { code?: string | string[] }) {

@@ -4,6 +4,9 @@ export type Bucket = { count: number; resetAt: Date };
 
 export const TRIAL_LIMIT = { max: 5, windowMs: 10 * 60_000 };
 
+/** BR-009: đăng nhập tối đa 20 lần/10 phút/IP (ngoài khóa theo tài khoản BR-005). */
+export const LOGIN_LIMIT = { max: 20, windowMs: 10 * 60_000 };
+
 /** Trạng thái bucket sau một lần gọi và lần gọi này có được phép không. */
 export function consume(bucket: Bucket | null, now: Date, limit = TRIAL_LIMIT): { allowed: boolean; next: Bucket } {
   if (!bucket || bucket.resetAt.getTime() <= now.getTime()) {

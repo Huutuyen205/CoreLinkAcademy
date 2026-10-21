@@ -6,6 +6,9 @@ import { db } from "@/server/db";
 import type { ActionState } from "@/server/errors";
 import { fieldErrorsOf } from "@/server/validation";
 import { normalizePhone } from "@/lib/phone";
+import { hitRateLimit } from "@/server/rate-limit/limiter";
+import { LOGIN_LIMIT } from "@/server/rate-limit/rules";
+import { clientIp } from "@/server/request";
 import { requireActor } from "./guard";
 import { burnPasswordCheck, hashPassword, verifyPassword } from "./password";
 import { HOME_BY_ROLE } from "./policy";
@@ -19,8 +22,18 @@ const loginSchema = z.object({
   password: z.string().min(1, "Nhập mật khẩu.").max(128),
 });
 
-/** API-005 — FR-010, FR-011. */
+/** API-005 — FR-010, FR-011. Khi lỗi trả lại ô email/SĐT (D13), không bao giờ trả mật khẩu. */
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const rawIdentifier = formData.get("identifier");
+  const values = { identifier: typeof rawIdentifier === "string" ? rawIdentifier.slice(0, 191) : "" };
+  if (!(await hitRateLimit(`login:${await clientIp()}`, LOGIN_LIMIT))) {
+    return { ok: false, message: "Quá nhiều lần đăng nhập từ thiết bị này. Vui lòng thử lại sau 10 phút.", values };
+  }
+  return { ...(await attemptLogin(formData)), values };
+}
+
+/** Đúng thông tin → tạo phiên và `redirect` (ném, không trả về); sai → ActionState lỗi. */
+async function attemptLogin(formData: FormData): Promise<ActionState> {
   const parsed = loginSchema.safeParse({
     identifier: formData.get("identifier"),
     password: formData.get("password"),

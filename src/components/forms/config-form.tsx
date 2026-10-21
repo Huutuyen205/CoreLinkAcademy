@@ -79,7 +79,10 @@ export function ConfigForm({ action, fields, hidden, submitLabel, columns = 1, c
                 <SelectField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
               );
             case "checkbox":
-              return <CheckboxField key={f.name} id={fid} className={span} name={f.name} label={f.label} defaultChecked={f.defaultChecked} error={e[f.name]} />;
+              // Khi lỗi, action trả `values[name]` = "on" | "" để giữ trạng thái người dùng đã chọn.
+              return (
+                <CheckboxField key={f.name} id={fid} className={span} name={f.name} label={f.label} defaultChecked={v[f.name] !== undefined ? v[f.name] === "on" : f.defaultChecked} error={e[f.name]} />
+              );
             case "checkboxes":
               return (
                 <fieldset key={f.name} className={cn("space-y-2", span)} aria-describedby={e[f.name] ? `${fid}-error` : undefined}>

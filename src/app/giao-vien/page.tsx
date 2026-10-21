@@ -53,12 +53,12 @@ export default async function TeacherDashboard({ searchParams }: { searchParams:
           )}
         </Card>
 
-        <Card title={`Bài chờ chấm (${pending.length})`}>
-          {pending.length === 0 ? (
+        <Card title={`Bài chờ chấm (${pending.total})`}>
+          {pending.total === 0 ? (
             <EmptyState message="Không có bài nào chờ chấm." />
           ) : (
             <ul className="divide-y divide-line">
-              {pending.map((p) => (
+              {pending.items.map((p) => (
                 <li key={p.id} className="py-3">
                   <Link href={`/giao-vien/bai-nop/${p.id}`} className="font-medium">
                     {p.student.fullName}

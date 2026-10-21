@@ -7,11 +7,12 @@ import { assertCan } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { LEAD_SOURCE_LABELS } from "@/lib/labels";
 import { normalizePhone } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
 import { generateTempPassword, nextStudentCode, withStudentCodeRetry } from "@/server/users/credentials";
 import { checkLeadTransition, CONVERTIBLE_STATUSES, overdueCutoff } from "./rules";
-import type { ConvertLeadInput, TrialRequestInput } from "./schemas";
+import type { ConvertLeadInput, ManualLeadInput, TrialRequestInput } from "./schemas";
 
 const OPEN_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "TRIAL_SCHEDULED", "TRIAL_DONE"];
 
@@ -76,7 +77,65 @@ export async function submitTrialRequest(input: TrialRequestInput): Promise<{ le
   });
 }
 
-export type LeadListFilter = { status?: LeadStatus; subjectId?: string; q?: string; overdue?: boolean; page: number };
+export class DuplicateOpenLeadError extends DomainError {
+  constructor(readonly existingLeadId: string) {
+    super("DUPLICATE_OPEN_LEAD", "SĐT này đang có lead chưa xử lý xong.", { phone: "SĐT này đang có lead chưa xử lý xong." });
+  }
+}
+
+/**
+ * API-021 — FR-006: Staff nhập lead tay (gọi điện, đến trực tiếp…).
+ * BR-011: trùng SĐT với lead đang mở → từ chối, chỉ tới lead cũ (khác form công khai).
+ */
+export async function createManualLead(actor: Actor, input: ManualLeadInput): Promise<string> {
+  assertCan(actor, "lead.manage");
+  const course = input.courseSlug
+    ? await db.course.findUnique({ where: { slug: input.courseSlug }, select: { id: true, title: true, subjectId: true } })
+    : null;
+  // Khóa đã chọn quyết định môn (UC-020 A1).
+  const subjectId = course?.subjectId ?? input.subjectId;
+  const subject = subjectId ? await db.subject.findUnique({ where: { id: subjectId }, select: { id: true, name: true } }) : null;
+  if (subjectId && !subject) throw new DomainError("INVALID_SUBJECT", "Môn học không hợp lệ.", { subjectId: "Chọn môn quan tâm." });
+
+  return db.$transaction(async (tx) => {
+    const open = await tx.lead.findFirst({
+      where: { phone: input.phone, status: { in: OPEN_STATUSES } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true },
+    });
+    if (open) throw new DuplicateOpenLeadError(open.id);
+
+    const lead = await tx.lead.create({
+      data: {
+        parentName: input.parentName,
+        phone: input.phone,
+        email: input.email,
+        studentName: input.studentName,
+        gradeLevel: input.gradeLevel,
+        subjectId: subject?.id ?? null,
+        courseId: course?.id ?? null,
+        note: input.note,
+        source: input.source,
+      },
+    });
+    await tx.leadActivity.create({
+      data: {
+        leadId: lead.id,
+        actorId: actor.id,
+        type: "CREATED",
+        content: [
+          `Nhập tay bởi ${actor.fullName} (nguồn: ${LEAD_SOURCE_LABELS[input.source]}).`,
+          subject ? `Môn quan tâm: ${subject.name}${course ? ` — khóa ${course.title}` : ""}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      },
+    });
+    return lead.id;
+  });
+}
+
+export type LeadListFilter ={ status?: LeadStatus; subjectId?: string; q?: string; overdue?: boolean; page: number };
 
 export const LEAD_PAGE_SIZE = 20;
 

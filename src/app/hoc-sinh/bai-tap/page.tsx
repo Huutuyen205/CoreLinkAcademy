@@ -11,7 +11,8 @@ type Row = Awaited<ReturnType<typeof listMyAssignments>>[number];
 
 function statusOf(a: Row, now: Date): { label: string; tone: "primary" | "success" | "warning" | "danger" | "neutral" } {
   if (a.submissionStatus === "SUBMITTED" || a.submissionStatus === "GRADED") {
-    return a.resultsPublished ? { label: `Đã có điểm: ${a.score ?? 0}`, tone: "success" } : { label: "Đã nộp", tone: "neutral" };
+    if (a.resultsPublished) return { label: `Đã có điểm: ${a.score ?? 0}`, tone: "success" };
+    return a.awaitingGrade ? { label: "Đang chờ chấm", tone: "primary" } : { label: "Đã nộp", tone: "neutral" };
   }
   if (a.status === "CLOSED") return { label: "Đã đóng", tone: "neutral" };
   if (now > a.dueAt) return a.allowLate ? { label: "Quá hạn — vẫn nhận nộp muộn", tone: "warning" } : { label: "Quá hạn", tone: "danger" };

@@ -7,6 +7,7 @@ import {
   normalizeAnswer,
   resultsVisible,
   statusAfterSubmit,
+  submissionResultVisible,
   toStudentQuestion,
   totalScore,
   validateQuestion,
@@ -124,5 +125,12 @@ describe("bảo vệ đáp án", () => {
   it("TC-033 kết quả chỉ hiển thị sau công bố", () => {
     expect(resultsVisible({ resultsPublishedAt: null })).toBe(false);
     expect(resultsVisible({ resultsPublishedAt: now })).toBe(true);
+  });
+
+  it("TC-042 đã công bố nhưng bài chưa chấm thì chưa hiện điểm (BR-047)", () => {
+    expect(submissionResultVisible({ resultsPublishedAt: now }, "SUBMITTED")).toBe(false);
+    expect(submissionResultVisible({ resultsPublishedAt: now }, "GRADED")).toBe(true);
+    expect(submissionResultVisible({ resultsPublishedAt: null }, "GRADED")).toBe(false);
+    expect(submissionResultVisible({ resultsPublishedAt: now }, null)).toBe(false);
   });
 });

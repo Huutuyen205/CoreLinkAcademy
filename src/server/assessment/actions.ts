@@ -33,8 +33,10 @@ const assignmentSchema = z.object({
 });
 
 function assignmentInput(formData: FormData) {
-  const fields = formFields(formData, ["title", "instructions", "dueAt"]);
-  return { fields, data: { ...fields, allowLate: formData.get("allowLate") === "on" } };
+  const allowLate = formData.get("allowLate") === "on";
+  // allowLate trả lại dạng "on"/"" để ConfigForm giữ trạng thái checkbox khi lỗi.
+  const fields = { ...formFields(formData, ["title", "instructions", "dueAt"]), allowLate: allowLate ? "on" : "" };
+  return { fields, data: { ...fields, allowLate } };
 }
 
 /** API-016 — FR-027. */
@@ -44,7 +46,7 @@ export async function createAssignmentAction(_prev: ActionState, formData: FormD
   if (!id.safeParse(classId).success) return { ok: false, message: "Lớp không hợp lệ." };
   const { fields, data } = assignmentInput(formData);
   const parsed = parseForm(assignmentSchema, data);
-  if (!parsed.ok) return parsed.state;
+  if (!parsed.ok) return { ...parsed.state, values: fields };
   const result = await runAction(() => createAssignment(actor, classId, parsed.data), fields);
   if (!result.ok) return result.state;
   redirect(`/giao-vien/bai-tap/${result.value}?thongbao=tao-bai`);
@@ -56,7 +58,7 @@ export async function updateAssignmentAction(_prev: ActionState, formData: FormD
   if (!id.safeParse(assignmentId).success) return { ok: false, message: "Bài tập không hợp lệ." };
   const { fields, data } = assignmentInput(formData);
   const parsed = parseForm(assignmentSchema, data);
-  if (!parsed.ok) return parsed.state;
+  if (!parsed.ok) return { ...parsed.state, values: fields };
   const result = await runAction(() => updateAssignment(actor, assignmentId, parsed.data), fields);
   if (!result.ok) return result.state;
   revalidatePath(`/giao-vien/bai-tap/${assignmentId}`);

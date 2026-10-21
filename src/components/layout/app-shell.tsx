@@ -41,6 +41,9 @@ export function AppShell({ actor, rootHref, nav, bottomNav, children }: Props) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[240px_1fr]">
+      <a href="#noi-dung" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:bg-surface focus:px-3 focus:py-2">
+        Bỏ qua tới nội dung
+      </a>
       <aside className="hidden border-r border-line bg-surface lg:flex lg:min-h-dvh lg:flex-col lg:gap-6 lg:p-5">
         {brand}
         <nav aria-label="Điều hướng nội bộ" className="flex-1">

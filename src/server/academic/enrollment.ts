@@ -19,16 +19,17 @@ export async function enrollInTx(tx: Tx, classId: string, studentId: string): Pr
       _count: { select: { enrollments: { where: { status: { in: SEAT_STATUSES } } } } },
     },
   });
-  const existing = await tx.enrollment.findUnique({
-    where: { classId_studentId: { classId, studentId } },
-    select: { id: true, status: true },
-  });
+  const [existing, student] = await Promise.all([
+    tx.enrollment.findUnique({ where: { classId_studentId: { classId, studentId } }, select: { id: true, status: true } }),
+    tx.user.findUnique({ where: { id: studentId }, select: { status: true } }),
+  ]);
 
   const error = checkEnrollment({
     classStatus: klass.status,
     seatCount: klass._count.enrollments,
     capacity: klass.capacity,
     existingStatus: existing?.status ?? null,
+    studentActive: student?.status === "ACTIVE",
   });
   if (error) throw new DomainError(error, ENROLL_ERROR_MESSAGES[error]);
 

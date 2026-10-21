@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
+import { Flash } from "@/components/layout/flash";
 import { Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { listEnrollableClasses } from "@/server/academic/service";
 import { requireRole } from "@/server/auth/guard";
@@ -8,7 +9,7 @@ import { orNotFound } from "@/server/page";
 import { addLeadNoteAction, changeLeadStatusAction } from "@/server/leads/actions";
 import { CONVERTIBLE_STATUSES, isLeadOverdue, LEAD_TRANSITIONS } from "@/server/leads/rules";
 import { getLead } from "@/server/leads/service";
-import { LEAD_STATUS } from "@/lib/labels";
+import { LEAD_SOURCE_LABELS, LEAD_STATUS } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
 import { ConvertLeadForm } from "./convert-form";
@@ -23,9 +24,10 @@ const ACTIVITY_LABELS = {
   CONVERTED: "Chuyển học viên",
 } as const;
 
-export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function LeadDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string }> }) {
   const actor = await requireRole("ADMIN", "STAFF");
   const { id } = await params;
+  const { thongbao } = await searchParams;
   const lead = await orNotFound(getLead(actor, id));
   const next = LEAD_TRANSITIONS[lead.status];
   const canConvert = CONVERTIBLE_STATUSES.includes(lead.status);
@@ -36,6 +38,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       <p className="mb-2 text-sm">
         <Link href="/quan-ly/lead">← Danh sách lead</Link>
       </p>
+      <Flash code={thongbao} />
       <PageHeader
         title={lead.parentName}
         description={`Học sinh ${lead.studentName}${lead.gradeLevel ? `, lớp ${lead.gradeLevel}` : ""}`}
@@ -55,7 +58,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
               <Info label="Email" value={lead.email ?? "—"} />
               <Info label="Môn quan tâm" value={lead.subject?.name ?? "—"} />
               <Info label="Khóa học" value={lead.course?.title ?? "—"} />
-              <Info label="Nguồn" value={lead.source === "web_form" ? "Form website" : lead.source} />
+              <Info label="Nguồn" value={LEAD_SOURCE_LABELS[lead.source] ?? lead.source} />
               <Info label="Ngày tạo" value={formatDateTime(lead.createdAt)} />
               {lead.lostReason && <Info label="Lý do không theo học" value={lead.lostReason} />}
               {lead.convertedStudent && (

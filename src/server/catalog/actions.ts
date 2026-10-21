@@ -6,7 +6,7 @@ import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
-import { deleteCourse, deleteRoom, saveCourse, saveRoom, saveSubject } from "./admin";
+import { deleteCourse, deleteRoom, deleteSubject, saveCourse, saveRoom, saveSubject } from "./admin";
 
 const optionalId = z.string().max(40).transform((v) => v || null);
 const slug = z
@@ -41,6 +41,17 @@ export async function saveSubjectAction(_prev: ActionState, formData: FormData):
   if (!result.ok) return result.state;
   revalidateCatalog();
   return { ok: true, message: id ? "Đã lưu môn học." : "Đã thêm môn học." };
+}
+
+/** API-022 — FR-015. */
+export async function deleteSubjectAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN");
+  const id = String(formData.get("id") ?? "");
+  if (!id || id.length > 40) return { ok: false, message: "Môn học không hợp lệ." };
+  const result = await runAction(() => deleteSubject(actor, id));
+  if (!result.ok) return result.state;
+  revalidateCatalog();
+  return { ok: true, message: "Đã xóa môn học." };
 }
 
 const courseSchema = z
@@ -93,10 +104,14 @@ const COURSE_FIELDS = ["id", "subjectId", "title", "slug", "summary", "descripti
 export async function saveCourseAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN");
   const fields = formFields(formData, COURSE_FIELDS);
-  const parsed = parseForm(courseSchema, { ...fields, isPublished: formData.get("isPublished") === "on", isFeatured: formData.get("isFeatured") === "on" });
-  if (!parsed.ok) return parsed.state;
+  const isPublished = formData.get("isPublished") === "on";
+  const isFeatured = formData.get("isFeatured") === "on";
+  // Giá trị checkbox trả lại để form giữ trạng thái khi lỗi (GAP-08).
+  const values = { ...fields, isPublished: isPublished ? "on" : "", isFeatured: isFeatured ? "on" : "" };
+  const parsed = parseForm(courseSchema, { ...fields, isPublished, isFeatured });
+  if (!parsed.ok) return { ...parsed.state, values };
   const { id, ...data } = parsed.data;
-  const result = await runAction(() => saveCourse(actor, id, data), fields);
+  const result = await runAction(() => saveCourse(actor, id, data), values);
   if (!result.ok) return result.state;
   revalidateCatalog();
   if (!id) redirect(`/quan-ly/khoa-hoc/${result.value}?thongbao=luu`);

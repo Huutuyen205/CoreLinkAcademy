@@ -9,8 +9,16 @@ import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
 import { hitRateLimit } from "@/server/rate-limit/limiter";
 import { clientIp } from "@/server/request";
-import { convertLeadSchema, trialRequestSchema } from "./schemas";
-import { addLeadNote, changeLeadStatus, convertLead, submitTrialRequest, type IssuedCredential } from "./service";
+import { convertLeadSchema, manualLeadSchema, trialRequestSchema } from "./schemas";
+import {
+  addLeadNote,
+  changeLeadStatus,
+  convertLead,
+  createManualLead,
+  DuplicateOpenLeadError,
+  submitTrialRequest,
+  type IssuedCredential,
+} from "./service";
 
 const THANK_YOU = "/dang-ky-hoc-thu/cam-on";
 
@@ -32,7 +40,30 @@ export async function submitTrialRequestAction(_prev: ActionState, formData: For
   redirect(THANK_YOU);
 }
 
-const LEAD_STATUSES = ["NEW", "CONTACTED", "TRIAL_SCHEDULED", "TRIAL_DONE", "ENROLLED", "LOST"] as const;
+export type CreateLeadState = ActionState & { existingLeadId?: string };
+
+/** API-021 — FR-006: Staff/Admin nhập lead tay. Trùng lead đang mở → trả id lead cũ (BR-011). */
+export async function createLeadAction(_prev: CreateLeadState, formData: FormData): Promise<CreateLeadState> {
+  const actor = await requireRole("ADMIN", "STAFF");
+  const fields = formFields(formData, ["source", "parentName", "phone", "email", "studentName", "gradeLevel", "subjectId", "courseSlug", "note"]);
+  const parsed = parseForm(manualLeadSchema, fields);
+  if (!parsed.ok) return parsed.state;
+
+  let existingLeadId: string | undefined;
+  const result = await runAction(
+    () =>
+      createManualLead(actor, parsed.data).catch((error: unknown) => {
+        if (error instanceof DuplicateOpenLeadError) existingLeadId = error.existingLeadId;
+        throw error;
+      }),
+    fields,
+  );
+  if (!result.ok) return { ...result.state, existingLeadId };
+  revalidatePath("/quan-ly/lead");
+  redirect(`/quan-ly/lead/${result.value}?thongbao=tao-lead`);
+}
+
+const LEAD_STATUSES =["NEW", "CONTACTED", "TRIAL_SCHEDULED", "TRIAL_DONE", "ENROLLED", "LOST"] as const;
 
 const statusSchema = z.object({
   leadId: z.string().min(1).max(40),

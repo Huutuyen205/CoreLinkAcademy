@@ -180,11 +180,16 @@ export async function setEnrollmentStatus(actor: Actor, enrollmentId: string, to
 /** API-014 — FR-021. */
 export async function cancelSession(actor: Actor, sessionId: string, reason: string): Promise<string> {
   assertCan(actor, "class.manage");
-  const s = await db.classSession.findUnique({ where: { id: sessionId }, select: { status: true, classId: true } });
-  if (!s) throw new ForbiddenError();
-  if (s.status !== "SCHEDULED") throw new DomainError("INVALID_TRANSITION", "Chỉ hủy được buổi chưa diễn ra.");
-  await db.classSession.update({ where: { id: sessionId }, data: { status: "CANCELLED", cancelReason: reason } });
-  return s.classId;
+  return db.$transaction(async (tx) => {
+    const s = await tx.classSession.findUnique({ where: { id: sessionId }, select: { status: true, classId: true, startsAt: true } });
+    if (!s) throw new ForbiddenError();
+    // updateMany theo trạng thái: buổi vừa được điểm danh/hủy bởi người khác thì không ghi đè.
+    const { count } = await tx.classSession.updateMany({ where: { id: sessionId, status: "SCHEDULED" }, data: { status: "CANCELLED", cancelReason: reason } });
+    if (count === 0) throw new DomainError("INVALID_TRANSITION", "Chỉ hủy được buổi chưa diễn ra.");
+    // FR-021, FR-035 (GAP-09): hủy buổi cũng được truy vết như dời buổi.
+    await writeAudit({ actorId: actor.id, action: "session.cancel", entity: "ClassSession", entityId: sessionId, detail: { startsAt: s.startsAt.toISOString(), reason } }, tx);
+    return s.classId;
+  });
 }
 
 /** API-014 — FR-021: dời buổi cũng kiểm tra trùng lịch GV/phòng. */

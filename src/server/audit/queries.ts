@@ -14,6 +14,7 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "attendance.override": "Sửa điểm danh ngoài khung",
   "grade.update_after_publish": "Sửa điểm sau công bố",
   "session.reschedule": "Dời buổi học",
+  "session.cancel": "Hủy buổi học",
 };
 
 /** FR-035: chỉ ADMIN xem; không có thao tác xóa. */

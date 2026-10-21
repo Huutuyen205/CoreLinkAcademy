@@ -34,7 +34,7 @@ export default async function LeadListPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="Lead" description="Khách đăng ký học thử và khách nhập tay." />
+      <PageHeader title="Lead" description="Khách đăng ký học thử và khách nhập tay." action={<ButtonLink href="/quan-ly/lead/moi">Nhập lead</ButtonLink>} />
       <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm theo tên hoặc SĐT" defaultValue={q} maxLength={100} />
         <SelectField

@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/format";
 
 const control =
-  "block w-full rounded-control border border-line bg-surface px-3 text-base text-ink placeholder:text-muted/80 focus-visible:border-primary aria-[invalid=true]:border-danger";
+  "block w-full rounded-control border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-muted/80 focus-visible:border-primary aria-[invalid=true]:border-danger";
 
 type FieldShellProps = {
   id: string;

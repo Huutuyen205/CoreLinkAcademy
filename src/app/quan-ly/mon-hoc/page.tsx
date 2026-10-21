@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ConfigForm, type FieldConfig } from "@/components/forms/config-form";
 import { Card, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { saveSubjectAction } from "@/server/catalog/actions";
+import { deleteSubjectAction, saveSubjectAction } from "@/server/catalog/actions";
 import { listSubjectsAdmin } from "@/server/catalog/admin";
 
 export const metadata: Metadata = { title: "Môn học" };
@@ -27,6 +27,11 @@ export default async function SubjectsPage() {
         {subjects.map((s) => (
           <Card key={s.id} title={`${s.name} · ${s._count.courses} khóa`}>
             <ConfigForm action={saveSubjectAction} hidden={{ id: s.id }} submitLabel="Lưu" submitVariant="secondary" columns={2} fields={subjectFields(s)} />
+            {s._count.courses === 0 ? (
+              <ConfigForm action={deleteSubjectAction} hidden={{ id: s.id }} submitLabel="Xóa môn" submitVariant="danger" confirm="Xóa môn học này?" fields={[]} className="mt-3" />
+            ) : (
+              <p className="mt-3 text-sm text-muted">Môn đang có khóa học nên không xóa được.</p>
+            )}
           </Card>
         ))}
         <Card title="Thêm môn học">

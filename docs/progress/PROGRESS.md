@@ -2,6 +2,42 @@
 
 Ghi theo phiên, mới nhất ở trên. Kết quả lệnh là output thực tế, không ước lượng.
 
+## 2026-10-21 (phiên 3) — Pha 1e: tài liệu chi tiết theo từng phía + bổ sung code theo báo cáo đối chiếu
+
+Yêu cầu chủ dự án (DECISION-D19): giữ 35 FR; viết lại tài liệu chi tiết theo vai trò dự án **và** theo cổng người dùng; sau đó bổ sung code theo báo cáo; **không commit**; chủ dự án tự chạy `pnpm db:reset`.
+
+### Tài liệu (theo skill project-team-roles-master + template)
+- Mới: `02-srs.md`, `04-use-cases/UC-001..UC-020` (tách file, thêm UC-013..020), `09-architecture/system-context.md`, ADR-002..004, `19-team-roles-and-document-register.md`, `20-frontend-guide.md`, `21-backend-guide.md`, `portals/P-01..P-05`, `README.md`, `progress/GAP-REPORT-2026-10-21.md`.
+- Viết lại chi tiết: 00, 01 (v3.1: làm rõ FR-006/011/015/019/021/032/033/035, NFR-009..012), 03 (ma trận theo thao tác), 04, 05 (FEAT-001..044, Pha 2 P2-01..22), 06 (BR-009, 011..016, 024..029, 034, 035, 047..051), 07, 08 (screen inventory 39 màn, tương phản đo thật), 09 component, 10 (data dictionary theo cột), 11 (error catalogue, API-021/022, Q-001..034), 12 (threat register T-01..T-20), 13 (TC-039..048, UAT-01..15, ma trận quyền âm), 14, 15 (RACI, RISK-008..012), 16, 17 (D15..D19 — **D15..D18 chờ chủ dự án xác nhận**), 18.
+
+### Code (GAP-01..GAP-14, xem GAP-REPORT)
+- Nhập lead thủ công `/quan-ly/lead/moi` (API-021, BR-011/012); xóa môn khi chưa có khóa (API-022); BR-047 — bài chưa chấm hiện "Đang chờ chấm" sau công bố, thẻ công bố báo số bài chưa chấm; đăng nhập giữ ô email/SĐT + rate limit 20 lần/10'/IP; skip link khu nội bộ; 404 có "Về trang tổng quan"; checkbox giữ trạng thái khi lỗi; audit `session.cancel` (transaction); chặn ghi danh HS bị khóa (`STUDENT_DISABLED`); tổng số bài chờ chấm; token `--color-line-strong` cho viền ô nhập (WCAG 1.4.11).
+- Test: unit TC-039, 042, 043, 044, 045; integration `*.int.test.ts` (TC-003, 007, 008, 015, 040, 041, 044, 047) + `vitest.integration.config.ts`, `src/test/`, script `pnpm test:integration`, biến `TEST_DATABASE_URL` (chặn trỏ nhầm `corelink`).
+- Không có migration mới (đã đối chiếu `migration.sql`).
+
+### Kết quả kiểm tra (chạy thật)
+| Lệnh | Kết quả |
+|---|---|
+| `pnpm typecheck` | Pass |
+| `pnpm lint` | Pass, 0 lỗi |
+| `pnpm test` | 14 file, **76/76** pass (phiên 2: 70) |
+| `pnpm test:integration` | 2 file, 8 test **skipped** (không có `TEST_DATABASE_URL`) — chưa chạy thật |
+| `pnpm build` | Pass, 39 route (thêm `/quan-ly/lead/moi`, 1,58 kB) |
+| Smoke `next start` (không DB) | `/dang-nhap` 200, đủ 4 header, không `X-Powered-By`; `/quan-ly`, `/quan-ly/lead/moi`, `/giao-vien`, `/hoc-sinh`, `/phu-huynh`, `/doi-mat-khau` → 307; `/khong-co` → 404 có "Về trang chủ" |
+| `grep console.* / dangerouslySetInnerHTML src` | 0 kết quả |
+
+### Chưa làm được / rủi ro còn lại
+- **Vẫn chưa chạy luồng nào trên DB thật** (DB `corelink` còn schema v2, `migrate status`: `20261021000000_init` chưa áp) — RISK-007.
+- Integration test chưa chạy (Q08); UAT, E2E, axe, đo NFR-009, thử restore backup: Pha 1.5.
+- Ghi chú phiên 1–2 về `docs/ACCOUNTS.md` là v2 đã **lỗi thời**: file đã là danh sách tài khoản v3, không chứa mật khẩu.
+- Một người kiêm mọi vai trò → chưa có review độc lập (RISK-012).
+
+### Bước tiếp theo
+1. Chủ dự án xem `progress/GAP-REPORT-2026-10-21.md` và xác nhận DECISION-D15..D18 (docs/17).
+2. Chủ dự án chạy `pnpm db:reset` rồi `pnpm dev`; chạy UAT TC-UAT-01..15 (docs/13 §7) và ma trận quyền âm (§6).
+3. Tạo DB test (vd `corelink_test`), `prisma migrate deploy` lên đó, đặt `TEST_DATABASE_URL`, chạy `pnpm test:integration`.
+4. Review diff và tự commit (trợ lý không commit/push).
+
 ## 2026-10-21 (phiên 2) — Pha 1b, 1c, 1d: code xong, chưa chạy trên DB thật
 
 ### Đã xong

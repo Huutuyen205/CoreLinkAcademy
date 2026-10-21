@@ -4,17 +4,21 @@ import type { ClassStatus, EnrollmentStatus } from "@prisma/client";
 /** BR-020: sĩ số = ACTIVE + PAUSED. */
 export const SEAT_STATUSES: EnrollmentStatus[] = ["ACTIVE", "PAUSED"];
 
-export type EnrollError = "CLASS_CLOSED" | "ALREADY_ENROLLED" | "CLASS_FULL";
+export type EnrollError = "CLASS_CLOSED" | "ALREADY_ENROLLED" | "CLASS_FULL" | "STUDENT_DISABLED";
 
+/** BR-020, BR-022, BR-029 — thứ tự kiểm tra theo docs/02 FR-019. */
 export function checkEnrollment(input: {
   classStatus: ClassStatus;
   seatCount: number;
   capacity: number;
   existingStatus: EnrollmentStatus | null;
+  /** BR-029: tài khoản học sinh còn ACTIVE. Mặc định true. */
+  studentActive?: boolean;
 }): EnrollError | null {
   if (input.classStatus === "COMPLETED" || input.classStatus === "CANCELLED") return "CLASS_CLOSED";
   if (input.existingStatus && input.existingStatus !== "DROPPED") return "ALREADY_ENROLLED";
   if (input.seatCount >= input.capacity) return "CLASS_FULL";
+  if (input.studentActive === false) return "STUDENT_DISABLED";
   return null;
 }
 
@@ -44,5 +48,6 @@ export const ENROLL_ERROR_MESSAGES: Record<EnrollError | "SCHEDULE_CONFLICT", st
   CLASS_CLOSED: "Lớp đã kết thúc hoặc đã hủy, không ghi danh thêm được.",
   ALREADY_ENROLLED: "Học sinh đã ghi danh lớp này.",
   CLASS_FULL: "Lớp đã đủ sĩ số.",
+  STUDENT_DISABLED: "Tài khoản học sinh đang bị khóa, không ghi danh được.",
   SCHEDULE_CONFLICT: "Lịch lớp trùng với lớp khác học sinh đang học.",
 };

@@ -18,6 +18,8 @@ export function LoginForm() {
         autoComplete="username"
         inputMode="email"
         required
+        maxLength={191}
+        defaultValue={state.values?.identifier}
         error={state.fieldErrors?.identifier}
       />
       <TextField

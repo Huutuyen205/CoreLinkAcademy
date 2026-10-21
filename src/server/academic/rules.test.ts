@@ -21,6 +21,12 @@ describe("ghi danh", () => {
     expect(checkEnrollment({ ...base, existingStatus: "DROPPED" })).toBeNull();
   });
 
+  it("TC-044 học sinh bị khóa → STUDENT_DISABLED, sau các kiểm tra của lớp", () => {
+    expect(checkEnrollment({ ...base, studentActive: false })).toBe("STUDENT_DISABLED");
+    expect(checkEnrollment({ ...base, studentActive: true })).toBeNull();
+    expect(checkEnrollment({ ...base, seatCount: 10, studentActive: false })).toBe("CLASS_FULL");
+  });
+
   it("TC-018 chuyển trạng thái ghi danh", () => {
     expect(canChangeEnrollment("ACTIVE", "PAUSED")).toBe(true);
     expect(canChangeEnrollment("PAUSED", "ACTIVE")).toBe(true);

@@ -54,7 +54,7 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
                   defaultValue={r.note ?? ""}
                   maxLength={255}
                   placeholder="Ghi chú (không bắt buộc)"
-                  className="block min-h-11 w-full rounded-control border border-line bg-surface px-3 text-sm"
+                  className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-sm"
                 />
               </label>
             </fieldset>

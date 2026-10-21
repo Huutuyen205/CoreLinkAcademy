@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MANUAL_LEAD_SOURCES } from "@/lib/labels";
 import { normalizePhone } from "@/lib/phone";
 
 const phone = z
@@ -50,6 +51,32 @@ export const trialRequestSchema = z.object({
 });
 
 export type TrialRequestInput = z.infer<typeof trialRequestSchema>;
+
+/** API-021 — FR-006: nhập lead tay. Không có ô đồng ý; khối và môn tùy chọn. */
+export const manualLeadSchema = z.object({
+  source: z.enum(MANUAL_LEAD_SOURCES, { errorMap: () => ({ message: "Chọn nguồn khách." }) }),
+  parentName: z.string().trim().min(2, "Nhập họ tên phụ huynh.").max(120, "Tối đa 120 ký tự."),
+  phone,
+  email: optionalEmail,
+  studentName: z.string().trim().min(2, "Nhập họ tên học sinh.").max(120, "Tối đa 120 ký tự."),
+  gradeLevel: z
+    .string()
+    .trim()
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 1 || n > 12) {
+        ctx.addIssue({ code: "custom", message: "Chọn khối lớp." });
+        return z.NEVER;
+      }
+      return n;
+    }),
+  subjectId: optionalText(40),
+  courseSlug: optionalText(160),
+  note: optionalText(1000),
+});
+
+export type ManualLeadInput = z.infer<typeof manualLeadSchema>;
 
 /** API-004 — FR-009. */
 export const convertLeadSchema = z

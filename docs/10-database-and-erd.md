@@ -1,75 +1,340 @@
-# 10 — Database và ERD
+# 10 — Database, ERD và Data Dictionary
 
-Nguồn sự thật: [`prisma/schema.prisma`](../prisma/schema.prisma). Migration: `prisma/migrations/`. MySQL 8, `utf8mb4`, mọi `DATETIME` là UTC.
+| Mục | Giá trị |
+|---|---|
+| Phiên bản | 3.1 (2026-10-21) — data dictionary theo từng cột, khớp `prisma/migrations/20261021000000_init/migration.sql` |
+| Owner | Trợ lý (DBA / Data Modeler) · Phê duyệt: chủ dự án |
+| Nguồn sự thật | [`prisma/schema.prisma`](../prisma/schema.prisma) + migration SQL. Tài liệu này mô tả, không thay thế |
 
-## 1. ERD
+## 1. Data architecture assumptions
+
+| Mục | Giá trị |
+|---|---|
+| DBMS | MySQL 8 (dev: `localhost:3306`, database `corelink`) |
+| Charset / collation | `utf8mb4` / `utf8mb4_unicode_ci` (so sánh chuỗi không phân biệt hoa thường — tìm kiếm `contains` cũng vậy) |
+| Thời gian | Mọi `DATETIME(3)` là **UTC**; `classes.startDate` kiểu `DATE`; giờ lớp "HH:mm" theo giờ VN |
+| Migration tool | Prisma Migrate. Migration hiện có: `20261021000000_init` (sinh offline bằng `prisma migrate diff --from-empty`) — **chưa áp vào `corelink`** (RISK-007) |
+| ID | `cuid()` → `VARCHAR(191)`; ngoại lệ `sessions.id` = sha256 hex `VARCHAR(64)`, `rate_limit_buckets.key` |
+| Quy mô ước tính | < 500 HS, < 50 lớp đồng thời, ~ 20.000 bản ghi điểm danh/năm (ASSUMPTION-A06) |
+| Môi trường | Dev dùng dữ liệu giả từ seed; DB test riêng `corelink_test` cho integration test (chưa được cấp quyền — QUESTION-Q08) |
+| Thao tác cấm trên production | `prisma migrate reset`, `db push --force-reset`, DROP bảng |
+
+## 2. ERD
 
 ```mermaid
 erDiagram
-  users ||--o{ sessions : "đăng nhập"
-  users ||--o{ guardianships : "phụ huynh"
-  users ||--o{ guardianships : "học sinh"
-  subjects ||--o{ courses : có
+  users ||--o{ sessions : "có phiên"
+  users ||--o{ guardianships : "là phụ huynh (parentId)"
+  users ||--o{ guardianships : "là học sinh (studentId)"
+  subjects ||--o{ courses : "có"
   courses ||--o{ classes : "mở thành"
-  users ||--o{ classes : "giáo viên"
-  rooms ||--o{ classes : "phòng mặc định"
-  classes ||--o{ class_sessions : sinh
-  rooms ||--o{ class_sessions : "diễn ra tại"
-  classes ||--o{ enrollments : có
+  users ||--o{ classes : "GV chính (teacherId)"
+  rooms |o--o{ classes : "phòng mặc định"
+  classes ||--o{ class_sessions : "sinh"
+  users ||--o{ class_sessions : "GV buổi (teacherId)"
+  rooms |o--o{ class_sessions : "diễn ra tại"
+  classes ||--o{ enrollments : "có"
   users ||--o{ enrollments : "học sinh"
-  class_sessions ||--o{ attendances : có
-  users ||--o{ attendances : "học sinh"
-  subjects ||--o{ leads : "quan tâm"
-  courses ||--o{ leads : "quan tâm"
-  leads ||--o{ lead_activities : có
-  classes ||--o{ assignments : có
-  assignments ||--o{ questions : gồm
-  assignments ||--o{ submissions : nhận
-  users ||--o{ submissions : "học sinh"
-  submissions ||--o{ answers : gồm
+  class_sessions ||--o{ attendances : "có"
+  users ||--o{ attendances : "học sinh / người điểm danh"
+  subjects |o--o{ leads : "quan tâm"
+  courses |o--o{ leads : "quan tâm"
+  users |o--o{ leads : "phụ trách (dự phòng) / học viên đã chuyển"
+  leads ||--o{ lead_activities : "có"
+  users |o--o{ lead_activities : "người thực hiện"
+  classes ||--o{ assignments : "có"
+  users ||--o{ assignments : "người tạo"
+  assignments ||--o{ questions : "gồm"
+  assignments ||--o{ submissions : "nhận"
+  users ||--o{ submissions : "học sinh / người chấm"
+  submissions ||--o{ answers : "gồm"
   questions ||--o{ answers : "trả lời cho"
-  users ||--o{ audit_logs : "thực hiện"
+  users |o--o{ audit_logs : "thực hiện"
 ```
 
-## 2. Bảng (ENT)
+## 3. Bảng (ENT) — tổng quan
 
-| ID | Bảng | Mục đích | Ràng buộc chính |
-|---|---|---|---|
-| ENT-001 | `users` | Mọi tài khoản, 1 vai trò | unique `email`, `phone`, `studentCode` |
-| ENT-002 | `sessions` | Phiên đăng nhập; `id` = sha256(token) | xóa theo user (cascade) |
-| ENT-003 | `guardianships` | Liên kết phụ huynh–học sinh | PK `(parentId, studentId)`; tối đa 4/HS kiểm tra ở service (BR-008) |
-| ENT-004 | `subjects` | Môn học | unique `slug` |
-| ENT-005 | `courses` | Khóa học mẫu | unique `slug`; `outcomes`, `syllabus` là JSON |
-| ENT-006 | `rooms` | Phòng học | unique `name` |
-| ENT-007 | `classes` | Lớp mở | unique `code`; `weekdays` "1,3,5"; giờ dạng "HH:mm" giờ VN |
-| ENT-008 | `class_sessions` | Buổi học | unique `(classId, index)`; index `(teacherId, startsAt)`, `(roomId, startsAt)` cho kiểm tra trùng |
-| ENT-009 | `enrollments` | Ghi danh | unique `(classId, studentId)` |
-| ENT-010 | `attendances` | Điểm danh | unique `(sessionId, studentId)` |
-| ENT-011 | `leads` | Khách tiềm năng | index `phone`, `(status, createdAt)` |
-| ENT-012 | `lead_activities` | Lịch sử lead | append-only |
-| ENT-013 | `assignments` | Bài tập | `resultsPublishedAt` = cờ công bố |
-| ENT-014 | `questions` | Câu hỏi | đáp án (`correctOption`, `acceptedAnswers`) **không bao giờ** gửi cho HS trước công bố |
-| ENT-015 | `submissions` | Bài nộp | unique `(assignmentId, studentId)` |
-| ENT-016 | `answers` | Câu trả lời | unique `(submissionId, questionId)` |
-| ENT-017 | `audit_logs` | Nhật ký | append-only, không có thao tác xóa trong code |
-| ENT-018 | `rate_limit_buckets` | Đếm rate limit theo khóa | key = `trial:<ip>` |
+| ENT | Bảng | Mục đích | Ước lượng dòng/năm | Sở hữu |
+|---|---|---|---|---|
+| ENT-001 | `users` | Mọi tài khoản, đúng 1 vai trò | ~ 1.500 | Admin/Staff |
+| ENT-002 | `sessions` | Phiên đăng nhập | vài nghìn (cần dọn hết hạn — RISK-010) | Hệ thống |
+| ENT-003 | `guardianships` | Liên kết PH–HS | ~ 600 | Staff |
+| ENT-004 | `subjects` | Môn | 6 | Admin |
+| ENT-005 | `courses` | Khóa học mẫu | < 100 | Admin |
+| ENT-006 | `rooms` | Phòng | < 20 | Admin |
+| ENT-007 | `classes` | Lớp mở | < 200 | Staff |
+| ENT-008 | `class_sessions` | Buổi học | ~ 5.000 | Staff (sinh), GV (trạng thái qua điểm danh) |
+| ENT-009 | `enrollments` | Ghi danh | ~ 1.500 | Staff |
+| ENT-010 | `attendances` | Điểm danh | ~ 20.000 | GV, Staff |
+| ENT-011 | `leads` | Khách tiềm năng | ~ 2.000 | Staff |
+| ENT-012 | `lead_activities` | Lịch sử lead (append-only) | ~ 8.000 | Hệ thống/Staff |
+| ENT-013 | `assignments` | Bài tập | ~ 1.000 | GV |
+| ENT-014 | `questions` | Câu hỏi | ~ 10.000 | GV |
+| ENT-015 | `submissions` | Bài nộp | ~ 15.000 | HS, GV |
+| ENT-016 | `answers` | Câu trả lời | ~ 150.000 | HS, GV |
+| ENT-017 | `audit_logs` | Nhật ký (append-only) | vài nghìn | Hệ thống |
+| ENT-018 | `rate_limit_buckets` | Bộ đếm rate limit | ≤ số IP | Hệ thống |
 
-## 3. Quy tắc xóa
+## 4. Data dictionary
 
-- Không xóa cứng người dùng trong Pha 1: dùng `status = DISABLED`.
-- Khóa học có lớp: không xóa, chỉ `isPublished = false`.
-- Xóa lớp chỉ khi chưa có ghi danh (cascade buổi, bài tập).
+Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) · **UQ** unique · **IX** index · Nhạy cảm: **PII** dữ liệu cá nhân, **MINOR** dữ liệu học sinh vị thành niên, **SECRET** bí mật.
 
-## 4. Dữ liệu nhạy cảm
+### ENT-001 `users`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| email | VARCHAR(191) | Y | | UQ | Đăng nhập; lưu chữ thường | PII |
+| phone | VARCHAR(20) | Y | | UQ | Đăng nhập; dạng `+84…` (BR-001) | PII |
+| fullName | VARCHAR(120) | N | | | Họ tên | PII/MINOR |
+| passwordHash | VARCHAR(255) | N | | | Argon2id | SECRET |
+| role | ENUM(ADMIN,STAFF,TEACHER,STUDENT,PARENT) | N | | IX | Một vai trò (D04) | |
+| status | ENUM(ACTIVE,DISABLED) | N | ACTIVE | | Khóa thay cho xóa | |
+| mustChangePassword | BOOLEAN | N | false | | Bắt đổi mật khẩu tạm | |
+| failedLoginCount | INT | N | 0 | | BR-005 | |
+| lockedUntil | DATETIME(3) | Y | | | Khóa tạm tới (UTC) | |
+| studentCode | VARCHAR(16) | Y | | UQ | `HSyyNNNN` (BR-007), chỉ HS | MINOR |
+| gradeLevel | TINYINT | Y | | | Khối 1..12, chỉ HS | MINOR |
+| createdAt / updatedAt | DATETIME(3) | N | now / auto | | | |
 
-`users.phone`, `users.email`, `leads.phone/email/parentName/studentName`, điểm số, chuyên cần. Không log ra console. Seed chỉ dùng dữ liệu giả (SĐT dạng `+8490000xxxx`).
+### ENT-002 `sessions`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(64) | N | | PK | sha256(token) hex — token thật chỉ ở cookie | SECRET (dẫn xuất) |
+| userId | VARCHAR(191) | N | | FK→users (CASCADE), IX | | |
+| expiresAt | DATETIME(3) | N | | | now + 7 ngày | |
+| createdAt | DATETIME(3) | N | now | | | |
 
-## 5. Migration và seed
+### ENT-003 `guardianships`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| parentId | VARCHAR(191) | N | | PK(parentId, studentId), FK→users (CASCADE) | PH |
+| studentId | VARCHAR(191) | N | | FK→users (CASCADE), IX | HS; ≤ 4 PH (BR-008, kiểm ở service + khóa dòng) |
+| relation | VARCHAR(40) | N | 'Phụ huynh' | | Chưa có UI sửa (dự phòng) |
+| createdAt | DATETIME(3) | N | now | | |
 
-- Lần đầu: `pnpm db:migrate` (= `prisma migrate dev`) tạo `prisma/migrations/<ts>_init`.
-- Seed: `pnpm db:seed` — môn, khóa, phòng, tài khoản demo (xem `docs/14-deployment-and-operations.md`).
-- Production: `prisma migrate deploy`; không bao giờ `migrate reset`.
+### ENT-004 `subjects`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| name | VARCHAR(80) | N | | | Tên môn |
+| slug | VARCHAR(80) | N | | UQ | `?mon=` |
+| description | TEXT | N | | | Mô tả trang chủ |
+| sortOrder | INT | N | 0 | | Thứ tự hiển thị |
 
-## 6. Sao lưu
+### ENT-005 `courses`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| subjectId | VARCHAR(191) | N | | FK→subjects (**RESTRICT**), IX(subjectId, isPublished) | Môn |
+| title | VARCHAR(160) | N | | | |
+| slug | VARCHAR(160) | N | | UQ | URL công khai |
+| summary | VARCHAR(300) | N | | | Thẻ khóa, meta description |
+| description | TEXT | N | | | |
+| gradeFrom / gradeTo | TINYINT | N | | gradeFrom ≤ gradeTo (kiểm ở action) | Khối áp dụng |
+| level | VARCHAR(60) | N | | | Trình độ |
+| totalSessions | SMALLINT | N | | 1..500 | Số buổi mẫu |
+| sessionMinutes | SMALLINT | N | | 15..300 | |
+| tuitionVnd | INT | Y | | 0..1e9 | Học phí tham khảo; null = "Liên hệ" (ASSUMPTION-A03) |
+| outcomes | JSON | N | | `string[]` | Mục tiêu |
+| syllabus | JSON | N | | `{title, detail}[]` | Lộ trình |
+| isPublished | BOOLEAN | N | false | | Hiện công khai |
+| isFeatured | BOOLEAN | N | false | | Trang chủ |
+| createdAt / updatedAt | DATETIME(3) | N | | | |
 
-Trước thao tác phá hủy: `mysqldump --single-transaction corelink > backup/corelink-<ngày>.sql` (thư mục `backup/` nằm trong `.gitignore`).
+### ENT-006 `rooms`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| name | VARCHAR(60) | N | | UQ | |
+| capacity | SMALLINT | N | | 1..500 | BR-024 |
+
+### ENT-007 `classes`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| code | VARCHAR(30) | N | | UQ | Mã lớp viết hoa |
+| courseId | VARCHAR(191) | N | | FK→courses (**RESTRICT**), IX(courseId, status) | |
+| teacherId | VARCHAR(191) | N | | FK→users (RESTRICT), IX | GV chính |
+| roomId | VARCHAR(191) | Y | | FK→rooms (SET NULL) | |
+| startDate | DATE | N | | | Ngày bắt đầu (lịch VN, lưu `YYYY-MM-DD 00:00Z`) |
+| weekdays | VARCHAR(20) | N | | "1,3,5" | 1 = Thứ Hai … 7 = Chủ nhật |
+| startTime / endTime | CHAR(5) | N | | "HH:mm", end > start | Giờ VN |
+| totalSessions | SMALLINT | N | | 1..200 | |
+| capacity | SMALLINT | N | | 1..100, ≤ phòng | Sĩ số tối đa |
+| status | ENUM(OPEN,IN_PROGRESS,COMPLETED,CANCELLED) | N | OPEN | | 06 §2.2 |
+| createdAt / updatedAt | DATETIME(3) | N | | | |
+
+### ENT-008 `class_sessions`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| classId | VARCHAR(191) | N | | FK→classes (CASCADE); UQ(classId, index) | |
+| index | SMALLINT | N | | | Buổi thứ n |
+| startsAt / endsAt | DATETIME(3) | N | | IX(startsAt); IX(teacherId, startsAt); IX(roomId, startsAt) | UTC |
+| teacherId | VARCHAR(191) | N | | FK→users (RESTRICT) | GV của buổi (dạy thay được) |
+| roomId | VARCHAR(191) | Y | | FK→rooms (SET NULL) | |
+| status | ENUM(SCHEDULED,COMPLETED,CANCELLED) | N | SCHEDULED | | 06 §2.4 |
+| cancelReason | VARCHAR(255) | Y | | | |
+
+### ENT-009 `enrollments`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| classId | VARCHAR(191) | N | | FK→classes (CASCADE); UQ(classId, studentId) | |
+| studentId | VARCHAR(191) | N | | FK→users (RESTRICT); IX(studentId, status) | |
+| status | ENUM(ACTIVE,PAUSED,DROPPED,COMPLETED) | N | ACTIVE | | 06 §2.3 |
+| enrolledAt | DATETIME(3) | N | now | | Đặt lại khi ghi danh lại |
+| updatedAt | DATETIME(3) | N | auto | | |
+
+### ENT-010 `attendances`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| sessionId | VARCHAR(191) | N | | FK→class_sessions (CASCADE); UQ(sessionId, studentId) | | |
+| studentId | VARCHAR(191) | N | | FK→users (RESTRICT), IX | | MINOR |
+| status | ENUM(PRESENT,LATE,ABSENT,EXCUSED) | N | | | | MINOR |
+| note | VARCHAR(255) | Y | | | Ghi chú GV | MINOR |
+| markedById | VARCHAR(191) | N | | FK→users (RESTRICT) | Người lưu gần nhất | |
+| markedAt | DATETIME(3) | N | now | | | |
+
+### ENT-011 `leads`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| parentName | VARCHAR(120) | N | | | | PII |
+| phone | VARCHAR(20) | N | | IX | `+84…` | PII |
+| email | VARCHAR(191) | Y | | | | PII |
+| studentName | VARCHAR(120) | N | | | | MINOR |
+| gradeLevel | TINYINT | Y | | | | MINOR |
+| subjectId | VARCHAR(191) | Y | | FK→subjects (SET NULL) | Môn quan tâm | |
+| courseId | VARCHAR(191) | Y | | FK→courses (SET NULL) | Khóa quan tâm | |
+| note | TEXT | Y | | | Ghi chú phụ huynh | PII |
+| source | VARCHAR(40) | N | 'web_form' | BR-012 | `web_form`, `phone`, `walk_in`, `referral`, `other` | |
+| utm | JSON | Y | | | Dự phòng (chưa ghi) | |
+| status | ENUM(NEW,CONTACTED,TRIAL_SCHEDULED,TRIAL_DONE,ENROLLED,LOST) | N | NEW | IX(status, createdAt) | BR-010 | |
+| lostReason | VARCHAR(255) | Y | | | BR-013 | |
+| assignedToId | VARCHAR(191) | Y | | FK→users (SET NULL) | **Dự phòng Pha 2** (P2-15), không FR nào dùng | |
+| convertedStudentId | VARCHAR(191) | Y | | FK→users (SET NULL) | HS sau chuyển | |
+| createdAt / updatedAt | DATETIME(3) | N | | | updatedAt đổi khi có hoạt động | |
+
+### ENT-012 `lead_activities`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| leadId | VARCHAR(191) | N | | FK→leads (CASCADE), IX(leadId, createdAt) | |
+| actorId | VARCHAR(191) | Y | | FK→users (SET NULL) | null = hệ thống/form công khai |
+| type | ENUM(CREATED,RESUBMITTED,NOTE,STATUS_CHANGE,CONVERTED) | N | | | |
+| content | TEXT | N | | | Có thể chứa PII từ form |
+| createdAt | DATETIME(3) | N | now | | |
+
+### ENT-013 `assignments`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| classId | VARCHAR(191) | N | | FK→classes (CASCADE), IX(classId, status) | |
+| createdById | VARCHAR(191) | N | | FK→users (RESTRICT) | GV tạo |
+| title | VARCHAR(200) | N | | | |
+| instructions | TEXT | N | | ≤ 5000 (action) | |
+| dueAt | DATETIME(3) | N | | | UTC |
+| allowLate | BOOLEAN | N | false | | BR-044 |
+| status | ENUM(DRAFT,PUBLISHED,CLOSED) | N | DRAFT | | BR-049 |
+| resultsPublishedAt | DATETIME(3) | Y | | | Cờ công bố (BR-046) |
+| createdAt / updatedAt | DATETIME(3) | N | | | |
+
+### ENT-014 `questions`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| assignmentId | VARCHAR(191) | N | | FK→assignments (CASCADE), IX(assignmentId, order) | | |
+| order | SMALLINT | N | | | 1..n, đánh lại khi xóa | |
+| type | ENUM(MCQ,SHORT,ESSAY) | N | | | | |
+| prompt | TEXT | N | | ≤ 5000 | | |
+| options | JSON | Y | | `string[]` 2–6 (MCQ) | | |
+| correctOption | TINYINT | Y | | 0-based (MCQ) | Đáp án | **Không gửi HS trước công bố** |
+| acceptedAnswers | JSON | Y | | `string[]` ≥ 1 (SHORT) | Đáp án | **Không gửi HS trước công bố** |
+| points | DOUBLE | N | | 0,25..100 bước 0,25 | | |
+
+### ENT-015 `submissions`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| assignmentId | VARCHAR(191) | N | | FK→assignments (CASCADE); UQ(assignmentId, studentId) | | |
+| studentId | VARCHAR(191) | N | | FK→users (RESTRICT), IX | | MINOR |
+| status | ENUM(IN_PROGRESS,SUBMITTED,GRADED) | N | IN_PROGRESS | | 06 §2.6 | |
+| startedAt | DATETIME(3) | N | now | | Lần mở đầu | |
+| submittedAt | DATETIME(3) | Y | | | | |
+| isLate | BOOLEAN | N | false | | | |
+| score | DOUBLE | Y | | | BR-043; null khi chưa chấm | MINOR |
+| teacherComment | TEXT | Y | | | | MINOR |
+| gradedAt | DATETIME(3) | Y | | | | |
+| gradedById | VARCHAR(191) | Y | | FK→users (SET NULL) | | |
+
+### ENT-016 `answers`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa | Nhạy cảm |
+|---|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | | |
+| submissionId | VARCHAR(191) | N | | FK→submissions (CASCADE); UQ(submissionId, questionId) | | |
+| questionId | VARCHAR(191) | N | | FK→questions (CASCADE) | | |
+| response | TEXT | Y | | ≤ 500 (MCQ/SHORT), ≤ 20.000 (ESSAY) | MCQ: chỉ số dạng chuỗi | MINOR |
+| autoPoints | DOUBLE | Y | | | null với tự luận | MINOR |
+| teacherPoints | DOUBLE | Y | | BR-042 | Ghi đè autoPoints | MINOR |
+| feedback | TEXT | Y | | ≤ 2000 | | MINOR |
+
+### ENT-017 `audit_logs`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| id | VARCHAR(191) | N | cuid | PK | |
+| actorId | VARCHAR(191) | Y | | FK→users (SET NULL) | |
+| action | VARCHAR(60) | N | | | `lead.convert`, `user.create`, `user.role_change`, `user.disable`, `user.enable`, `user.reset_password`, `attendance.override`, `grade.update_after_publish`, `session.reschedule`, `session.cancel` |
+| entity | VARCHAR(40) | N | | IX(entity, entityId) | Tên model (`Lead`, `User`, `ClassSession`, `Submission`) |
+| entityId | VARCHAR(40) | N | | | |
+| detail | JSON | Y | | | before/after, lý do — **không** chứa mật khẩu/token |
+| createdAt | DATETIME(3) | N | now | IX | |
+
+### ENT-018 `rate_limit_buckets`
+| Cột | Kiểu | Null | Mặc định | Ràng buộc | Ý nghĩa |
+|---|---|---|---|---|---|
+| key | VARCHAR(120) | N | | PK | `trial:<ip>`, `login:<ip>` |
+| count | INT | N | | | Số lần trong cửa sổ |
+| resetAt | DATETIME(3) | N | | | Hết cửa sổ |
+
+## 5. Constraints and lifecycle
+
+| Chủ đề | Quy tắc |
+|---|---|
+| Xóa người dùng | Không xóa cứng ở Pha 1 → `status = DISABLED` (FK RESTRICT từ classes, sessions, enrollments, attendances, submissions, assignments chặn xóa nhầm) |
+| Xóa khóa | Chỉ khi chưa có lớp (BR-050; FK `classes.courseId` RESTRICT là lớp bảo vệ thứ hai); lead → `courseId = NULL` |
+| Xóa môn | Chỉ khi chưa có khóa (BR-050; FK `courses.subjectId` RESTRICT); lead → `subjectId = NULL` (FK SET NULL) |
+| Xóa phòng | Chỉ khi không lớp/buổi tham chiếu (kiểm ở service; FK SET NULL nếu bỏ qua) |
+| Xóa lớp | Chỉ khi chưa ghi danh (BR-027) → cascade buổi, điểm danh, bài tập, câu hỏi, bài nộp, câu trả lời |
+| Append-only | `lead_activities`, `audit_logs`: code không có update/delete |
+| Unique bảo vệ bất biến | email, phone, studentCode, slug, room.name, class.code, (classId, index), (classId, studentId), (sessionId, studentId), (assignmentId, studentId), (submissionId, questionId) |
+| Kiểm ở service (không có CHECK) | gradeFrom ≤ gradeTo; endTime > startTime; capacity ≤ phòng; ≤ 4 PH; điểm trong khoảng |
+| Transaction | Chuyển lead, mở lớp + buổi, ghi danh (FOR UPDATE), liên kết PH (FOR UPDATE), điểm danh (nhiều upsert + audit), nộp bài, chấm + audit, dời buổi + audit, đổi trạng thái lớp + hệ quả |
+| Concurrency | docs/06 §3 |
+
+## 6. Migration and recovery
+
+| Bước | Lệnh (PowerShell, thư mục gốc) | Ghi chú |
+|---|---|---|
+| Kiểm tra trạng thái | `pnpm db:check` (= `scripts/check-db.mjs` → `prisma migrate status`) | Không phá hủy |
+| Lần đầu chuyển từ v2 (dev) | `pnpm db:reset` (= `prisma migrate reset --force`) | **Xóa toàn bộ bảng** rồi áp `init` + seed. Chỉ chủ dự án chạy; đã có backup v2 |
+| Áp migration (dev/prod) | `pnpm db:migrate` (= `prisma migrate deploy`) | Không tạo migration mới |
+| Tạo migration mới | `pnpm db:migrate:new -- --name <tên>` (= `prisma migrate dev --create-only`) | Review SQL trước khi deploy |
+| Seed | `pnpm db:seed` | Dữ liệu giả, chạy lại được (upsert) |
+| Production | Chỉ `prisma migrate deploy`; migration chỉ **thêm** (không xóa/đổi cột trong cùng release) để bản cũ còn chạy khi rollback | docs/14 |
+
+**Backup/restore:** trước mọi thao tác phá hủy: `mysqldump --single-transaction corelink > backup/corelink-<ngày>.sql` (`backup/` trong `.gitignore`). Backup v2: `backup/corelink-v2-20261021.sql` (84 bảng). **Chưa từng thử restore** → không coi là bằng chứng phục hồi (RISK-011); kế hoạch thử restore ở docs/14 §6.
+
+**Seed policy:** chỉ dữ liệu giả (SĐT `+8490000xxxx`, email `@demo.corelink.vn`); không chạy seed ở production.
+
+## 7. Security and privacy
+
+| Chủ đề | Quy tắc |
+|---|---|
+| Least privilege | Dev dùng một user MySQL; production: user ứng dụng chỉ quyền DML trên `corelink`, user migration riêng (TBD — docs/14) |
+| Secrets | `DATABASE_URL` chỉ trong `.env`/secret manager; không commit |
+| Mã hóa | Mật khẩu Argon2id; token phiên sha256; dữ liệu khác không mã hóa ở mức cột (chấp nhận Pha 1); TLS tới DB khi khác máy (production) |
+| PII/MINOR | Không log; không seed dữ liệu thật; truy cập theo docs/03 |
+| Retention | Lead LOST: **TBD** (QUESTION-Q03, đề xuất 12 tháng rồi ẩn danh hóa). Audit: TBD (QUESTION-Q11). Phiên hết hạn: dọn định kỳ (RISK-010) |
+| Xuất/xóa theo yêu cầu | Chưa có chức năng; Admin làm thủ công qua DB nếu có yêu cầu (ghi QUESTION-Q03) |

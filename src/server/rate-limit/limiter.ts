@@ -2,7 +2,7 @@ import { db } from "@/server/db";
 import { isUniqueViolation } from "@/server/users/credentials";
 import { consume, TRIAL_LIMIT } from "./rules";
 
-async function hitOnce(key: string, limit: typeof TRIAL_LIMIT): Promise<boolean> {
+async function hitOnce(key: string, limit: { max: number; windowMs: number }): Promise<boolean> {
   return db.$transaction(async (tx) => {
     const rows = await tx.$queryRaw<{ count: number; resetAt: Date }[]>`
       SELECT count, resetAt FROM rate_limit_buckets WHERE \`key\` = ${key} FOR UPDATE`;
@@ -13,8 +13,8 @@ async function hitOnce(key: string, limit: typeof TRIAL_LIMIT): Promise<boolean>
   });
 }
 
-/** Ghi nhận một lần gọi cho `key`; trả false khi vượt giới hạn (BR-002). */
-export async function hitRateLimit(key: string, limit = TRIAL_LIMIT): Promise<boolean> {
+/** Ghi nhận một lần gọi cho `key`; trả false khi vượt giới hạn (BR-002, BR-009). */
+export async function hitRateLimit(key: string, limit: { max: number; windowMs: number } = TRIAL_LIMIT): Promise<boolean> {
   try {
     return await hitOnce(key, limit);
   } catch (error) {

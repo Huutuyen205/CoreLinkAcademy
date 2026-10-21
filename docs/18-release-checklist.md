@@ -1,16 +1,36 @@
 # 18 — Release checklist
 
-Trạng thái ngày 2026-10-21 (Pha 1). `[x]` = đã kiểm chứng bằng chạy thật; `[ ]` = chưa.
+| Mục | Giá trị |
+|---|---|
+| Phiên bản | 3.1 (2026-10-21, sau phiên 3) |
+| Owner | Trợ lý (Release) · Người phê duyệt: chủ dự án |
 
-- [ ] Toàn bộ FR của pha đạt tiêu chí chấp nhận (ghi bằng chứng vào 16) — code xong, logic thuần có unit test; chưa kiểm tra trên DB thật
-- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` (70/70), `pnpm build` xanh — output trong `progress/PROGRESS.md`
-- [ ] Kiểm tra thủ công UC-001..UC-012 với tài khoản seed, ở desktop và 360px — chờ migrate DB
-- [ ] Kiểm tra truy cập chéo: GV A mở lớp GV B, PH mở con người khác, HS mở bài lớp khác → 404 (kịch bản trong `ACCOUNTS.md`) — chờ DB; logic đã có unit test TC-034, TC-035
-- [ ] Không có đáp án trong HTML/RSC payload của trang làm bài trước công bố — code chỉ truyền `toStudentQuestion()` (TC-032); cần xem source trang khi có DB
+`[x]` = đã kiểm chứng bằng chạy thật (output trong PROGRESS) · `[ ]` = chưa.
+
+## Chất lượng
+- [x] `pnpm typecheck`, `pnpm lint`, `pnpm test` (76/76), `pnpm build` xanh — 2026-10-21 phiên 3
+- [ ] `pnpm test:integration` xanh trên DB test — đã viết 8 test, đang **skip** (chưa có `TEST_DATABASE_URL`, Q08)
+- [ ] Toàn bộ FR đạt tiêu chí chấp nhận, bằng chứng ở docs/16 — logic thuần có unit test; chưa chạy trên DB thật
+- [ ] UAT TC-UAT-01..15 (desktop + 360px) — chờ `pnpm db:reset`
+- [ ] Ma trận quyền âm N-02..N-10 (docs/13 §6) — N-01 đã smoke test
+- [ ] Không có đáp án trong HTML/RSC trang làm bài trước công bố (TC-UAT-10) — code dùng `toStudentQuestion` (TC-032 unit ✓)
+- [ ] Bàn phím, focus, 360px, axe — chưa chạy
+
+## Dữ liệu
 - [x] Backup DB trước migration (`backup/corelink-v2-20261021.sql`, 84 bảng)
-- [ ] `prisma migrate deploy`/`reset` chạy sạch — chủ dự án chạy (trợ lý không có quyền)
-- [x] `.env` không bị commit (`.gitignore`); không có secret trong code/log
-- [x] Header bảo mật có trong response (smoke test `next start`)
-- [x] Tài liệu 01, 10, 11, 16, PROGRESS cập nhật theo code thực tế
-- [x] Kế hoạch rollback đã rõ (14 §6)
-- [ ] Chủ dự án phê duyệt release
+- [ ] Thử restore backup vào DB tạm (RISK-011)
+- [ ] `prisma migrate deploy`/`reset` chạy sạch — chủ dự án chạy
+- [x] Thay đổi phiên 3 không cần migration mới (đã đối chiếu `migration.sql`)
+
+## Bảo mật & cấu hình
+- [x] `.env` không bị commit; không có secret/log PII trong code (`grep console.* / dangerouslySetInnerHTML src` = 0)
+- [x] Header bảo mật có trong response, không có `X-Powered-By` (smoke `next start`)
+- [ ] `pnpm audit --prod` không có lỗ hổng mức cao chưa xử lý — chưa chạy
+- [ ] CSP (Q05), proxy ghi đè `X-Forwarded-For` (RISK-009) — khi chọn hosting
+- [ ] Chính sách lưu trữ/riêng tư (Q03, Q10, Q11)
+
+## Vận hành & tài liệu
+- [x] Tài liệu 00–21, use case, cổng người dùng, GAP-REPORT, PROGRESS cập nhật theo code thực tế
+- [x] Kế hoạch rollback rõ (14 §4.1)
+- [ ] Giám sát/alert (Q05)
+- [ ] Chủ dự án xác nhận DECISION-D15..D18 và phê duyệt release

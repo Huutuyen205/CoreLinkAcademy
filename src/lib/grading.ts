@@ -95,7 +95,15 @@ export function resultsVisible(assignment: { resultsPublishedAt: Date | null }):
   return assignment.resultsPublishedAt !== null;
 }
 
-export type StudentQuestion = Pick<QuestionData, "id" | "order" | "type" | "prompt" | "options" | "points">;
+/**
+ * BR-047, TC-042: điểm/đáp án của MỘT bài nộp chỉ hiện cho HS/PH khi bài đã công bố VÀ bài nộp đã chấm.
+ * Bài còn SUBMITTED (tự luận chưa chấm) hiện "Đang chờ chấm" thay vì điểm 0 (DECISION-D15).
+ */
+export function submissionResultVisible(assignment: { resultsPublishedAt: Date | null }, submissionStatus: SubmissionStatus | null): boolean {
+  return resultsVisible(assignment) && submissionStatus === "GRADED";
+}
+
+export type StudentQuestion =Pick<QuestionData, "id" | "order" | "type" | "prompt" | "options" | "points">;
 
 /** T-06, TC-032: bỏ mọi trường đáp án trước khi gửi cho học sinh. */
 export function toStudentQuestion(q: QuestionData): StudentQuestion {
