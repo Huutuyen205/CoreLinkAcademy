@@ -43,7 +43,7 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
 
 export function Card({ title, action, children, className }: { title?: string; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("rounded-block border border-line bg-surface p-5", className)}>
+    <section className={cn("rounded-block border border-line bg-surface p-4 sm:p-5", className)}>
       {(title || action) && (
         <header className="mb-4 flex items-center justify-between gap-3">
           {title && <h2 className="text-lg">{title}</h2>}
@@ -66,7 +66,7 @@ export function EmptyState({ message, action }: { message: string; action?: Reac
 
 export function PageHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-6 flex flex-col items-start gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <h1 className="text-2xl text-primary sm:text-3xl">{title}</h1>
         {description && <p className="mt-1 text-muted">{description}</p>}

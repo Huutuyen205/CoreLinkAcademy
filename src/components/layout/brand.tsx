@@ -14,7 +14,7 @@ export function Brand({ href, tone = "dark", className }: { href: string; tone?:
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/0 via-white/15 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </div>
       <span className="leading-none" aria-hidden="true">
-        <span className={cn("block font-serif text-lg font-bold tracking-wide transition-colors duration-200", tone === "light" ? "text-white group-hover:text-brand-tint" : "text-primary group-hover:text-accent")}>CORE LINK</span>
+        <span className={cn("block whitespace-nowrap font-serif text-lg font-bold tracking-wide transition-colors duration-200", tone === "light" ? "text-white group-hover:text-brand-tint" : "text-primary group-hover:text-accent")}>CORE LINK</span>
         <span className={cn("mt-1 block text-[0.65rem] font-medium tracking-[0.32em] transition-colors duration-200", tone === "light" ? "text-on-brand-muted" : "text-muted group-hover:text-ink")}>ACADEMY</span>
       </span>
     </Link>

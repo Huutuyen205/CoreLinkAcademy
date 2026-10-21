@@ -49,7 +49,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
               cell: (r) =>
                 r.detail ? (
                   <details>
-                    <summary className="cursor-pointer text-sm text-primary">Xem</summary>
+                    <summary className="cursor-pointer py-2.5 text-sm text-primary">Xem</summary>
                     <pre className="mt-1 max-h-60 overflow-auto whitespace-pre-wrap break-all text-xs">{JSON.stringify(r.detail, null, 2)}</pre>
                   </details>
                 ) : (

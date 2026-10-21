@@ -4,7 +4,7 @@ import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { Brand, BridgeArc } from "./brand";
-import { BottomNav, SideNav, type NavItem } from "./nav-links";
+import { BottomNav, MobileMenu, SideNav, type NavItem } from "./nav-links";
 
 type Props = {
   actor: Actor;
@@ -25,12 +25,12 @@ export function AppShell({ actor, rootHref, nav, bottomNav, children }: Props) {
         <p className="font-semibold text-white">{actor.fullName}</p>
         <p className="text-sm text-on-brand-muted">{ROLE_LABELS[actor.role]}</p>
       </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-        <Link href="/doi-mat-khau" className="underline underline-offset-2">
+      <div className="flex flex-wrap gap-x-4 text-sm">
+        <Link href="/doi-mat-khau" className="inline-flex min-h-11 items-center underline underline-offset-2">
           Đổi mật khẩu
         </Link>
         <form action={logout}>
-          <button type="submit" className="text-white underline underline-offset-2">
+          <button type="submit" className="inline-flex min-h-11 items-center text-white underline underline-offset-2">
             Đăng xuất
           </button>
         </form>
@@ -53,24 +53,27 @@ export function AppShell({ actor, rootHref, nav, bottomNav, children }: Props) {
       </aside>
 
       <header className="on-brand sticky top-0 z-30 bg-primary lg:hidden">
-        <details className="group">
-          <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
-            <Brand href={rootHref} tone="light" />
-            <span className="rounded-control border border-white/40 px-3 py-1.5 text-sm font-medium">
-              <span className="group-open:hidden">Menu</span>
-              <span className="hidden group-open:inline">Đóng</span>
-            </span>
-          </summary>
-          <div className="space-y-4 border-t border-white/15 px-4 pb-5 pt-3">
+        <MobileMenu
+          summary={
+            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
+              <Brand href={rootHref} tone="light" />
+              <span className="inline-flex min-h-11 items-center rounded-control border border-white/40 px-4 text-sm font-medium">
+                <span className="group-open:hidden">Menu</span>
+                <span className="hidden group-open:inline">Đóng</span>
+              </span>
+            </summary>
+          }
+        >
+          <div className="max-h-[calc(100dvh-4rem)] space-y-4 overflow-y-auto overscroll-contain border-t border-white/15 px-4 pb-5 pt-3">
             <nav aria-label="Điều hướng nội bộ">
               <SideNav items={nav} rootHref={rootHref} />
             </nav>
             {account}
           </div>
-        </details>
+        </MobileMenu>
       </header>
 
-      <main id="noi-dung" className={bottomNav ? "px-4 pb-24 pt-6 lg:p-8" : "px-4 py-6 lg:p-8"}>
+      <main id="noi-dung" className={bottomNav ? "px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 lg:p-8" : "px-4 py-6 lg:p-8"}>
         <div className="mx-auto max-w-[1120px]">{children}</div>
       </main>
 

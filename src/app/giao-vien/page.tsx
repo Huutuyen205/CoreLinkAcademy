@@ -24,7 +24,7 @@ export default async function TeacherDashboard({ searchParams }: { searchParams:
       <Flash code={thongbao} />
       <PageHeader title={`Xin chào, ${actor.fullName}`} description="Buổi dạy hôm nay và việc cần làm." />
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Buổi dạy hôm nay" action={<Link href="/giao-vien/lich">Lịch tuần</Link>}>
+        <Card title="Buổi dạy hôm nay" action={<Link href="/giao-vien/lich" className="inline-flex min-h-11 items-center">Lịch tuần</Link>}>
           {today.length === 0 ? (
             <EmptyState message="Hôm nay bạn không có buổi dạy." />
           ) : (

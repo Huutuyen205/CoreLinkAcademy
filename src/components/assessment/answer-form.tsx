@@ -14,7 +14,7 @@ type Item = { id: string; order: number; type: QuestionType; prompt: string; opt
 function Buttons() {
   const { pending } = useFormStatus();
   return (
-    <div className="sticky bottom-16 z-10 flex flex-wrap gap-3 border-t border-line bg-paper py-3 lg:bottom-0">
+    <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 flex flex-wrap gap-3 border-t border-line bg-paper py-3 lg:bottom-0">
       <Button type="submit" name="intent" value="draft" variant="secondary" disabled={pending}>
         {pending ? "Đang lưu…" : "Lưu nháp"}
       </Button>

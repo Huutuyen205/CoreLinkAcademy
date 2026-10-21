@@ -54,7 +54,7 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
                   defaultValue={r.note ?? ""}
                   maxLength={255}
                   placeholder="Ghi chú (không bắt buộc)"
-                  className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-sm"
+                  className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base"
                 />
               </label>
             </fieldset>
@@ -72,7 +72,7 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
           error={state.fieldErrors?.reason}
         />
       )}
-      <div className="sticky bottom-16 z-10 lg:bottom-0">
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 lg:bottom-0">
         <SubmitButton className="w-full sm:w-auto">Lưu điểm danh</SubmitButton>
       </div>
     </form>

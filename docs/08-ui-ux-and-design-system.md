@@ -126,19 +126,23 @@ Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2
 | Focus | `outline: 2px solid primary; offset 2px` cho mọi `:focus-visible`; radio/checkbox trong nhãn dùng `has-[:focus-visible]` |
 | Motion & Animation | Micro-animations: `.animate-float`, `.animate-float-delayed`, `.animate-pulse-subtle`, `.btn-shimmer`, `card-interactive`; `prefers-reduced-motion` tắt toàn bộ transition/animation bảo đảm WCAG 2.1 AA |
 | Breakpoint | `sm` 640px (2 cột form), `md` 768px (DataTable thành bảng), `lg` 1024px (sidebar 240px, lưới 7 cột lịch tuần). Nội dung tối đa 1120px |
-| Vùng chạm | ≥ 44px (`min-h-11`) cho nút, ô nhập, liên kết điều hướng, radio điểm danh; thanh đáy 56px |
+| Vùng chạm | ≥ 44px (`min-h-11`) cho nút, ô nhập, liên kết điều hướng, radio điểm danh, liên kết hành động trong thẻ ("Điểm danh", "Lịch tuần"); `summary` dạng chữ nhỏ có `py-2.5`; liên kết chân trang `py-2` trên điện thoại; thanh đáy 56px |
+| Ô nhập trên điện thoại | Cỡ chữ ≥ 16px (`text-base`) — dưới 16px iOS Safari tự phóng to khi chạm |
+| Vùng an toàn iPhone | `viewport-fit=cover`; thanh đáy, nút nổi, thanh nút dính, ngăn kéo menu cộng `env(safe-area-inset-bottom)` |
 
 ## 5. Responsive and interaction behavior
 
 | Thành phần | < 640px | 640–1023px | ≥ 1024px |
 |---|---|---|---|
-| Header công khai | Logo + 3 mục, xuống dòng nếu hẹp | Một dòng | Một dòng |
-| Khu nội bộ | Thanh trên dính (logo + "Menu"), ngăn kéo `details` chứa menu + tài khoản; GV/HS/PH có thanh đáy ≤ 4 mục | Như trên | Sidebar trái 240px, không có thanh đáy |
+| Header công khai | Logo + nút menu (nút "Đăng ký học thử" nằm trong ngăn kéo menu và nút nổi) | Logo + "Đăng ký học thử" + nút menu | Logo + menu ngang + "Đăng ký học thử" |
+| Banner + truy cập nhanh | Thẻ truy cập nhanh nằm dưới banner (không đè) | Thẻ đè mép dưới banner | Như trên |
+| Khu nội bộ | Thanh trên dính (logo + "Menu"), ngăn kéo `details` (`MobileMenu`) chứa menu + tài khoản, tự đóng khi bấm liên kết/đổi trang/Esc, cuộn trong ngăn kéo nếu dài; GV/HS/PH có thanh đáy ≤ 4 mục | Như trên | Sidebar trái 240px, không có thanh đáy |
+| `PageHeader` / `Card` | Nhãn/nút ở `action` giữ độ rộng theo nội dung (không kéo giãn); `Card` đệm 16px | Đệm 20px | Như trên |
 | DataTable | Danh sách dòng: cột chính in đậm + `dl` các cột còn lại (không cuộn ngang) | Như < 640 tới 767px; bảng từ 768px | Bảng |
 | Form | 1 cột | 2 cột (`columns=2`, ô `wide` chiếm 2 cột) | 2 cột |
 | Lịch tuần | Danh sách các ngày có buổi | Như trên | 7 cột |
 | Bảng điểm GV | Cuộn ngang **trong khung** (ngoại lệ có chủ đích) | Như trên | Bảng đầy đủ |
-| Nút gửi dài (điểm danh, làm bài) | Dính đáy, trên thanh đáy (`bottom-16`) | Như trên | Dính đáy trang |
+| Nút gửi dài (điểm danh, làm bài) | Dính đáy, trên thanh đáy (`bottom: 4rem + safe-area`) | Như trên | Dính đáy trang |
 | Hộp xác nhận | `window.confirm` cho thao tác khó hoàn tác (giao bài, công bố, nộp bài, hủy buổi, xóa, khóa, đặt lại MK, đổi trạng thái lớp) | | |
 
 Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới nội dung" ở đầu mọi trang (công khai và nội bộ — GAP-06); menu ngăn kéo là `details/summary` (Enter/Space mở); không bẫy focus.

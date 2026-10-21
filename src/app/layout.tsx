@@ -24,7 +24,8 @@ export const metadata: Metadata = {
     "Core Link Academy đào tạo Toán, Ngữ văn, Tiếng Anh, Vật lý, Hóa học, Tin học cho học sinh phổ thông. Đăng ký học thử miễn phí.",
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#1F2F98" };
+// viewportFit "cover": để env(safe-area-inset-*) có giá trị trên iPhone (thanh đáy, nút nổi không bị thanh Home che).
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#1F2F98" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

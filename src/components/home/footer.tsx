@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Brand } from "@/components/layout/brand";
 import { FOOTER_COURSE_LINKS, FOOTER_SUPPORT_LINKS, isPlaceholder, phoneHref, SITE } from "@/data/site";
 
-const linkClass = "text-on-brand-muted no-underline transition-colors hover:text-white hover:underline underline-offset-4";
+// Điện thoại: mỗi liên kết cao ~40px để dễ chạm; từ sm trở lên giữ dòng gọn như cũ.
+const linkClass =
+  "inline-block py-2 text-on-brand-muted no-underline transition-colors hover:text-white hover:underline underline-offset-4 sm:py-0";
 
 export function Footer() {
   const mapSrc = isPlaceholder(SITE.address) ? null : `https://www.google.com/maps?q=${encodeURIComponent(SITE.address)}&output=embed`;
@@ -34,7 +36,7 @@ export function Footer() {
 
         <nav aria-label="Khóa học">
           <p className="font-heading font-bold text-white">Khóa học</p>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-1 sm:mt-3 sm:space-y-2">
             {FOOTER_COURSE_LINKS.map((l) => (
               <li key={l.label}>
                 <Link href={l.href} className={linkClass}>
@@ -47,7 +49,7 @@ export function Footer() {
 
         <nav aria-label="Hỗ trợ">
           <p className="font-heading font-bold text-white">Hỗ trợ</p>
-          <ul className="mt-3 space-y-2">
+          <ul className="mt-1 sm:mt-3 sm:space-y-2">
             {FOOTER_SUPPORT_LINKS.map((l) => (
               <li key={l.label}>
                 <Link href={l.href} className={linkClass}>
@@ -76,7 +78,9 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-on-brand-muted">
+      {/* Chừa chỗ cho cụm nút nổi (gọi/Zalo) ở góc phải dưới để không che dòng bản quyền. */}
+      <div className="border-t border-white/10 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-4 text-center text-xs text-on-brand-muted sm:py-4">
+
         © {new Date().getFullYear()} Core Link Academy. Mọi quyền được bảo lưu.
       </div>
     </footer>

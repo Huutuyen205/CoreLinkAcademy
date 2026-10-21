@@ -3,10 +3,10 @@ import Link from "next/link";
 import { QUICK_ACCESS } from "@/data/home";
 import { Stagger, StaggerItem } from "./motion";
 
-/** 4 thẻ truy cập nhanh đè lên mép dưới banner (margin âm). */
+/** 4 thẻ truy cập nhanh đè lên mép dưới banner (margin âm) từ sm; điện thoại banner chỉ cao ~140px nên không đè để khỏi che chữ trên ảnh. */
 export function QuickAccess() {
   return (
-    <section aria-label="Truy cập nhanh" className="relative z-10 -mt-8 px-4 sm:-mt-12">
+    <section aria-label="Truy cập nhanh" className="relative z-10 mt-4 px-4 sm:-mt-12">
       <Stagger as="ul" className="mx-auto grid max-w-[1200px] gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {QUICK_ACCESS.map((q) => (
           <StaggerItem key={q.no} as="li" className="list-none">

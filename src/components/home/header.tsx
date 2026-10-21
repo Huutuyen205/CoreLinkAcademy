@@ -8,8 +8,9 @@ import { Brand } from "@/components/layout/brand";
 import { cn } from "@/lib/format";
 import { NAV_ITEMS, type NavItem } from "@/data/nav";
 
+// Không chứa `inline-flex`: clsx không gộp lớp xung đột, `hidden` + `inline-flex` cùng lúc thì `inline-flex` thắng → nút vẫn hiện trên điện thoại.
 const pillCta =
-  "pulse-ring inline-flex min-h-11 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-white no-underline shadow-md transition-colors hover:bg-primary-strong";
+  "pulse-ring min-h-11 items-center justify-center whitespace-nowrap rounded-full bg-primary px-5 text-sm font-semibold text-white no-underline shadow-md transition-colors hover:bg-primary-strong";
 
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
@@ -86,7 +87,7 @@ export function Header() {
               key="panel"
               id="menu-di-dong"
               aria-label="Menu di động"
-              className="fixed inset-y-0 right-0 z-40 flex w-[min(86vw,22rem)] flex-col overflow-y-auto bg-white p-4 shadow-2xl lg:hidden"
+              className="fixed inset-y-0 right-0 z-40 flex w-[min(86vw,22rem)] flex-col overflow-y-auto overscroll-contain bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-2xl lg:hidden"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
@@ -155,7 +156,7 @@ export function Header() {
                   </li>
                 ))}
               </ul>
-              <Link href="/dang-ky-hoc-thu" onClick={() => setMobileOpen(false)} className={cn(pillCta, "mt-6 w-full")}>
+              <Link href="/dang-ky-hoc-thu" onClick={() => setMobileOpen(false)} className={cn(pillCta, "mt-6 flex w-full")}>
                 Đăng ký học thử
               </Link>
             </motion.nav>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, type ReactNode } from "react";
 import { cn } from "@/lib/format";
 
 export type NavItem = { href: string; label: string };
@@ -37,12 +38,43 @@ export function SideNav({ items, rootHref }: { items: NavItem[]; rootHref: strin
   );
 }
 
+/**
+ * Ngăn kéo menu dưới 1024px. Layout dùng chung giữ nguyên khi chuyển trang nên `<details>` phải tự đóng
+ * khi bấm liên kết / đổi đường dẫn, nếu không menu vẫn mở che nội dung trang mới.
+ */
+export function MobileMenu({ summary, children }: { summary: ReactNode; children: ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    ref.current?.removeAttribute("open");
+  }, [pathname]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") ref.current?.removeAttribute("open");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <details
+      ref={ref}
+      className="group"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a")) ref.current?.removeAttribute("open");
+      }}
+    >
+      {summary}
+      {children}
+    </details>
+  );
+}
+
 /** Thanh điều hướng đáy trên điện thoại cho GV/HS/PH, tối đa 4 mục (docs/08 §3). */
 export function BottomNav({ items, rootHref }: { items: NavItem[]; rootHref: string }) {
   const pathname = usePathname();
   const shown = items.slice(0, 4);
   return (
-    <nav aria-label="Điều hướng nhanh" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface lg:hidden">
+    <nav aria-label="Điều hướng nhanh" className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden">
       <ul className="grid" style={{ gridTemplateColumns: `repeat(${shown.length}, minmax(0, 1fr))` }}>
         {shown.map((item) => {
           const active = isActive(pathname, item.href, rootHref);

@@ -28,7 +28,7 @@ export default async function StudentDashboard({ searchParams }: { searchParams:
       <Flash code={sp.thongbao} />
       <PageHeader title={`Xin chào, ${actor.fullName}`} />
       <div className="space-y-6">
-        <Card title={`Bài cần làm (${todo.length})`} action={<Link href="/hoc-sinh/bai-tap">Tất cả bài tập</Link>}>
+        <Card title={`Bài cần làm (${todo.length})`} action={<Link href="/hoc-sinh/bai-tap" className="inline-flex min-h-11 shrink-0 items-center">Tất cả bài tập</Link>}>
           {todo.length === 0 ? (
             <EmptyState message="Bạn không có bài nào cần làm." />
           ) : (

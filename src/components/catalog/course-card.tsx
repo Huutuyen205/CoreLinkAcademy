@@ -14,12 +14,10 @@ export function CourseCard({ course }: { course: CourseCardData }) {
         </span>
       </div>
       <h3 className="mt-3 text-xl">
-        <Link
-          href={`/khoa-hoc/${course.slug}`}
-          className="inline-flex items-center gap-1.5 text-ink no-underline transition-colors group-hover:text-primary"
-        >
-          <span>{course.title}</span>
-          <span aria-hidden="true" className="text-sm transition-transform duration-200 group-hover:translate-x-1">→</span>
+        {/* Mũi tên nằm cùng dòng chữ cuối của tiêu đề (không tách cột) để tiêu đề dùng hết chiều rộng trên điện thoại. */}
+        <Link href={`/khoa-hoc/${course.slug}`} className="text-ink no-underline transition-colors group-hover:text-primary">
+          {course.title}
+          <span aria-hidden="true" className="ml-1.5 inline-block text-sm transition-transform duration-200 group-hover:translate-x-1">→</span>
         </Link>
       </h3>
       <p className="mt-2 flex-1 text-muted leading-relaxed line-clamp-3">{course.summary}</p>

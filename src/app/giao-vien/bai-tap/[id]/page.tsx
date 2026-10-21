@@ -72,7 +72,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                     {q.type === "SHORT" && <p className="mt-2 text-sm">Đáp án chấp nhận: {q.acceptedAnswers?.join(" · ")}</p>}
                     {isDraft && (
                       <details className="mt-3">
-                        <summary className="cursor-pointer text-sm text-primary">Sửa hoặc xóa</summary>
+                        <summary className="cursor-pointer py-2.5 text-sm text-primary">Sửa hoặc xóa</summary>
                         <div className="mt-3 space-y-4">
                           <QuestionForm assignmentId={a.id} initial={q} />
                           <ConfigForm

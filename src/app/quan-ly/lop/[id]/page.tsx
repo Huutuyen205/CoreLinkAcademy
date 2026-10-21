@@ -120,15 +120,15 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                     <div className="flex items-center gap-2">
                       <Badge tone={SESSION_STATUS[s.status].tone}>{SESSION_STATUS[s.status].label}</Badge>
                       {s.status !== "CANCELLED" && (
-                        <Link href={`/quan-ly/buoi/${s.id}`} className="text-sm">
+                        <Link href={`/quan-ly/buoi/${s.id}`} className="inline-flex min-h-11 items-center px-1 text-sm">
                           Điểm danh
                         </Link>
                       )}
                     </div>
                   </div>
                   {s.status === "SCHEDULED" && s.startsAt > now && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-sm text-primary">Hủy hoặc dời buổi</summary>
+                    <details>
+                      <summary className="cursor-pointer py-2.5 text-sm text-primary">Hủy hoặc dời buổi</summary>
                       <div className="mt-3 grid gap-6 md:grid-cols-2">
                         <ConfigForm
                           action={rescheduleSessionAction}
