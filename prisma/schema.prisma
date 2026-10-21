@@ -1,13 +1,14 @@
 // CoreLink Academy v3 — nguồn sự thật cho dữ liệu. Tài liệu: docs/10-database-and-erd.md
-// Mọi thời gian lưu UTC.
+// Mọi thời gian lưu UTC. CSDL: PostgreSQL (Supabase) — ADR-005.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // Supabase pooler (6543, pgbouncer) — dùng lúc chạy app
+  directUrl = env("DIRECT_URL") // kết nối trực tiếp/session (5432) — dùng cho migrate
 }
 
 enum Role {
@@ -97,7 +98,7 @@ model User {
   failedLoginCount   Int        @default(0)
   lockedUntil        DateTime?
   studentCode        String?    @unique @db.VarChar(16)
-  gradeLevel         Int?       @db.TinyInt
+  gradeLevel         Int?       @db.SmallInt
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
@@ -164,8 +165,8 @@ model Course {
   slug           String   @unique @db.VarChar(160)
   summary        String   @db.VarChar(300)
   description    String   @db.Text
-  gradeFrom      Int      @db.TinyInt
-  gradeTo        Int      @db.TinyInt
+  gradeFrom      Int      @db.SmallInt
+  gradeTo        Int      @db.SmallInt
   level          String   @db.VarChar(60)
   totalSessions  Int      @db.SmallInt
   sessionMinutes Int      @db.SmallInt
@@ -281,7 +282,7 @@ model Lead {
   phone              String         @db.VarChar(20)
   email              String?        @db.VarChar(191)
   studentName        String         @db.VarChar(120)
-  gradeLevel         Int?           @db.TinyInt
+  gradeLevel         Int?           @db.SmallInt
   subjectId          String?
   courseId           String?
   note               String?        @db.Text
@@ -346,7 +347,7 @@ model Question {
   type            QuestionType
   prompt          String       @db.Text
   options         Json? // string[] cho MCQ
-  correctOption   Int?         @db.TinyInt // chỉ số 0-based cho MCQ
+  correctOption   Int?         @db.SmallInt // chỉ số 0-based cho MCQ
   acceptedAnswers Json? // string[] cho SHORT
   points          Float
   assignment      Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)

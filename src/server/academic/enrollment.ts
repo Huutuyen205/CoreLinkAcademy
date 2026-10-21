@@ -7,7 +7,7 @@ import { checkEnrollment, ENROLL_ERROR_MESSAGES, SEAT_STATUSES } from "./rules";
 
 /** FR-019. Phải gọi bên trong `db.$transaction`. Khóa dòng lớp để hai Staff không cùng lấy chỗ cuối. */
 export async function enrollInTx(tx: Tx, classId: string, studentId: string): Promise<void> {
-  const locked = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM classes WHERE id = ${classId} FOR UPDATE`;
+  const locked = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "classes" WHERE "id" = ${classId} FOR UPDATE`;
   if (locked.length === 0) throw new DomainError("NOT_FOUND", "Không tìm thấy lớp.");
 
   const klass = await tx.class.findUniqueOrThrow({

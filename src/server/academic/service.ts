@@ -290,7 +290,7 @@ export async function listStudentsForEnrollment(actor: Actor, classId: string, q
       role: "STUDENT",
       status: "ACTIVE",
       enrollments: { none: { classId, status: { not: "DROPPED" } } },
-      ...(query ? { OR: [{ fullName: { contains: query } }, { studentCode: { contains: query } }] } : {}),
+      ...(query ? { OR: [{ fullName: { contains: query, mode: "insensitive" as const } }, { studentCode: { contains: query, mode: "insensitive" as const } }] } : {}),
     },
     orderBy: { fullName: "asc" },
     take: 100,

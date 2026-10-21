@@ -116,7 +116,7 @@ export async function listUsers(actor: Actor, filter: UserFilter) {
   const where: Prisma.UserWhereInput = {
     ...(filter.role ? { role: filter.role } : {}),
     ...(filter.status ? { status: filter.status } : {}),
-    ...(q ? { OR: [{ fullName: { contains: q } }, { email: { contains: q } }, { phone: { contains: q.replace(/^0/, "") } }, { studentCode: { contains: q } }] } : {}),
+    ...(q ? { OR: [{ fullName: { contains: q, mode: "insensitive" as const } }, { email: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q.replace(/^0/, "") } }, { studentCode: { contains: q, mode: "insensitive" as const } }] } : {}),
   };
   const [total, rows] = await Promise.all([
     db.user.count({ where }),
@@ -161,7 +161,7 @@ export async function listLearners(actor: Actor, q: string | undefined, page: nu
   const query = q?.trim();
   const where: Prisma.UserWhereInput = {
     role: "STUDENT",
-    ...(query ? { OR: [{ fullName: { contains: query } }, { studentCode: { contains: query } }] } : {}),
+    ...(query ? { OR: [{ fullName: { contains: query, mode: "insensitive" as const } }, { studentCode: { contains: query, mode: "insensitive" as const } }] } : {}),
   };
   const [total, rows] = await Promise.all([
     db.user.count({ where }),
@@ -201,7 +201,7 @@ export async function linkGuardian(actor: Actor, parentId: string, studentId: st
     ]);
     if (!parent) throw new DomainError("INVALID", "Phụ huynh không hợp lệ.", { parentId: "Chọn phụ huynh." });
     if (!student) throw new ForbiddenError();
-    await tx.$queryRaw`SELECT id FROM users WHERE id = ${studentId} FOR UPDATE`;
+    await tx.$queryRaw`SELECT "id" FROM "users" WHERE "id" = ${studentId} FOR UPDATE`;
     const existing = await tx.guardianship.findUnique({ where: { parentId_studentId: { parentId, studentId } } });
     if (existing) throw new DomainError("ALREADY_LINKED", "Phụ huynh này đã được liên kết.");
     const count = await tx.guardianship.count({ where: { studentId } });

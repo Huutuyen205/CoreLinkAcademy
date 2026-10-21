@@ -154,7 +154,7 @@ export async function listLeads(actor: Actor, filter: LeadListFilter) {
     const phone = normalizePhone(q);
     where.OR = phone
       ? [{ phone }]
-      : [{ parentName: { contains: q } }, { studentName: { contains: q } }, { phone: { contains: q.replace(/\D/g, "") || q } }];
+      : [{ parentName: { contains: q, mode: "insensitive" as const } }, { studentName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q.replace(/\D/g, "") || q } }];
   }
 
   const [total, rows] = await Promise.all([
