@@ -4,7 +4,12 @@ import { DomainError } from "@/server/errors";
 import { checkUploads, MAX_FILES_PER_UPLOAD, resolveMimeType, sanitizeFileName } from "./rules";
 
 export type PreparedFile = { fileName: string; mimeType: string; size: number; data: Uint8Array<ArrayBuffer> };
-export type FileOwner = { assignmentId: string } | { submissionId: string } | { documentId: string };
+export type FileOwner =
+  | { assignmentId: string }
+  | { submissionId: string; questionId?: string } // questionId: ảnh bài làm câu tự luận
+  | { documentId: string }
+  | { messageId: string }
+  | Record<string, never>; // ảnh đại diện: không có chủ sở hữu, gắn qua `users.avatarFileId`
 
 /** Đọc các ô `<input type="file" name=…>` từ FormData (bỏ ô trống), kiểm tra, đọc nội dung vào bộ nhớ. */
 export async function readUploads(formData: FormData, name: string, maxFiles = MAX_FILES_PER_UPLOAD): Promise<PreparedFile[]> {

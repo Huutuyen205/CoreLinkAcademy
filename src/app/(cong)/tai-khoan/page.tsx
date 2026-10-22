@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { KeyRound, ShieldCheck } from "lucide-react";
 import { ConfigForm } from "@/components/forms/config-form";
+import { AvatarUploader } from "@/components/people/avatar-uploader";
 import { Card, PageHeader } from "@/components/ui/feedback";
 import { updateMyContactAction } from "@/server/account/actions";
 import { getMyAccount } from "@/server/account/service";
@@ -16,7 +17,6 @@ export const metadata: Metadata = { title: "Tài khoản" };
 export default async function AccountPage() {
   const actor = await requireActor();
   const me = await getMyAccount(actor);
-  const initials = me.fullName.trim().split(" ").slice(-1)[0]?.[0] ?? "U";
 
   const info: [string, string][] = [
     ["Họ và tên", me.fullName],
@@ -32,16 +32,14 @@ export default async function AccountPage() {
     <div className="space-y-6">
       <PageHeader
         title="Hồ sơ &amp; Tài khoản"
-        description="Thông tin cá nhân và tài khoản truy cập hệ thống CoreLink Academy. Bạn có thể tự cập nhật email, số điện thoại và địa chỉ liên lạc."
+        description="Thông tin cá nhân và tài khoản truy cập hệ thống CoreLink Academy. Bạn có thể tự cập nhật ảnh đại diện, email, số điện thoại và địa chỉ liên lạc."
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Hồ sơ cá nhân">
           {/* Avatar & Header */}
-          <div className="mb-6 flex items-center gap-4 rounded-2xl bg-paper p-4 border border-line">
-            <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-accent font-heading text-xl font-bold text-white shadow-md">
-              {initials}
-            </div>
+          <div className="mb-6 space-y-4 rounded-2xl border border-line bg-paper p-4">
+            <AvatarUploader name={me.fullName} fileId={me.avatarFileId} />
             <div>
               <h3 className="text-lg font-bold text-ink">{me.fullName}</h3>
               <div className="flex flex-wrap items-center gap-2 mt-1">

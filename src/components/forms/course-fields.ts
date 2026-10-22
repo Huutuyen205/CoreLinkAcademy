@@ -8,7 +8,7 @@ export function courseFields(subjects: { id: string; name: string }[], c?: Cours
   return [
     { type: "select", name: "subjectId", label: "Môn", required: true, placeholder: "Chọn môn", options: subjects.map((s) => ({ value: s.id, label: s.name })), defaultValue: c?.subjectId },
     { type: "text", name: "title", label: "Tên khóa", required: true, maxLength: 160, defaultValue: c?.title },
-    { type: "text", name: "slug", label: "Slug (đường dẫn)", required: true, maxLength: 160, hint: "Ví dụ: toan-9-on-thi-vao-10", defaultValue: c?.slug },
+    { type: "text", name: "slug", label: "Đường dẫn web (slug)", maxLength: 160, hint: "Để trống: tự tạo từ tên khóa (vd. toan-9-on-thi-vao-10).", defaultValue: c?.slug },
     { type: "text", name: "level", label: "Trình độ", required: true, maxLength: 60, defaultValue: c?.level ?? "Cơ bản" },
     { type: "select", name: "gradeFrom", label: "Từ khối", required: true, options: GRADE_OPTIONS, defaultValue: c ? String(c.gradeFrom) : "6" },
     { type: "select", name: "gradeTo", label: "Đến khối", required: true, options: GRADE_OPTIONS, defaultValue: c ? String(c.gradeTo) : "9" },

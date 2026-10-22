@@ -45,6 +45,12 @@ export const formatDate = (date: Date) => formatVn(date, "dd/MM/yyyy");
 export const formatDateTime = (date: Date) => formatVn(date, "HH:mm dd/MM/yyyy");
 export const formatTime = (date: Date) => formatVn(date, "HH:mm");
 
+/** Giờ trong danh sách tin nhắn: hôm nay → "HH:mm", cùng năm → "dd/MM", khác năm → "dd/MM/yy" (giờ VN). */
+export function formatChatTime(date: Date, now = new Date()): string {
+  if (vnDateKey(date) === vnDateKey(now)) return formatTime(date);
+  return formatVn(date, vnDateKey(date).slice(0, 4) === vnDateKey(now).slice(0, 4) ? "dd/MM" : "dd/MM/yy");
+}
+
 export const WEEKDAY_LABELS: Record<number, string> = {
   1: "Thứ Hai",
   2: "Thứ Ba",

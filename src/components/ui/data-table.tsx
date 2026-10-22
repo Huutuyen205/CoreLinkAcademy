@@ -15,7 +15,8 @@ export function DataTable<T>({ columns, rows, rowKey, caption }: { columns: Colu
   const primary = columns.find((c) => c.primary) ?? columns[0]!;
   const rest = columns.filter((c) => c !== primary);
   return (
-    <div className="rounded-block border border-line bg-surface">
+    // overflow-x-auto: bảng quá rộng thì cuộn trong khung, không làm cả trang kéo ngang được.
+    <div className="overflow-x-auto rounded-block border border-line bg-surface">
       <table className="hidden w-full text-left md:table">
         <caption className="sr-only">{caption}</caption>
         <thead>

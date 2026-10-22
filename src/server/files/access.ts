@@ -4,6 +4,7 @@ import { isManager, linkedStudentIds } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { ForbiddenError } from "@/server/errors";
+import { canReadMessage } from "@/server/messaging/service";
 
 async function isLearnerOfClass(actor: Actor, classId: string): Promise<boolean> {
   if (actor.role === "STUDENT") {
@@ -25,23 +26,31 @@ export async function getFileForDownload(actor: Actor, fileId: string) {
       mimeType: true,
       size: true,
       documentId: true,
+      messageId: true,
+      avatarOf: { select: { id: true } },
       assignment: { select: { status: true, classId: true, class: { select: { teacherId: true } } } },
       submission: { select: { studentId: true, assignment: { select: { class: { select: { teacherId: true } } } } } },
     },
   });
   if (!file) throw new ForbiddenError();
 
-  let allowed = isManager(actor);
-  if (!allowed && file.assignment) {
+  // Ảnh đại diện: ai đã đăng nhập cũng xem được (tên người dùng vốn đã hiện khắp cổng).
+  // Tệp tin nhắn: chỉ người xem được cuộc trò chuyện (quản lý cũng không mở tệp tin nhắn riêng của người khác).
+  let allowed: boolean;
+  if (file.messageId) allowed = await canReadMessage(actor, file.messageId);
+  else allowed = isManager(actor) || Boolean(file.avatarOf);
+  if (allowed || file.messageId) {
+    // đã quyết định ở trên
+  } else if (file.assignment) {
     const a = file.assignment;
     allowed = (actor.role === "TEACHER" && a.class.teacherId === actor.id) || (a.status !== "DRAFT" && (await isLearnerOfClass(actor, a.classId)));
-  } else if (!allowed && file.submission) {
+  } else if (file.submission) {
     const s = file.submission;
     allowed =
       (actor.role === "STUDENT" && s.studentId === actor.id) ||
       (actor.role === "TEACHER" && s.assignment.class.teacherId === actor.id) ||
       (actor.role === "PARENT" && (await linkedStudentIds(actor.id)).includes(s.studentId));
-  } else if (!allowed && file.documentId) {
+  } else if (file.documentId) {
     allowed = Boolean(await db.document.findFirst({ where: { id: file.documentId, ...documentVisibilityWhere(actor) }, select: { id: true } }));
   }
   if (!allowed) throw new ForbiddenError();

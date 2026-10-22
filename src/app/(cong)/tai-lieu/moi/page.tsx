@@ -41,8 +41,9 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
     });
   }
   fields.push(
-    { type: "text", name: "url", label: "Đường dẫn (Google Drive, YouTube…)", maxLength: 500, wide: true, hint: "Không bắt buộc nếu đã tải tệp lên." },
-    { type: "file", name: "files", label: "Tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true, wide: true },
+    { type: "file", name: "files", label: "Tệp tài liệu", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true, wide: true },
+    // Phụ: chỉ cần khi tài liệu quá lớn để tải lên (video, thư mục Drive) — có hay không đều được.
+    { type: "text", name: "url", label: "Liên kết ngoài (tùy chọn)", maxLength: 500, wide: true, hint: "Chỉ dùng khi tệp quá lớn để tải lên, vd. video YouTube, thư mục Google Drive." },
   );
   if (kind !== "LESSON_PLAN") {
     fields.push(

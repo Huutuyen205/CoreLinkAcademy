@@ -7,6 +7,8 @@ const control =
 type FieldShellProps = {
   id: string;
   label: string;
+  /** Nhãn chỉ dành cho trình đọc màn hình (ô nằm trong hàng thao tác gọn). */
+  hideLabel?: boolean;
   hint?: string;
   error?: string;
   required?: boolean;
@@ -15,10 +17,10 @@ type FieldShellProps = {
 };
 
 /** Nhãn + gợi ý + lỗi; control bên trong phải dùng `describedBy(id, hint, error)`. */
-export function FieldShell({ id, label, hint, error, required, children, className }: FieldShellProps) {
+export function FieldShell({ id, label, hideLabel, hint, error, required, children, className }: FieldShellProps) {
   return (
     <div className={cn("space-y-1.5", className)}>
-      <label htmlFor={id} className="block text-sm font-medium text-ink">
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "block text-sm font-medium text-ink"}>
         {label}
         {required && (
           <span className="text-danger" aria-hidden="true">

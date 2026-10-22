@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateTime, isValidTime, parseWeekParam, vnDateKey, vnToUtc, vnWeekday, vnWeekRange, vnWeekStart } from "./time";
+import { formatChatTime, formatDateTime, isValidTime, parseWeekParam, vnDateKey, vnToUtc, vnWeekday, vnWeekRange, vnWeekStart } from "./time";
 
 describe("time", () => {
   it("đổi giờ Việt Nam sang UTC (+07:00, không có giờ mùa hè)", () => {
@@ -39,5 +39,16 @@ describe("tuần theo giờ VN (FR-022)", () => {
     const r = vnWeekRange("2026-10-19");
     expect(r.from.toISOString()).toBe("2026-10-18T17:00:00.000Z");
     expect(r.to.toISOString()).toBe("2026-10-25T17:00:00.000Z");
+  });
+});
+
+describe("formatChatTime", () => {
+  const now = new Date("2026-10-22T03:00:00.000Z"); // 10:00 22/10 giờ VN
+  it("hôm nay theo giờ VN → giờ:phút", () => {
+    expect(formatChatTime(new Date("2026-10-21T18:30:00.000Z"), now)).toBe("01:30");
+  });
+  it("hôm qua cùng năm → ngày/tháng; khác năm → có năm", () => {
+    expect(formatChatTime(new Date("2026-10-21T10:00:00.000Z"), now)).toBe("21/10");
+    expect(formatChatTime(new Date("2025-12-31T10:00:00.000Z"), now)).toBe("31/12/25");
   });
 });

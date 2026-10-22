@@ -52,8 +52,12 @@ C = tạo, R = xem, U = sửa, D = xóa/ẩn, X = thao tác đặc biệt. "own"
 | Đơn xin nghỉ (FR-044) | — | R, X duyệt | R, X duyệt | R, X duyệt (lớp/buổi mình) | — | CR own (con), X rút |
 | Thông báo (FR-048) | — | C mọi đối tượng, R đã gửi | như Admin | C cho lớp mình | R own | R own |
 | Đánh giá định kỳ (FR-049) | — | R (đã gửi) | R (đã gửi) | CRUD own (nháp), X gửi | R own (đã gửi) | R (con, đã gửi) |
-| Nhắn tin (FR-050) | — | Nhóm lớp mọi lớp; 1-1 GV/PH/quản lý | như Admin | Nhóm lớp mình; 1-1 quản lý, PH lớp mình | Nhóm lớp mình | Nhóm lớp của con; 1-1 quản lý, GV của con |
-| Báo cáo + xuất CSV (FR-052) | — | R | R | — | — | — |
+| Nhắn tin (FR-050, D30) | — | Nhóm lớp mọi lớp; 1-1 mọi người | như Admin | Nhóm lớp mình; 1-1 quản lý + mọi thành viên lớp mình | Nhóm lớp mình; 1-1 quản lý, GV + bạn cùng lớp, PH của chính em | Nhóm lớp của con; 1-1 quản lý, GV + PH cùng lớp, con mình |
+| Tệp đính kèm tin nhắn | — | Chỉ cuộc trò chuyện mình xem được (không mở tệp tin riêng của người khác) | như Admin | như trên | như trên | như trên |
+| Ảnh bài tự luận (FR-031) | — | R | R | R own (lớp mình, khi chấm) | CRD own (trước khi nộp) | R (con) |
+| Ảnh đại diện (FR-051) | — | CRUD own, R mọi người | như Admin | như Admin | như Admin | như Admin |
+| Đăng ký thông báo đẩy | — | CRUD own (thiết bị) | như Admin | như Admin | như Admin | như Admin |
+| Báo cáo + xuất Excel (FR-052) | — | R | R | — | — | — |
 
 Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Pha 1 (ma trận cũ ghi R nhưng không có FR yêu cầu; chuyển thành Pha 2 — xem 05 §5).
 
@@ -75,10 +79,10 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | `room.manage` — lưu/xóa phòng | ADMIN | — | như trên | như trên | — | TC-036 |
 | `lead.manage` — xem/lọc/nhập tay/đổi trạng thái/ghi chú/chuyển lead | ADMIN, STAFF | — | TEACHER/STUDENT/PARENT | chuyển về tổng quan | `lead.convert` | TC-036, TC-UAT-13 |
 | Gửi form học thử | Khách (mọi người) | — | rate limit, honeypot | thông báo / trang cảm ơn giả | — | TC-004 |
-| `user.manage` — danh sách, sửa, khóa, đặt lại MK | ADMIN | Không áp cho chính mình khi đổi vai trò/khóa | STAFF; Admin tự khóa/tự đổi vai trò | 404 / `CANNOT_MODIFY_SELF` | `user.*` | TC-036, TC-038 |
+| `user.manage` — danh sách, sửa, khóa, đặt lại MK | ADMIN | Không áp cho chính mình khi đổi vai trò/khóa | STAFF; Admin tự khóa/tự đổi vai trò | 404 / `CANNOT_MODIFY_SELF` | `user.*` (khóa/mở: dây chuyền một cấp HS ↔ PH đã liên kết, mỗi tài khoản một dòng audit `detail.linkedTo` — D31) | TC-036, TC-038 |
 | `user.createLearner` — tạo tài khoản | ADMIN (mọi vai trò), STAFF (STUDENT, PARENT) | `canCreateUserWithRole` | STAFF tạo ADMIN/STAFF/TEACHER | 404 | `user.create` | TC-036 |
 | `guardian.manage` — liên kết/bỏ liên kết | ADMIN, STAFF | PH phải vai trò PARENT, HS vai trò STUDENT | quá 4 PH, trùng | `MAX_GUARDIANS`, `ALREADY_LINKED` | — | TC-037 |
-| `class.manage` — mở/xóa/đổi trạng thái lớp, hủy/dời buổi, xem lớp quản lý | ADMIN, STAFF | — | vai trò khác | chuyển về tổng quan / 404 | `session.reschedule`, `session.cancel` | TC-036 |
+| `class.manage` — mở/xóa/đổi trạng thái lớp, hủy/dời buổi, xem lớp quản lý | ADMIN, STAFF | — | vai trò khác | chuyển về tổng quan / 404 | `session.reschedule`, `session.cancel`, `class.cancel`, `class.delete` | TC-036 |
 | `enrollment.manage` — ghi danh, đổi trạng thái | ADMIN, STAFF | HS vai trò STUDENT và ACTIVE | — | `STUDENT_DISABLED` | — | TC-044 |
 | Xem lớp (GV) | TEACHER | GV chính hoặc có buổi dạy thay | lớp của GV khác | 404 | — | TC-035, TC-UAT-13 |
 | Điểm danh | TEACHER (own, trong khung), ADMIN, STAFF | `loadSession`: quản lý hoặc GV chính/GV buổi | ngoài khung (GV), thiếu lý do (quản lý) | 404 / `OUTSIDE_WINDOW` / `REASON_REQUIRED` | `attendance.override` | TC-019, TC-020 |
@@ -92,8 +96,11 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | Tải tệp `/tep/<id>` | Theo chủ sở hữu tệp | bài tập: GV chính / HS-PH của lớp khi bài đã giao; bài nộp: HS đó, GV lớp, PH của HS; tài liệu: `documentVisibilityWhere` | ngoài phạm vi | 404 | — | E2E: hs3 → 404 |
 | `request.handle` — duyệt đề xuất đổi lịch | ADMIN, STAFF | — | — | chuyển về tổng quan | theo thao tác lịch | E2E |
 | Duyệt đơn xin nghỉ | ADMIN, STAFF, TEACHER | GV: buổi mình dạy hoặc lớp mình phụ trách | đơn đã xử lý | 404 / `NOT_PENDING` | — | E2E |
-| Nhắn 1-1 | theo `canDirectMessage` | kiểm tra lại khi gửi | quan hệ không còn | 404 / `NOT_ALLOWED` | — | E2E |
-| `report.view` | ADMIN, STAFF | — | vai trò khác | 404 (route CSV) | — | E2E |
+| Nhắn 1-1 | theo `canDirectMessage` (`messaging/rules.ts`: trung tâm ↔ mọi người; HS ↔ PH chỉ PH của em; còn lại phải cùng lớp) | kiểm tra lại khi gửi | quan hệ không còn | 404 / `NOT_ALLOWED` | — | `messaging/rules.test.ts`, E2E 2026-10-22 |
+| Tải tệp tin nhắn | người xem được cuộc trò chuyện (`canReadMessage`) — không có ngoại lệ cho quản lý | DIRECT: thành viên; CLASS: thành viên lớp/quản lý | ngoài cuộc trò chuyện | 404 | — | E2E: Admin mở ảnh tin riêng HS → 404 |
+| Ảnh câu tự luận | HS (tải/xóa trước khi nộp, câu ESSAY của bài mình), GV lớp, PH của HS | như bài nộp | câu không phải ESSAY, đã nộp, HS/PH khác | 404 / `ALREADY_SUBMITTED` | — | E2E 2026-10-22 |
+| Bật/tắt thông báo đẩy | mọi người đã đăng nhập | chỉ thiết bị/đăng ký của mình | — | — | — | E2E 2026-10-22 |
+| `report.view` | ADMIN, STAFF | — | vai trò khác | 404 (route xuất Excel) | — | E2E |
 | Đổi mật khẩu | Mọi người đã đăng nhập (kể cả `mustChangePassword`) | chính mình | — | — | — (thu hồi phiên khác) | TC-012 |
 
 ## 5. Điều cấm (không ngoại lệ)

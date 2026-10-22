@@ -48,7 +48,7 @@ export default async function GradeSubmissionPage({ params }: { params: Promise<
           currentScore={submission.score}
           comment={submission.teacherComment}
           publishedWarning={Boolean(submission.assignment.resultsPublishedAt)}
-          items={items.map(({ question: q, answer }) => ({
+          items={items.map(({ question: q, answer, photos }) => ({
             answerId: answer?.id ?? null,
             order: q.order,
             type: q.type,
@@ -61,6 +61,7 @@ export default async function GradeSubmissionPage({ params }: { params: Promise<
             autoPoints: answer?.autoPoints ?? null,
             teacherPoints: answer?.teacherPoints ?? null,
             feedback: answer?.feedback ?? null,
+            photos,
           }))}
         />
       )}

@@ -72,6 +72,18 @@ export async function setClassStatusAction(_prev: ActionState, formData: FormDat
   return { ok: true, message: "Đã cập nhật trạng thái lớp." };
 }
 
+/** Hủy lớp (kèm lý do tùy chọn): các buổi chưa học bị hủy, thành viên lớp nhận thông báo. */
+export async function cancelClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN", "STAFF");
+  const parsed = parseForm(z.object({ classId: id, reason: z.string().trim().max(200) }), formFields(formData, ["classId", "reason"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => setClassStatus(actor, parsed.data.classId, "CANCELLED", parsed.data.reason || null));
+  if (!result.ok) return result.state;
+  invalidate(CACHE_TAGS.dashboard);
+  revalidatePath("/quan-ly/lop", "layout");
+  return { ok: true, message: "Đã hủy lớp." };
+}
+
 export async function deleteClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN", "STAFF");
   const parsed = parseForm(z.object({ classId: id }), formFields(formData, ["classId"]));

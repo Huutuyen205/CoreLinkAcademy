@@ -25,7 +25,7 @@ export async function createUser(tag: string, role: Role, extra: { status?: "ACT
       gradeLevel: role === "STUDENT" ? 9 : null,
     },
   });
-  return { id: u.id, role: u.role, fullName: u.fullName, mustChangePassword: false };
+  return { id: u.id, role: u.role, fullName: u.fullName, mustChangePassword: false, avatarFileId: null };
 }
 
 export async function createCatalog(tag: string) {

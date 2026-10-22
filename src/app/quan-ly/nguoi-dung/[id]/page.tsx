@@ -5,7 +5,7 @@ import { ConfigForm } from "@/components/forms/config-form";
 import { ResetPasswordForm } from "@/components/forms/reset-password-form";
 import { Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { ROLE_LABELS } from "@/server/auth/policy";
+import { ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
 import { orNotFound } from "@/server/page";
 import { setUserStatusAction, updateUserAction, unlinkGuardianAction } from "@/server/users/actions";
 import { getUser } from "@/server/users/service";
@@ -100,8 +100,20 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         </div>
 
         <div className="space-y-6">
-          <Card title="Mật khẩu">
-            <ResetPasswordForm userId={user.id} fullName={user.fullName} />
+          <div id="mat-khau" className="scroll-mt-24">
+            <Card title="Mật khẩu">
+              <ResetPasswordForm userId={user.id} fullName={user.fullName} />
+            </Card>
+          </div>
+          <Card title={`Thao tác của vai trò ${ROLE_LABELS[user.role]}`}>
+            <dl className="space-y-2 text-sm">
+              {ROLE_CAPABILITIES[user.role].map((c) => (
+                <div key={c.area}>
+                  <dt className="font-medium">{c.area}</dt>
+                  <dd className="text-muted">{c.actions}</dd>
+                </div>
+              ))}
+            </dl>
           </Card>
           {!isSelf && (
             <Card title="Khóa tài khoản">

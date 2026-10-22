@@ -11,6 +11,47 @@ export const ROLE_LABELS: Record<Role, string> = {
   PARENT: "Phụ huynh",
 };
 
+/**
+ * Thao tác chính theo vai trò — hiển thị cho Admin ở trang Người dùng (docs/03 §2).
+ * Chỉ để đọc: quyền thật vẫn kiểm tra bằng `assertCan`/phạm vi trong từng service.
+ */
+export const ROLE_CAPABILITIES: Record<Role, { area: string; actions: string }[]> = {
+  ADMIN: [
+    { area: "Người dùng", actions: "Tạo mọi loại tài khoản, đổi vai trò, khóa/mở khóa, đặt lại mật khẩu" },
+    { area: "Danh mục", actions: "Thêm/sửa/xóa môn học, cấp học, khóa học, phòng học" },
+    { area: "Tuyển sinh", actions: "Xem, nhập tay, đổi trạng thái lead; chuyển lead thành học viên" },
+    { area: "Đào tạo", actions: "Mở/sửa lớp, ghi danh, hủy/dời buổi, dạy thay, học bù, lịch tổng, sửa điểm danh ngoài khung" },
+    { area: "Tài liệu & yêu cầu", actions: "Quản lý giáo trình/tài liệu; duyệt đề xuất đổi lịch, đơn xin nghỉ" },
+    { area: "Giao tiếp", actions: "Gửi thông báo mọi đối tượng; nhắn tin nhóm lớp và 1-1" },
+    { area: "Báo cáo & nhật ký", actions: "Xem báo cáo, xuất Excel; xem nhật ký hệ thống (audit)" },
+  ],
+  STAFF: [
+    { area: "Người dùng", actions: "Tạo tài khoản học sinh/phụ huynh, liên kết phụ huynh – học sinh" },
+    { area: "Tuyển sinh", actions: "Xem, nhập tay, đổi trạng thái lead; chuyển lead thành học viên" },
+    { area: "Đào tạo", actions: "Mở/sửa lớp, ghi danh, hủy/dời buổi, dạy thay, học bù, lịch tổng, sửa điểm danh ngoài khung" },
+    { area: "Tài liệu & yêu cầu", actions: "Quản lý giáo trình/tài liệu; duyệt đề xuất đổi lịch, đơn xin nghỉ" },
+    { area: "Giao tiếp", actions: "Gửi thông báo mọi đối tượng; nhắn tin nhóm lớp và 1-1" },
+    { area: "Báo cáo", actions: "Xem báo cáo, xuất Excel (không quản lý vai trò, danh mục, nhật ký)" },
+  ],
+  TEACHER: [
+    { area: "Lớp của mình", actions: "Xem lịch dạy, điểm danh trong khung giờ, hồ sơ học sinh lớp mình" },
+    { area: "Bài tập", actions: "Soạn/giao/đóng bài, chấm (kể cả ảnh bài tự luận), công bố điểm, bảng điểm" },
+    { area: "Yêu cầu", actions: "Gửi đề xuất đổi lịch/xin nghỉ; duyệt đơn xin nghỉ của học sinh lớp mình" },
+    { area: "Tài liệu & đánh giá", actions: "Tài liệu, giáo án; đánh giá định kỳ học sinh" },
+    { area: "Giao tiếp", actions: "Thông báo cho lớp mình; nhắn nhóm lớp, nhắn riêng học sinh/phụ huynh lớp mình và trung tâm" },
+  ],
+  STUDENT: [
+    { area: "Học tập", actions: "Xem lịch học, làm và nộp bài (chụp ảnh bài tự luận), xem điểm đã công bố, chuyên cần" },
+    { area: "Tài liệu", actions: "Xem tài liệu được chia sẻ cho lớp" },
+    { area: "Giao tiếp", actions: "Nhắn nhóm lớp, nhắn riêng giáo viên và bạn cùng lớp; nhận thông báo" },
+  ],
+  PARENT: [
+    { area: "Theo dõi con", actions: "Xem lịch, chuyên cần, bài tập, điểm đã công bố, đánh giá của con đã liên kết" },
+    { area: "Đơn xin nghỉ", actions: "Gửi/rút đơn xin nghỉ buổi học cho con" },
+    { area: "Giao tiếp", actions: "Nhắn nhóm lớp của con, nhắn riêng giáo viên của con và trung tâm; nhận thông báo" },
+  ],
+};
+
 export const HOME_BY_ROLE: Record<Role, string> = {
   ADMIN: "/quan-ly",
   STAFF: "/quan-ly",

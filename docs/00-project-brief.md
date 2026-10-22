@@ -49,9 +49,10 @@ Mỗi tài khoản đúng một vai trò (DECISION-D04).
 4. **Bài tập và chấm điểm** (FR-027..FR-033): 3 dạng câu, làm/nộp một lần, tự chấm, chấm tự luận, công bố, bảng điểm.
 5. **Cổng và audit** (FR-034, FR-035).
 6. **Bổ sung v3.2 — DECISION-D26** (FR-036..FR-052, nguồn: danh sách chức năng 4 actor của PO): hồ sơ GV/HS/PH, cấp học, sửa lớp/dạy thay/học bù/chuyển lớp/lịch tổng, nộp bài bằng tệp/ảnh, giáo trình–tài liệu–giáo án, đề xuất đổi lịch, đơn xin nghỉ, thông báo, đánh giá định kỳ, nhắn tin (không realtime), tài khoản cá nhân, báo cáo + xuất CSV.
+7. **Bổ sung v3.3 — DECISION-D30** (PO yêu cầu 2026-10-22, mở rộng FR-013/014/031/048/050/051/052): cột thao tác theo tài khoản, ô gõ tìm phụ huynh, ảnh bài tự luận, thông báo đẩy Web Push, chat kiểu Zalo có ảnh/tệp và nhắn riêng thành viên lớp, ảnh đại diện, xuất Excel `.xlsx` có công thức %.
 
 ### Out of scope Pha 1
-Học phí/hóa đơn/thanh toán, lương giáo viên, chatbot/AI, chat realtime, Web Push/email/SMS, điểm danh QR/GPS, nhiều cơ sở, app di động, quên mật khẩu qua email, 2FA, đa ngôn ngữ.
+Học phí/hóa đơn/thanh toán, lương giáo viên, chatbot/AI, chat realtime (WebSocket), email/SMS/Zalo OA, điểm danh QR/GPS, nhiều cơ sở, app di động, quên mật khẩu qua email, 2FA, đa ngôn ngữ.
 
 ### Later / backlog
 Danh sách Pha 2 nằm ở [05 §5](05-functional-decomposition.md#5-pha-2--ý-tưởng-đã-ghi-nhận-chưa-làm). Ý tưởng mới chỉ ghi vào đó, không code (AGENTS.md).

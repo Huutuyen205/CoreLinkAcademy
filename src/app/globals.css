@@ -61,6 +61,13 @@
 }
 
 @layer base {
+  /* Trang không bao giờ cuộn/kéo ngang: `clip` (khác `hidden`) không tạo vùng cuộn nên sidebar sticky vẫn chạy. */
+  html,
+  body {
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;

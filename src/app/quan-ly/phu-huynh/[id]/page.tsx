@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ConfigForm } from "@/components/forms/config-form";
+import { InlinePickForm } from "@/components/forms/inline-pick-form";
+import { UserRowActions } from "@/components/people/user-row-actions";
+import { ActionButton } from "@/components/ui/row-actions";
 import { ProfileForm } from "@/components/people/profile-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
@@ -26,7 +28,12 @@ export default async function ParentDetailPage({ params }: { params: Promise<{ i
       <PageHeader
         title={p.fullName}
         description={[p.phone ? formatPhone(p.phone) : null, p.email].filter(Boolean).join(" · ") || "Phụ huynh"}
-        action={p.status === "DISABLED" ? <Badge tone={USER_STATUS.DISABLED.tone}>Tài khoản bị khóa</Badge> : undefined}
+        action={
+          <span className="flex flex-wrap items-center gap-2">
+            {p.status === "DISABLED" && <Badge tone={USER_STATUS.DISABLED.tone}>Tài khoản bị khóa</Badge>}
+            <UserRowActions user={{ ...p, role: "PARENT" }} actor={actor} hideProfile />
+          </span>
+        }
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
         <Card title="Hồ sơ">
@@ -45,19 +52,22 @@ export default async function ParentDetailPage({ params }: { params: Promise<{ i
                       {[s.studentCode, s.enrollments.map((e) => e.class.code).join(", ") || "chưa có lớp"].filter(Boolean).join(" · ")}
                     </span>
                   </span>
-                  <ConfigForm action={unlinkGuardianAction} hidden={{ parentId: p.id, studentId: s.id }} submitLabel="Gỡ" submitVariant="secondary" confirm="Gỡ liên kết với học sinh này?" fields={[]} />
+                  <ActionButton action={unlinkGuardianAction} hidden={{ parentId: p.id, studentId: s.id }} icon="unlink" tone="danger" confirm={`Gỡ liên kết với ${s.fullName}?`}>
+                    Gỡ liên kết
+                  </ActionButton>
                 </li>
               ))}
             </ul>
           )}
           {students.length > 0 && (
-            <ConfigForm
+            <InlinePickForm
               className="mt-4"
               action={linkGuardianAction}
               hidden={{ parentId: p.id }}
-              submitLabel="Liên kết"
-              submitVariant="secondary"
-              fields={[{ type: "select", name: "studentId", label: "Liên kết thêm con", placeholder: "Chọn học sinh", options: students.map((s) => ({ value: s.id, label: `${s.fullName}${s.studentCode ? ` (${s.studentCode})` : ""}` })) }]}
+              name="studentId"
+              label="Liên kết thêm con"
+              placeholder="Thêm con: gõ tên hoặc mã học sinh…"
+              options={students.map((s) => ({ value: s.id, label: `${s.fullName}${s.studentCode ? ` (${s.studentCode})` : ""}` }))}
             />
           )}
         </Card>

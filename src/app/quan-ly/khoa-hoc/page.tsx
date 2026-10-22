@@ -4,9 +4,10 @@ import { ConfigForm } from "@/components/forms/config-form";
 import { courseFields } from "@/components/forms/course-fields";
 import { Flash } from "@/components/layout/flash";
 import { DataTable } from "@/components/ui/data-table";
+import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { saveCourseAction } from "@/server/catalog/actions";
+import { deleteCourseAction, saveCourseAction, setCatalogActiveAction } from "@/server/catalog/actions";
 import { listCoursesAdmin, listSubjectsAdmin } from "@/server/catalog/admin";
 import { formatGradeRange } from "@/lib/format";
 
@@ -47,6 +48,30 @@ export default async function CoursesAdminPage({ searchParams }: { searchParams:
                   <Badge tone={c.isPublished ? "success" : "neutral"}>{c.isPublished ? "Đã xuất bản" : "Ẩn"}</Badge>
                   {c.isFeatured && <Badge tone="primary">Nổi bật</Badge>}
                 </span>
+              ),
+            },
+            {
+              header: "Thao tác",
+              className: "md:w-[1%] md:whitespace-nowrap",
+              cell: (c) => (
+                <RowActions>
+                  <ActionLink href={`/quan-ly/khoa-hoc/${c.id}`} icon="edit">
+                    Sửa
+                  </ActionLink>
+                  {c.isPublished && (
+                    <ActionLink href={`/khoa-hoc/${c.slug}`} icon="view">
+                      Xem trên web
+                    </ActionLink>
+                  )}
+                  <ActionButton action={setCatalogActiveAction} hidden={{ kind: "course", id: c.id, active: c.isPublished ? "0" : "1" }} icon={c.isPublished ? "hide" : "show"} tone={c.isPublished ? "default" : "success"}>
+                    {c.isPublished ? "Ẩn" : "Xuất bản"}
+                  </ActionButton>
+                  {c._count.classes === 0 && (
+                    <ActionButton action={deleteCourseAction} hidden={{ id: c.id }} icon="delete" tone="danger" confirm={`Xóa khóa học "${c.title}"?`}>
+                      Xóa
+                    </ActionButton>
+                  )}
+                </RowActions>
               ),
             },
           ]}

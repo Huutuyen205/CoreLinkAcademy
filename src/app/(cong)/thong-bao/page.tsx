@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Bell, CalendarClock, ClipboardCheck, FileText, Megaphone, MessageSquareText } from "lucide-react";
+import { PushToggle } from "@/components/notifications/push-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { Pagination, parsePage } from "@/components/ui/data-table";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -21,6 +22,7 @@ const ICONS: Record<string, typeof Bell> = {
   leave_result: ClipboardCheck,
   reminder: ClipboardCheck,
   results: ClipboardCheck,
+  submission: ClipboardCheck,
   evaluation: MessageSquareText,
   document: FileText,
 };
@@ -56,6 +58,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           </span>
         }
       />
+      <PushToggle />
       <nav aria-label="Lọc thông báo" className="mb-4 flex gap-2">
         {[
           { href: "/thong-bao", label: "Tất cả", active: !onlyUnread },

@@ -134,11 +134,14 @@ export async function createClass(actor: Actor, input: ClassInput): Promise<stri
   }
 }
 
-/** API-012. Hoàn thành: ghi danh ACTIVE → COMPLETED. Hủy: các buổi chưa diễn ra → CANCELLED. */
-export async function setClassStatus(actor: Actor, classId: string, to: ClassStatus): Promise<void> {
+/**
+ * API-012. Hoàn thành: ghi danh ACTIVE → COMPLETED.
+ * Hủy: các buổi chưa diễn ra → CANCELLED, báo GV/HS/PH của lớp, ghi audit `class.cancel` (kèm lý do nếu có).
+ */
+export async function setClassStatus(actor: Actor, classId: string, to: ClassStatus, reason: string | null = null): Promise<void> {
   assertCan(actor, "class.manage");
   await db.$transaction(async (tx) => {
-    const klass = await tx.class.findUnique({ where: { id: classId }, select: { status: true } });
+    const klass = await tx.class.findUnique({ where: { id: classId }, select: { status: true, code: true } });
     if (!klass) throw new ForbiddenError();
     if (!canChangeClass(klass.status, to)) throw new DomainError("INVALID_TRANSITION", "Không thể chuyển lớp sang trạng thái này.");
     await tx.class.update({ where: { id: classId }, data: { status: to } });
@@ -146,15 +149,20 @@ export async function setClassStatus(actor: Actor, classId: string, to: ClassSta
       await tx.enrollment.updateMany({ where: { classId, status: "ACTIVE" }, data: { status: "COMPLETED" } });
     }
     if (to === "CANCELLED") {
-      await tx.classSession.updateMany({
+      const { count } = await tx.classSession.updateMany({
         where: { classId, status: "SCHEDULED", startsAt: { gt: new Date() } },
-        data: { status: "CANCELLED", cancelReason: "Lớp bị hủy" },
+        data: { status: "CANCELLED", cancelReason: reason ? `Lớp bị hủy: ${reason}`.slice(0, 255) : "Lớp bị hủy" },
       });
+      await notifySchedule(tx, classId, "Hủy lớp", `Lớp đã bị hủy${reason ? `. Lý do: ${reason}` : ""}. ${count} buổi chưa học được hủy theo.`);
+      await writeAudit({ actorId: actor.id, action: "class.cancel", entity: "Class", entityId: classId, detail: { code: klass.code, from: klass.status, reason, cancelledSessions: count } }, tx);
     }
   });
 }
 
-/** Xóa lớp chỉ khi chưa có ghi danh (docs/10 §3). */
+/**
+ * Xóa lớp (docs/10 §3): lớp chưa có ghi danh xóa được ngay; lớp đã có học sinh phải HỦY trước rồi mới xóa
+ * (xóa kéo theo buổi học, điểm danh, bài tập của lớp — audit ghi lại số lượng).
+ */
 export async function deleteClass(actor: Actor, classId: string): Promise<void> {
   assertCan(actor, "class.manage");
   await db.$transaction(async (tx) => {
@@ -162,10 +170,15 @@ export async function deleteClass(actor: Actor, classId: string): Promise<void> 
     // rồi lệnh xóa cascade mất luôn ghi danh mới.
     const locked = await tx.$queryRaw<{ id: string; code: string }[]>`SELECT "id", "code" FROM "classes" WHERE "id" = ${classId} FOR UPDATE`;
     if (locked.length === 0) throw new ForbiddenError();
-    const enrollments = await tx.enrollment.count({ where: { classId } });
-    if (enrollments > 0) throw new DomainError("HAS_ENROLLMENTS", "Lớp đã có ghi danh, chỉ có thể hủy lớp.");
+    const [enrollments, status, sessions, assignments] = await Promise.all([
+      tx.enrollment.count({ where: { classId } }),
+      tx.class.findUniqueOrThrow({ where: { id: classId }, select: { status: true } }),
+      tx.classSession.count({ where: { classId } }),
+      tx.assignment.count({ where: { classId } }),
+    ]);
+    if (enrollments > 0 && status.status !== "CANCELLED") throw new DomainError("HAS_ENROLLMENTS", "Lớp đã có học sinh: hãy hủy lớp trước, sau đó mới xóa được.");
     await tx.class.delete({ where: { id: classId } });
-    await writeAudit({ actorId: actor.id, action: "class.delete", entity: "Class", entityId: classId, detail: { code: locked[0]!.code } }, tx);
+    await writeAudit({ actorId: actor.id, action: "class.delete", entity: "Class", entityId: classId, detail: { code: locked[0]!.code, enrollments, sessions, assignments } }, tx);
   });
 }
 
@@ -265,9 +278,21 @@ export async function listClasses(actor: Actor, filter: { status?: ClassStatus }
 export const CLASS_PAGE_SIZE = 50;
 
 /** Danh sách lớp cho quản lý, có phân trang (lớp tích lũy qua các khóa). Cùng thứ tự và trường với listClasses. */
-export async function listClassesPage(actor: Actor, filter: { status?: ClassStatus; page: number }) {
+export async function listClassesPage(actor: Actor, filter: { status?: ClassStatus; q?: string; page: number }) {
   assertCan(actor, "class.manage");
-  const where: Prisma.ClassWhereInput = filter.status ? { status: filter.status } : {};
+  const q = filter.q?.trim();
+  const where: Prisma.ClassWhereInput = {
+    ...(filter.status ? { status: filter.status } : {}),
+    ...(q
+      ? {
+          OR: [
+            { code: { contains: q, mode: "insensitive" } },
+            { course: { title: { contains: q, mode: "insensitive" } } },
+            { teacher: { fullName: { contains: q, mode: "insensitive" } } },
+          ],
+        }
+      : {}),
+  };
   const [total, rows] = await Promise.all([
     db.class.count({ where }),
     db.class.findMany({

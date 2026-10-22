@@ -138,7 +138,7 @@ CoreLink Academy v3
 |---|---|---|---|---|
 | P2-01 | Học phí, hóa đơn, công nợ, thanh toán online | Tài chính | Brief | Discovery tài chính, nhà cung cấp thanh toán |
 | P2-02 | Lương giáo viên theo buổi dạy | Tài chính | Brief | P2-01 |
-| P2-03 | Thông báo (email/Web Push/Zalo): lead mới, vắng, điểm mới, hủy/dời buổi | Giao tiếp | UC-007, 011, 015 | Nhà cung cấp gửi tin |
+| P2-03 | Thông báo email/Zalo OA/SMS: lead mới, vắng, điểm mới, hủy/dời buổi (**Web Push đã làm — DECISION-D30**) | Giao tiếp | UC-007, 011, 015 | Nhà cung cấp gửi tin |
 | P2-04 | Chat/nhắn tin GV–PH | Giao tiếp | Brief | P2-03 |
 | P2-05 | Chatbot/AI tư vấn khóa, AI chấm tự luận | AI | v1/v2 | Discovery AI, đánh giá chất lượng |
 | P2-06 | Ngân hàng câu hỏi, nhân bản bài, ảnh/công thức trong câu hỏi | Khảo thí | UC-008 | Upload file |
@@ -153,7 +153,7 @@ CoreLink Academy v3
 | P2-15 | Phân công lead cho tư vấn viên (`assignedToId`), chiến dịch, mã giới thiệu, phễu | Tuyển sinh | Schema, brief | — |
 | P2-16 | Nhập tài khoản hàng loạt từ Excel | Nền tảng | UC-012 | Upload file |
 | P2-17 | Admin/Staff xem bài tập, bài nộp, bảng điểm mọi lớp | Khảo thí | docs/03 bản cũ | — |
-| P2-18 | Báo cáo tháng (tuyển sinh, chuyên cần, điểm), xuất Excel | Báo cáo | Brief | — |
+| P2-18 | Báo cáo tháng tự động (tuyển sinh, chuyên cần, điểm) (**xuất Excel .xlsx theo kỳ đã làm — DECISION-D30**) | Báo cáo | Brief | — |
 | P2-19 | Nhiều cơ sở (campus) | Nền tảng | ASSUMPTION-A01 | Thay đổi schema lớn |
 | P2-20 | App di động + REST `/api/v1` | Kênh | ADR-001 | ADR mới |
 | P2-21 | Ảnh minh họa khóa học | Công khai | UC-014 | Upload file |
@@ -162,7 +162,7 @@ CoreLink Academy v3
 | P2-24 | Quản trị tin tức, giáo viên, học viên tiêu biểu trong cổng quản lý (hiện sửa file `src/data/home.ts`) | Công khai | Trang chủ D22 | P2-21 (upload ảnh) |
 | P2-25 | Tìm kiếm toàn site, tra cứu kết quả công khai bằng mã (hiện nút tìm dẫn tới `/khoa-hoc`, "Tra cứu kết quả" dẫn tới đăng nhập) | Công khai | Trang chủ D22 | — |
 | P2-26 | Xóa mềm (`deletedAt`) cho môn/khóa/phòng/lớp/người dùng thay xóa cứng (hiện: chỉ xóa khi không còn tham chiếu + audit) | Nền tảng | Rà soát BE 2026-10-22 | Đổi schema + lọc mọi truy vấn |
-| P2-27 | Ô chọn phụ huynh có tìm kiếm (combobox) ở trang Học viên thay `<select>` 500 dòng lặp lại ở mỗi học sinh | Nền tảng | Rà soát BE 2026-10-22 | — |
+| P2-27 | ~~Ô chọn phụ huynh có tìm kiếm (combobox)~~ **Đã làm (DECISION-D30)**; còn lại: tải danh sách theo từ khóa từ server thay vì gửi sẵn ≤ 500 dòng | Nền tảng | Rà soát BE 2026-10-22 | — |
 | P2-28 | Tìm kiếm tên không phân biệt dấu/hoa thường bằng index `pg_trgm` + `unaccent` khi lead/người dùng > vài chục nghìn | Nền tảng | Rà soát BE 2026-10-22 | Extension Supabase |
 | P2-29 | Hàng đợi nền (gửi thông báo, xuất Excel, báo cáo tháng) và cache dùng chung (Redis/KV) khi chạy nhiều instance | Vận hành | Rà soát BE 2026-10-22 | P2-03, P2-18 |
 | P2-30 | Trang Khóa học quản lý trên điện thoại: thu gọn form; bộ lọc lead thu gọn (trang Môn học/Phòng đã thu gọn ở FR-036) | Nền tảng | Rà soát giao diện điện thoại 2026-10-21 | — |
@@ -173,7 +173,10 @@ CoreLink Academy v3
 | P2-36 | GV tải lên / thay / xóa bài làm hộ HS (ảnh bài trên giấy) | Bài tập | Giáo viên.md §8; bảng ưu tiên (chức năng phụ) | FR-040 |
 | P2-37 | Giao bài cho nhóm / từng học sinh thay vì cả lớp | Bài tập | Giáo viên.md §7 | — |
 | P2-38 | Chia sẻ tài liệu cho từng học sinh / từng buổi (hiện: theo lớp; giáo án gắn buổi) | Tài liệu | Giáo viên.md §5 | FR-042 |
-| P2-39 | Nhắn tin realtime, gửi ảnh/tệp trong chat, nhắn 1-1 GV ↔ HS (DECISION-D27, D29) | Tương tác | Bảng ưu tiên (chức năng phụ) | Hạ tầng realtime |
+| P2-39 | Nhắn tin realtime (WebSocket/Supabase Realtime), thu hồi/sửa tin, trạng thái "đã xem", gửi tệp > 4 MB (**ảnh/tệp trong chat và nhắn 1-1 thành viên lớp đã làm — DECISION-D30**) | Tương tác | Bảng ưu tiên (chức năng phụ) | Hạ tầng realtime, Supabase Storage |
+| P2-42 | Xoay/cắt ảnh bài làm trước khi gửi; GV ghi chú trực tiếp lên ảnh khi chấm | Bài tập | DECISION-D30 | — |
+| P2-43 | Tắt thông báo đẩy theo loại (chỉ tin nhắn / chỉ thông báo) và theo nhóm lớp | Giao tiếp | DECISION-D30 | — |
+| P2-44 | Đóng gói Android (TWA) đưa lên CH Play nếu cần có mặt trên cửa hàng (hiện cài PWA trực tiếp — DECISION-D31) | Kênh | DECISION-D31 | Tài khoản Google Play, ký ứng dụng |
 | P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
 | P2-41 | HS tự ôn luyện (đề luyện tập, lịch sử, chấm tự động); lịch tháng; biểu đồ tiến độ/xu hướng điểm | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |

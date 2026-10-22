@@ -16,6 +16,8 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   "session.reschedule": "Dời buổi học",
   "session.cancel": "Hủy buổi học",
   "class.delete": "Xóa lớp",
+  "class.cancel": "Hủy lớp",
+  "level.delete": "Xóa cấp học",
   "course.delete": "Xóa khóa học",
   "subject.delete": "Xóa môn học",
   "room.delete": "Xóa phòng",

@@ -328,6 +328,15 @@ Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) �
 
 Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `profileNote`), `subjects.isActive`, `rooms` (`isActive`, `note`), `class_sessions` (`isMakeup`, `note`), `assignments` (`acceptsFiles`, `manualMaxScore`). Tất cả có mặc định hoặc cho phép null.
 
+### 5c. Bổ sung v3.3 (DECISION-D30) — migration `20261024090000_chat_files_push_avatar` (chỉ thêm, đã áp 2026-10-22)
+
+| Thay đổi | Mục đích | Ghi chú |
+|---|---|---|
+| `stored_files.questionId` → `questions` (CASCADE) | Ảnh bài làm câu tự luận | Luôn đi cùng `submissionId`; quyền tải như bài nộp. Index `(submissionId, questionId)` thay index `submissionId` |
+| `stored_files.messageId` → `messages` (CASCADE) | Ảnh/tệp đính kèm tin nhắn | Quyền: người xem được cuộc trò chuyện (`canReadMessage`) |
+| `users.avatarFileId` (UNIQUE) → `stored_files` (SET NULL) | Ảnh đại diện | Tệp không có chủ sở hữu khác; đổi ảnh xóa tệp cũ cùng transaction |
+| `push_subscriptions` (`endpoint` UNIQUE, `p256dh`, `auth`, `userAgent`, `userId` → `users` CASCADE) | Đăng ký Web Push theo thiết bị | Endpoint trả 404/410 khi gửi → xóa; đổi tài khoản trên cùng máy → chuyển `userId` |
+
 ## 6. Migration and recovery
 
 **Migration `20261023090000_portal_features`** (chỉ thêm bảng/cột + dữ liệu cấp học): đã áp lên Supabase ngày 2026-10-21 cùng `20261022090000_admin_perf_indexes` (PO đồng ý). Rollback: `DROP TABLE` 14 bảng mới + `ALTER TABLE … DROP COLUMN` các cột mới (mất dữ liệu của tính năng mới).

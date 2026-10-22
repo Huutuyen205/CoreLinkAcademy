@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AnswerForm } from "@/components/assessment/answer-form";
+import { PhotoGrid } from "@/components/assessment/essay-photos";
 import { FileList } from "@/components/files/file-list";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
@@ -69,7 +70,7 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
       {canWork ? (
         <AnswerForm
           assignmentId={a.id}
-          items={items.map((i) => ({ id: i.question.id, order: i.question.order, type: i.question.type, prompt: i.question.prompt, options: i.question.options, points: i.question.points, response: i.response }))}
+          items={items.map((i) => ({ id: i.question.id, order: i.question.order, type: i.question.type, prompt: i.question.prompt, options: i.question.options, points: i.question.points, response: i.response, photos: i.photos }))}
         />
       ) : (
         <>
@@ -100,8 +101,9 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
                   <p className="mt-1 whitespace-pre-line font-medium">{q.prompt}</p>
                   <p className="mt-2 whitespace-pre-line">
                     <span className="text-sm text-muted">Bài làm: </span>
-                    {shown || <span className="text-muted">(Bỏ trống)</span>}
+                    {shown || (i.photos.length === 0 && <span className="text-muted">(Bỏ trống)</span>)}
                   </p>
+                  <PhotoGrid photos={i.photos} />
                   {r && q.type === "MCQ" && r.correctOption !== null && <p className="mt-1 text-sm text-success">Đáp án đúng: {q.options?.[r.correctOption]}</p>}
                   {r && q.type === "SHORT" && r.acceptedAnswers && <p className="mt-1 text-sm text-success">Đáp án: {r.acceptedAnswers.join(" · ")}</p>}
                   {r?.feedback && <p className="mt-1 text-sm">Nhận xét: {r.feedback}</p>}

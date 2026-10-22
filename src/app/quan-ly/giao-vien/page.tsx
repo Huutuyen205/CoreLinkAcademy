@@ -2,9 +2,11 @@ import type { MemberStatus } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CreateUserForm } from "@/components/forms/create-user-form";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { UserRowActions } from "@/components/people/user-row-actions";
+import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
 import { SelectField, TextField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
 import { listTeachers, PEOPLE_PAGE_SIZE } from "@/server/people/service";
@@ -35,7 +37,7 @@ export default async function TeachersPage({ searchParams }: { searchParams: Pro
           </div>
         </details>
       )}
-      <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.5fr_1fr_auto] md:items-end">
+      <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.5fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm tên, email, SĐT" defaultValue={q} maxLength={80} />
         <SelectField
           name="trangthai"
@@ -44,17 +46,14 @@ export default async function TeachersPage({ searchParams }: { searchParams: Pro
           defaultValue={status ?? ""}
           options={STATUSES.map((s) => ({ value: s, label: memberStatusLabel("TEACHER", s).label }))}
         />
-        <div className="flex gap-2">
-          <button type="submit" className={buttonClass()}>
-            Lọc
-          </button>
+        <div className="flex min-h-11 items-center">
           {(q || status) && (
             <ButtonLink href="/quan-ly/giao-vien" variant="ghost">
               Bỏ lọc
             </ButtonLink>
           )}
         </div>
-      </form>
+      </FilterForm>
       {rows.length === 0 ? (
         <EmptyState message="Không có giáo viên phù hợp." />
       ) : (
@@ -85,6 +84,7 @@ export default async function TeachersPage({ searchParams }: { searchParams: Pro
                   </span>
                 ),
               },
+              { header: "Thao tác", className: "md:w-[1%] md:whitespace-nowrap", cell: (t) => <UserRowActions user={{ ...t, role: "TEACHER" }} actor={actor} /> },
             ]}
           />
         </Card>

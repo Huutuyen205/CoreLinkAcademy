@@ -13,6 +13,7 @@ export type Actor = {
   role: Role;
   fullName: string;
   mustChangePassword: boolean;
+  avatarFileId: string | null;
 };
 
 function hashToken(token: string): string {
@@ -49,13 +50,13 @@ export const getCurrentActor = cache(async (): Promise<Actor | null> => {
     where: { id: hashToken(token) },
     select: {
       expiresAt: true,
-      user: { select: { id: true, role: true, fullName: true, status: true, mustChangePassword: true } },
+      user: { select: { id: true, role: true, fullName: true, status: true, mustChangePassword: true, avatarFileId: true } },
     },
   });
   if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") return null;
 
-  const { id, role, fullName, mustChangePassword } = session.user;
-  return { id, role, fullName, mustChangePassword };
+  const { id, role, fullName, mustChangePassword, avatarFileId } = session.user;
+  return { id, role, fullName, mustChangePassword, avatarFileId };
 });
 
 export async function destroyCurrentSession(): Promise<void> {

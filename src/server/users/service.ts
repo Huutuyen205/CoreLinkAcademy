@@ -80,18 +80,36 @@ export async function updateUser(actor: Actor, userId: string, input: UserInput)
   if (roleChanged) await revokeUserSessions(userId);
 }
 
-/** API-008: khóa/mở khóa; Admin không tự khóa (T-10). Khóa → thu hồi phiên ngay. */
-export async function setUserStatus(actor: Actor, userId: string, status: UserStatus): Promise<void> {
+/**
+ * API-008: khóa/mở khóa; Admin không tự khóa (T-10). Khóa → thu hồi phiên ngay.
+ * DECISION-D31: dây chuyền MỘT cấp giữa học sinh và phụ huynh đã liên kết, cả hai chiều —
+ * khóa/mở học sinh thì khóa/mở luôn phụ huynh của em; khóa/mở phụ huynh thì khóa/mở luôn các con.
+ * Trả số tài khoản liên kết đã đổi theo.
+ */
+export async function setUserStatus(actor: Actor, userId: string, status: UserStatus): Promise<{ linked: number }> {
   assertCan(actor, "user.manage");
   if (!canChangeRoleOrStatus(actor, userId)) throw new DomainError("CANNOT_MODIFY_SELF", "Bạn không thể tự khóa tài khoản của chính mình.");
-  const user = await db.user.findUnique({ where: { id: userId }, select: { status: true } });
-  if (!user) throw new ForbiddenError();
-  if (user.status === status) return;
-  await db.$transaction(async (tx) => {
-    await tx.user.update({ where: { id: userId }, data: { status, ...(status === "ACTIVE" ? { failedLoginCount: 0, lockedUntil: null } : {}) } });
-    await writeAudit({ actorId: actor.id, action: status === "DISABLED" ? "user.disable" : "user.enable", entity: "User", entityId: userId, detail: { from: user.status, to: status } }, tx);
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true, childLinks: { select: { studentId: true } }, parentLinks: { select: { parentId: true } } },
   });
-  if (status === "DISABLED") await revokeUserSessions(userId);
+  if (!user) throw new ForbiddenError();
+  const linkedIds = user.role === "STUDENT" ? user.parentLinks.map((l) => l.parentId) : user.role === "PARENT" ? user.childLinks.map((l) => l.studentId) : [];
+  const targets = [userId, ...linkedIds].filter((id) => id !== actor.id);
+  const changed = await db.$transaction(async (tx) => {
+    const rows = await tx.user.findMany({ where: { id: { in: targets }, status: { not: status } }, select: { id: true, status: true } });
+    if (rows.length === 0) return [];
+    await tx.user.updateMany({ where: { id: { in: rows.map((r) => r.id) } }, data: { status, ...(status === "ACTIVE" ? { failedLoginCount: 0, lockedUntil: null } : {}) } });
+    for (const r of rows) {
+      await writeAudit(
+        { actorId: actor.id, action: status === "DISABLED" ? "user.disable" : "user.enable", entity: "User", entityId: r.id, detail: { from: r.status, to: status, ...(r.id !== userId ? { linkedTo: userId } : {}) } },
+        tx,
+      );
+    }
+    return rows.map((r) => r.id);
+  });
+  if (status === "DISABLED") await Promise.all(changed.map((id) => revokeUserSessions(id)));
+  return { linked: changed.filter((id) => id !== userId).length };
 }
 
 /** API-008: đặt lại mật khẩu tạm. */
@@ -157,11 +175,17 @@ export async function getUser(actor: Actor, userId: string) {
 }
 
 /** Trang Học viên cho Staff/Admin: học sinh kèm phụ huynh đã liên kết. */
-export async function listLearners(actor: Actor, q: string | undefined, page: number) {
+/** Lọc thêm: trạng thái tài khoản; `noParent` = chưa liên kết phụ huynh; `noClass` = chưa học lớp nào. */
+export type LearnerFilter = { status?: UserStatus; noParent?: boolean; noClass?: boolean };
+
+export async function listLearners(actor: Actor, q: string | undefined, page: number, filter: LearnerFilter = {}) {
   assertCan(actor, "guardian.manage");
   const query = q?.trim();
   const where: Prisma.UserWhereInput = {
     role: "STUDENT",
+    ...(filter.status ? { status: filter.status } : {}),
+    ...(filter.noParent ? { parentLinks: { none: {} } } : {}),
+    ...(filter.noClass ? { enrollments: { none: { status: { in: ["ACTIVE", "PAUSED"] } } } } : {}),
     ...(query ? { OR: [{ fullName: { contains: query, mode: "insensitive" as const } }, { studentCode: { contains: query, mode: "insensitive" as const } }] } : {}),
   };
   const [total, rows] = await Promise.all([

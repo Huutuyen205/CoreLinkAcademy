@@ -2,8 +2,9 @@ import type { DocumentKind } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Flash } from "@/components/layout/flash";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { SelectField, TextField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireActor } from "@/server/auth/guard";
 import { isManager } from "@/server/auth/scope";
@@ -74,16 +75,13 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         ))}
       </nav>
       {options && (
-        <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto] md:items-end">
+        <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_auto] md:items-end">
           {kind && <input type="hidden" name="loai" value={kind} />}
           <TextField name="q" label="Tìm theo tên" defaultValue={filter.q} maxLength={80} />
           <SelectField name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
           <SelectField name="cap" label="Cấp học" placeholder="Tất cả" defaultValue={filter.levelId ?? ""} options={options.levels.map((l) => ({ value: l.id, label: l.name }))} />
           <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className={buttonClass()}>
-              Lọc
-            </button>
             {isManager(actor) && (
               <label className="inline-flex min-h-11 items-center gap-2 text-sm">
                 <input type="checkbox" name="ngung" value="1" defaultChecked={filter.includeInactive} className="size-5 accent-primary" />
@@ -91,7 +89,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               </label>
             )}
           </div>
-        </form>
+        </FilterForm>
       )}
       {docs.length === 0 ? (
         <EmptyState message={learner ? "Chưa có tài liệu nào được chia sẻ cho lớp." : "Chưa có tài liệu phù hợp."} />
@@ -112,7 +110,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
               </h2>
               {d.description && <p className="mt-1 line-clamp-2 text-sm text-muted">{d.description}</p>}
               <p className="mt-2 text-sm text-muted">
-                {d.files.length} tệp{d.url ? " · có đường dẫn" : ""} · {d.owner.fullName} · {formatDate(d.updatedAt)}
+                {d.files.length} tệp{d.url ? " · có liên kết" : ""} · {d.owner.fullName} · {formatDate(d.updatedAt)}
                 {d.shares.length > 0 && !learner ? ` · lớp ${d.shares.map((s) => s.class.code).join(", ")}` : ""}
               </p>
             </li>

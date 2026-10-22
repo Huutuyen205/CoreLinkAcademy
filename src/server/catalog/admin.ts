@@ -182,3 +182,32 @@ export async function saveLevel(actor: Actor, id: string | null, input: LevelInp
     throw error;
   }
 }
+
+/** Xóa cấp học khi chưa có môn và tài liệu gắn vào (còn dùng → "ngừng sử dụng"). */
+export async function deleteLevel(actor: Actor, id: string): Promise<void> {
+  assertCan(actor, "level.manage");
+  const level = await db.educationLevel.findUnique({ where: { id }, select: { name: true, _count: { select: { subjects: true, documents: true } } } });
+  if (!level) throw new ForbiddenError();
+  if (level._count.subjects + level._count.documents > 0) throw new DomainError("IN_USE", "Cấp học đang có môn/tài liệu gắn vào — hãy bỏ chọn ở các môn hoặc dùng \"Ngừng\".");
+  await db.$transaction(async (tx) => {
+    await tx.educationLevel.delete({ where: { id } });
+    await writeAudit({ actorId: actor.id, action: "level.delete", entity: "EducationLevel", entityId: id, detail: { name: level.name } }, tx);
+  });
+}
+
+export type CatalogToggleKind = "subject" | "level" | "room" | "course";
+
+/** Nút nhanh "Ngừng / Dùng lại" (môn, cấp học, phòng) và "Ẩn / Xuất bản" (khóa học). */
+export async function setCatalogActive(actor: Actor, kind: CatalogToggleKind, id: string, active: boolean): Promise<void> {
+  assertCan(actor, kind === "room" ? "room.manage" : kind === "level" ? "level.manage" : "catalog.manage");
+  const where = { id };
+  const { count } =
+    kind === "subject"
+      ? await db.subject.updateMany({ where, data: { isActive: active } })
+      : kind === "level"
+        ? await db.educationLevel.updateMany({ where, data: { isActive: active } })
+        : kind === "room"
+          ? await db.room.updateMany({ where, data: { isActive: active } })
+          : await db.course.updateMany({ where, data: { isPublished: active } });
+  if (count === 0) throw new ForbiddenError();
+}

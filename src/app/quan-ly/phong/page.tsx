@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
 import { requireRole } from "@/server/auth/guard";
-import { deleteRoomAction, saveRoomAction } from "@/server/catalog/actions";
+import { deleteRoomAction, saveRoomAction, setCatalogActiveAction } from "@/server/catalog/actions";
 import { listRoomsAdmin } from "@/server/catalog/admin";
 
 export const metadata: Metadata = { title: "Phòng học" };
@@ -22,12 +22,20 @@ export default async function RoomsPage() {
             key={r.id}
             title={r.name}
             action={
-              <span className="flex items-center gap-2">
+              <RowActions>
                 {!r.isActive && <Badge tone="neutral">Tạm ngừng</Badge>}
-                <Link href={`/quan-ly/lich?phong=${r.id}`} className="inline-flex min-h-11 items-center text-sm">
-                  Lịch sử dụng
-                </Link>
-              </span>
+                <ActionLink href={`/quan-ly/lich?phong=${r.id}`} icon="schedule">
+                  Lịch
+                </ActionLink>
+                <ActionButton action={setCatalogActiveAction} hidden={{ kind: "room", id: r.id, active: r.isActive ? "0" : "1" }} icon={r.isActive ? "hide" : "restore"} tone={r.isActive ? "default" : "success"}>
+                  {r.isActive ? "Tạm ngừng" : "Dùng lại"}
+                </ActionButton>
+                {r._count.classes + r._count.sessions === 0 && (
+                  <ActionButton action={deleteRoomAction} hidden={{ id: r.id }} icon="delete" tone="danger" confirm={`Xóa phòng ${r.name}?`}>
+                    Xóa
+                  </ActionButton>
+                )}
+              </RowActions>
             }
           >
             <ConfigForm
@@ -43,11 +51,7 @@ export default async function RoomsPage() {
                 { type: "checkbox", name: "isActive", label: "Đang sử dụng", defaultChecked: r.isActive, wide: true },
               ]}
             />
-            {r._count.classes + r._count.sessions === 0 ? (
-              <ConfigForm action={deleteRoomAction} hidden={{ id: r.id }} submitLabel="Xóa phòng" submitVariant="danger" confirm="Xóa phòng này?" fields={[]} className="mt-3" />
-            ) : (
-              <p className="mt-3 text-sm text-muted">Đang dùng cho {r._count.classes} lớp nên không xóa được.</p>
-            )}
+            {r._count.classes + r._count.sessions > 0 && <p className="mt-3 text-sm text-muted">Đang dùng cho {r._count.classes} lớp nên không xóa được.</p>}
           </Card>
         ))}
         <Card title="Thêm phòng">

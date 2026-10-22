@@ -10,6 +10,9 @@ import { transferStudentAction } from "@/server/academic/operations-actions";
 import { listEnrollableClasses } from "@/server/academic/service";
 import { listPublishedResults } from "@/server/assessment/service";
 import { getStudentAttendance } from "@/server/attendance/service";
+import { InlinePickForm } from "@/components/forms/inline-pick-form";
+import { UserRowActions } from "@/components/people/user-row-actions";
+import { ActionButton } from "@/components/ui/row-actions";
 import { requireRole } from "@/server/auth/guard";
 import { listEvaluationsOfStudent } from "@/server/evaluations/service";
 import { orNotFound } from "@/server/page";
@@ -49,9 +52,10 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
           .filter(Boolean)
           .join(" · ")}
         action={
-          <span className="flex flex-wrap gap-2">
+          <span className="flex flex-wrap items-center gap-2">
             <Badge tone={ms.tone}>{ms.label}</Badge>
             {s.status === "DISABLED" && <Badge tone={USER_STATUS.DISABLED.tone}>Tài khoản bị khóa</Badge>}
+            <UserRowActions user={{ ...s, role: "STUDENT" }} actor={actor} hideProfile />
           </span>
         }
       />
@@ -139,20 +143,15 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
                       <Link href={`/quan-ly/phu-huynh/${parent.id}`}>{parent.fullName}</Link>
                       <span className="block text-sm text-muted">{[parent.phone ? formatPhone(parent.phone) : null, parent.email].filter(Boolean).join(" · ")}</span>
                     </span>
-                    <ConfigForm action={unlinkGuardianAction} hidden={{ parentId: parent.id, studentId: s.id }} submitLabel="Bỏ" submitVariant="secondary" confirm="Bỏ liên kết phụ huynh này?" fields={[]} />
+                    <ActionButton action={unlinkGuardianAction} hidden={{ parentId: parent.id, studentId: s.id }} icon="unlink" tone="danger" confirm={`Bỏ liên kết ${parent.fullName}?`}>
+                      Bỏ liên kết
+                    </ActionButton>
                   </li>
                 ))}
               </ul>
             )}
             {s.parentLinks.length < MAX_GUARDIANS && parentOptions.length > 0 && (
-              <ConfigForm
-                className="mt-4"
-                action={linkGuardianAction}
-                hidden={{ studentId: s.id }}
-                submitLabel="Liên kết"
-                submitVariant="secondary"
-                fields={[{ type: "select", name: "parentId", label: "Thêm phụ huynh", placeholder: "Chọn phụ huynh", options: parentOptions }]}
-              />
+              <InlinePickForm className="mt-4" action={linkGuardianAction} hidden={{ studentId: s.id }} name="parentId" label="Thêm phụ huynh" placeholder="Thêm phụ huynh: gõ tên hoặc SĐT…" options={parentOptions} />
             )}
           </Card>
         </div>

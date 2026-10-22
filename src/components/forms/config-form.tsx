@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useId } from "react";
+import { ComboboxField } from "@/components/ui/combobox";
 import { CheckboxField, FileField, SelectField, TextareaField, TextField } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -13,6 +14,7 @@ export type FieldConfig =
   | (Base & { type: "text" | "email" | "tel" | "number" | "date" | "time" | "datetime-local" | "password"; maxLength?: number; min?: string; max?: string; step?: string })
   | (Base & { type: "textarea"; maxLength?: number; rows?: number })
   | (Base & { type: "select"; options: { value: string; label: string }[]; placeholder?: string })
+  | (Base & { type: "combobox"; options: { value: string; label: string }[]; placeholder?: string })
   | (Base & { type: "checkbox"; defaultChecked?: boolean })
   | (Base & { type: "file"; accept?: string; multiple?: boolean })
   | (Base & { type: "checkboxes"; options: { value: string; label: string }[]; defaultValues?: string[] });
@@ -78,6 +80,10 @@ export function ConfigForm({ action, fields, hidden, submitLabel, columns = 1, c
             case "select":
               return (
                 <SelectField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
+              );
+            case "combobox":
+              return (
+                <ComboboxField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
               );
             case "file":
               return (

@@ -6,16 +6,21 @@ import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireActor } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
+import { readUploads } from "@/server/files/storage";
 import { MESSAGE_MAX, sendMessage, startDirectConversation } from "./service";
 
 const id = z.string().min(1).max(40);
 
+/** Gửi tin: chữ và/hoặc ảnh/tệp đính kèm (ô `files`). */
 export async function sendMessageAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireActor();
   const fields = formFields(formData, ["conversationId", "body"]);
-  const parsed = parseForm(z.object({ conversationId: id, body: z.string().trim().min(1, "Nhập tin nhắn.").max(MESSAGE_MAX, `Tối đa ${MESSAGE_MAX} ký tự.`) }), fields);
+  const parsed = parseForm(z.object({ conversationId: id, body: z.string().trim().max(MESSAGE_MAX, `Tối đa ${MESSAGE_MAX} ký tự.`) }), fields);
   if (!parsed.ok) return parsed.state;
-  const result = await runAction(() => sendMessage(actor, parsed.data.conversationId, parsed.data.body), fields);
+  const result = await runAction(async () => {
+    const files = await readUploads(formData, "files");
+    await sendMessage(actor, parsed.data.conversationId, parsed.data.body, files);
+  }, fields);
   if (!result.ok) return result.state;
   revalidatePath(`/tin-nhan/${parsed.data.conversationId}`);
   return { ok: true };

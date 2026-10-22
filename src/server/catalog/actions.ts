@@ -7,7 +7,8 @@ import { formFields, formIds, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
 import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
-import { deleteCourse, deleteRoom, deleteSubject, saveCourse, saveLevel, saveRoom, saveSubject } from "./admin";
+import { slugify } from "@/lib/search";
+import { deleteCourse, deleteLevel, deleteRoom, deleteSubject, saveCourse, saveLevel, saveRoom, saveSubject, setCatalogActive } from "./admin";
 
 const optionalId = z.string().max(40).transform((v) => v || null);
 const slug = z
@@ -38,7 +39,9 @@ export async function saveSubjectAction(_prev: ActionState, formData: FormData):
   // Form thêm mới không có ô trạng thái (statusField) → mặc định đang dùng.
   const isActive = formData.has("statusField") ? formData.get("isActive") === "on" : true;
   const levelIds = formIds(formData, "levelIds", 20);
-  const fields = { ...formFields(formData, ["id", "name", "slug", "description", "sortOrder"]), isActive: isActive ? "on" : "", levelIds: levelIds.join(",") };
+  const raw = formFields(formData, ["id", "name", "slug", "description", "sortOrder"]);
+  // Slug để trống → tự tạo từ tên môn.
+  const fields = { ...raw, slug: raw.slug!.trim() || slugify(raw.name!, 80), isActive: isActive ? "on" : "", levelIds: levelIds.join(",") };
   const parsed = parseForm(subjectSchema, fields);
   if (!parsed.ok) return parsed.state;
   const { id, ...data } = parsed.data;
@@ -108,7 +111,8 @@ const COURSE_FIELDS = ["id", "subjectId", "title", "slug", "summary", "descripti
 /** API-010 — FR-015. Mục tiêu: mỗi dòng một ý; lộ trình: mỗi dòng "Tiêu đề | chi tiết". */
 export async function saveCourseAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN");
-  const fields = formFields(formData, COURSE_FIELDS);
+  const raw = formFields(formData, COURSE_FIELDS);
+  const fields = { ...raw, slug: raw.slug!.trim() || slugify(raw.title!, 160) };
   const isPublished = formData.get("isPublished") === "on";
   const isFeatured = formData.get("isFeatured") === "on";
   // Giá trị checkbox trả lại để form giữ trạng thái khi lỗi (GAP-08).
@@ -185,4 +189,29 @@ export async function deleteRoomAction(_prev: ActionState, formData: FormData): 
   if (!result.ok) return result.state;
   revalidatePath("/quan-ly/phong");
   return { ok: true, message: "Đã xóa phòng." };
+}
+
+export async function deleteLevelAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN");
+  const id = String(formData.get("id") ?? "");
+  if (!id || id.length > 40) return { ok: false, message: "Cấp học không hợp lệ." };
+  const result = await runAction(() => deleteLevel(actor, id));
+  if (!result.ok) return result.state;
+  revalidatePath("/quan-ly/mon-hoc");
+  revalidateCatalog();
+  return { ok: true, message: "Đã xóa cấp học." };
+}
+
+const toggleSchema = z.object({ kind: z.enum(["subject", "level", "room", "course"]), id: z.string().min(1).max(40), active: z.enum(["1", "0"]) });
+
+/** Ngừng/dùng lại môn, cấp học, phòng; ẩn/xuất bản khóa học — một chạm từ danh sách. */
+export async function setCatalogActiveAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN");
+  const parsed = parseForm(toggleSchema, formFields(formData, ["kind", "id", "active"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => setCatalogActive(actor, parsed.data.kind, parsed.data.id, parsed.data.active === "1"));
+  if (!result.ok) return result.state;
+  revalidatePath("/quan-ly", "layout");
+  revalidateCatalog();
+  return { ok: true, message: "Đã cập nhật." };
 }

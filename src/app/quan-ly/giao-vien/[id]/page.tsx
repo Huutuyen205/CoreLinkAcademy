@@ -5,6 +5,8 @@ import { WeekSchedule } from "@/components/schedule/week-schedule";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { listSessionsForManager } from "@/server/academic/operations";
+import { UserRowActions } from "@/components/people/user-row-actions";
+import { ActionLink } from "@/components/ui/row-actions";
 import { requireRole } from "@/server/auth/guard";
 import { orNotFound } from "@/server/page";
 import { getTeacherProfile } from "@/server/people/service";
@@ -33,9 +35,13 @@ export default async function TeacherDetailPage({ params, searchParams }: { para
         title={t.fullName}
         description={[t.expertise, t.phone ? formatPhone(t.phone) : null, t.email].filter(Boolean).join(" · ") || "Giáo viên"}
         action={
-          <span className="flex flex-wrap gap-2">
+          <span className="flex flex-wrap items-center gap-2">
             <Badge tone={ms.tone}>{ms.label}</Badge>
             {t.status === "DISABLED" && <Badge tone={USER_STATUS.DISABLED.tone}>Tài khoản bị khóa</Badge>}
+            <ActionLink href={`/quan-ly/lich?gv=${t.id}`} icon="schedule">
+              Lịch dạy
+            </ActionLink>
+            <UserRowActions user={{ ...t, role: "TEACHER" }} actor={actor} hideProfile />
           </span>
         }
       />

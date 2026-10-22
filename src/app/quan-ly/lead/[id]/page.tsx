@@ -105,7 +105,7 @@ export default async function LeadDetailPage({ params, searchParams }: { params:
             />
           </Card>
           {canConvert && (
-            <Card title="Chuyển thành học viên">
+            <Card title="Chuyển thành học viên" id="chuyen-hoc-vien" className="scroll-mt-24">
               <ConvertLeadForm
                 lead={{ id: lead.id, studentName: lead.studentName, gradeLevel: lead.gradeLevel, parentName: lead.parentName, phone: lead.phone, email: lead.email }}
                 classes={classes.map((c) => ({ value: c.id, label: `${c.code} — ${c.course.title} (còn ${c.capacity - c._count.enrollments} chỗ)` }))}

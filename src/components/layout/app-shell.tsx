@@ -1,9 +1,10 @@
-import { Bell, KeyRound, LogOut, User } from "lucide-react";
+import { Bell, Download, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
+import { Avatar } from "@/components/ui/avatar";
 import { Brand, BridgeArc } from "./brand";
 import { BottomNav, MobileMenu, SideNav, type NavItem } from "./nav-links";
 
@@ -40,15 +41,13 @@ function BellLink({ unread }: { unread: number }) {
  * dưới đó là thanh trên xanh + ngăn kéo menu (docs/08 §5).
  */
 export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children }: Props) {
-  const initials = actor.fullName.trim().split(" ").slice(-1)[0]?.[0] ?? "U";
-
   const account = (
     <div className="space-y-3 rounded-2xl border border-white/12 bg-white/6 p-3.5 backdrop-blur-xs">
       <div className="flex items-center gap-3">
-        <div className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-accent to-accent-light font-heading text-sm font-bold text-white shadow-sm ring-2 ring-white/20">
-          {initials}
+        <Link href="/tai-khoan" title="Đổi ảnh đại diện" className="relative shrink-0 rounded-full ring-2 ring-white/20">
+          <Avatar name={actor.fullName} fileId={actor.avatarFileId} />
           <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-primary-strong" />
-        </div>
+        </Link>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-bold text-white leading-tight">{actor.fullName}</p>
           <span className="inline-block mt-0.5 rounded-full bg-white/15 px-2 py-0.2 text-[10px] font-semibold text-brand-tint">
@@ -56,6 +55,14 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
           </span>
         </div>
       </div>
+
+      <Link
+        href="/cai-ung-dung"
+        className="flex items-center justify-center gap-1.5 rounded-xl bg-white/10 py-1.5 text-xs font-semibold text-white no-underline transition-colors hover:bg-white/20"
+      >
+        <Download className="size-3.5" aria-hidden="true" />
+        Cài ứng dụng
+      </Link>
 
       <div className="flex items-center justify-between border-t border-white/10 pt-2.5 text-xs">
         <Link
@@ -89,7 +96,7 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
   );
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
+    <div className="min-h-dvh lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
       <a
         href="#noi-dung"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-50 focus:rounded-control focus:bg-surface focus:px-3 focus:py-2 focus:shadow-md"
@@ -145,9 +152,10 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
       </header>
 
       {/* ─── Main content ─── */}
+      {/* min-w-0: cột nội dung không bị bảng/email dài kéo rộng hơn màn hình (gây kéo ngang trang). */}
       <main
         id="noi-dung"
-        className={bottomNav ? "px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 lg:p-8" : "px-4 py-6 lg:p-8"}
+        className={bottomNav ? "min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 lg:p-8" : "min-w-0 px-4 py-6 lg:p-8"}
       >
         <div className="mx-auto max-w-[1140px]">{children}</div>
       </main>

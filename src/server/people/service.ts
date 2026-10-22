@@ -1,5 +1,5 @@
 // Hồ sơ giáo viên / học sinh / phụ huynh cho quản lý (Admin §2, §3, §4 — FR-036).
-import type { MemberStatus, Prisma, Role } from "@prisma/client";
+import type { MemberStatus, Prisma, Role, UserStatus } from "@prisma/client";
 import { writeAudit } from "@/server/audit/log";
 import { assertCan, can } from "@/server/auth/policy";
 import { assertCanViewStudent, isManager } from "@/server/auth/scope";
@@ -127,9 +127,14 @@ export async function getStudentProfile(actor: Actor, studentId: string) {
 
 /* ───────────── Phụ huynh ───────────── */
 
-export async function listParentsPage(actor: Actor, filter: { q?: string; page: number }) {
+export async function listParentsPage(actor: Actor, filter: { q?: string; status?: UserStatus; noChild?: boolean; page: number }) {
   assertCan(actor, "guardian.manage");
-  const where: Prisma.UserWhereInput = { role: "PARENT", ...textSearch(filter.q) };
+  const where: Prisma.UserWhereInput = {
+    role: "PARENT",
+    ...textSearch(filter.q),
+    ...(filter.status ? { status: filter.status } : {}),
+    ...(filter.noChild ? { childLinks: { none: {} } } : {}),
+  };
   const [total, rows] = await Promise.all([
     db.user.count({ where }),
     db.user.findMany({

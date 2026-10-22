@@ -84,8 +84,10 @@ export async function setUserStatusAction(_prev: ActionState, formData: FormData
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setUserStatus(actor, parsed.data.userId, parsed.data.status));
   if (!result.ok) return result.state;
-  revalidatePath(`/quan-ly/nguoi-dung/${parsed.data.userId}`);
-  return { ok: true, message: parsed.data.status === "DISABLED" ? "Đã khóa tài khoản." : "Đã mở khóa tài khoản." };
+  revalidatePath("/quan-ly", "layout");
+  const verb = parsed.data.status === "DISABLED" ? "khóa" : "mở khóa";
+  const linked = result.value.linked > 0 ? ` và ${result.value.linked} tài khoản học sinh/phụ huynh liên kết` : "";
+  return { ok: true, message: `Đã ${verb} tài khoản${linked}.` };
 }
 
 export type ResetState = ActionState & { password?: string; login?: string };

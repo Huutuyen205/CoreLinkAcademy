@@ -52,7 +52,7 @@ export function Badge({ tone = "neutral", children }: { tone?: BadgeTone; childr
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide",
+        "inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold tracking-wide",
         badgeTones[tone],
       )}
     >
@@ -68,7 +68,9 @@ export function Card({
   children,
   className,
   interactive = false,
+  id,
 }: {
+  id?: string;
   title?: string;
   action?: ReactNode;
   children: ReactNode;
@@ -77,6 +79,7 @@ export function Card({
 }) {
   return (
     <section
+      id={id}
       className={cn(
         "rounded-block border border-line bg-surface p-4 shadow-[0_2px_8px_rgba(14,20,51,0.06)] sm:p-5",
         interactive && "card-interactive",

@@ -89,7 +89,7 @@ async function checkSessionScope(actor: Actor, sessionId: string | null) {
 /** Tạo tài liệu: cần tệp tải lên hoặc đường dẫn. `shareClassIds` chia sẻ luôn cho các lớp (theo quyền chia sẻ). */
 export async function createDocument(actor: Actor, input: DocumentInput, files: PreparedFile[], shareClassIds: string[] = []): Promise<string> {
   if (!canCreateKind(actor.role, input.kind)) throw new ForbiddenError();
-  if (files.length === 0 && !input.url) throw new DomainError("NO_CONTENT", "Tải tệp lên hoặc nhập đường dẫn tài liệu.", { files: "Chọn tệp hoặc nhập đường dẫn." });
+  if (files.length === 0 && !input.url) throw new DomainError("NO_CONTENT", "Hãy tải tệp tài liệu lên (hoặc dán liên kết ngoài nếu tệp quá lớn).", { files: "Chọn tệp tài liệu." });
   await checkSessionScope(actor, input.sessionId);
   if (input.kind === "LESSON_PLAN" && shareClassIds.length > 0) throw new DomainError("NOT_SHAREABLE", "Giáo án không chia sẻ cho học sinh.");
   const classIds = await shareableClassIds(actor, shareClassIds);
@@ -106,7 +106,7 @@ export async function createDocument(actor: Actor, input: DocumentInput, files: 
 
 export async function updateDocument(actor: Actor, documentId: string, input: Omit<DocumentInput, "kind">): Promise<void> {
   const doc = await manageable(actor, documentId);
-  if (!input.url && doc._count.files === 0) throw new DomainError("NO_CONTENT", "Tài liệu cần tệp hoặc đường dẫn.", { url: "Nhập đường dẫn hoặc giữ tệp đã tải." });
+  if (!input.url && doc._count.files === 0) throw new DomainError("NO_CONTENT", "Tài liệu chưa có tệp — hãy giữ liên kết ngoài hoặc tải tệp lên trước.", { url: "Tài liệu chưa có tệp nên cần liên kết." });
   await checkSessionScope(actor, input.sessionId);
   const data = doc.kind === "LESSON_PLAN" ? { ...input, visibleToStudents: false, visibleToParents: false } : input;
   await db.document.update({ where: { id: documentId }, data });

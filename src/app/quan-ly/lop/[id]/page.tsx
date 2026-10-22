@@ -3,11 +3,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Flash } from "@/components/layout/flash";
-import { buttonClass } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { TextField } from "@/components/ui/field";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { FilterForm } from "@/components/ui/filter-form";
+import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
 import {
+  cancelClassAction,
   cancelSessionAction,
   deleteClassAction,
   enrollStudentsAction,
@@ -40,7 +42,9 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
   const canEnroll = klass.status === "OPEN" || klass.status === "IN_PROGRESS";
   const candidates = canEnroll ? await listStudentsForEnrollment(actor, klass.id, q) : [];
   const seats = klass.enrollments.filter((e) => e.status === "ACTIVE" || e.status === "PAUSED").length;
-  const nextStatuses = CLASS_TRANSITIONS[klass.status];
+  const nextStatuses = CLASS_TRANSITIONS[klass.status].filter((s) => s !== "CANCELLED");
+  const canCancel = CLASS_TRANSITIONS[klass.status].includes("CANCELLED");
+  const canDelete = klass.enrollments.length === 0 || klass.status === "CANCELLED";
   const now = new Date();
 
   return (
@@ -52,7 +56,45 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
       <PageHeader
         title={`Lớp ${klass.code}`}
         description={`${klass.course.title} · GV ${klass.teacher.fullName}${klass.room ? ` · ${klass.room.name}` : ""}`}
-        action={<Badge tone={CLASS_STATUS[klass.status].tone}>{CLASS_STATUS[klass.status].label}</Badge>}
+        action={
+          <RowActions>
+            <Badge tone={CLASS_STATUS[klass.status].tone}>{CLASS_STATUS[klass.status].label}</Badge>
+            {!isClosed && (
+              <ActionLink href="#sua-lop" icon="edit">
+                Sửa lớp
+              </ActionLink>
+            )}
+            <ActionLink href={`/quan-ly/lich?lop=${klass.id}`} icon="schedule">
+              Lịch
+            </ActionLink>
+            <ActionLink href={`/tin-nhan/lop/${klass.id}`} icon="message">
+              Nhóm lớp
+            </ActionLink>
+            {canCancel && (
+              <ActionButton
+                action={cancelClassAction}
+                hidden={{ classId: klass.id }}
+                icon="cancel"
+                tone="danger"
+                prompt={{ name: "reason", message: `Hủy lớp ${klass.code}? Các buổi chưa học sẽ bị hủy và lớp nhận thông báo.
+Lý do (không bắt buộc):` }}
+              >
+                Hủy lớp
+              </ActionButton>
+            )}
+            {canDelete && (
+              <ActionButton
+                action={deleteClassAction}
+                hidden={{ classId: klass.id }}
+                icon="delete"
+                tone="danger"
+                confirm={`Xóa hẳn lớp ${klass.code} cùng toàn bộ buổi học${klass.enrollments.length ? ", ghi danh, điểm danh và bài tập" : ""}? Không hoàn tác được.`}
+              >
+                Xóa lớp
+              </ActionButton>
+            )}
+          </RowActions>
+        }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
@@ -191,7 +233,7 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
 
         <div className="space-y-6">
           {!isClosed && (
-            <Card title="Sửa lớp / phân công giáo viên">
+            <Card title="Sửa lớp / phân công giáo viên" className="scroll-mt-24" id="sua-lop">
               <ConfigForm
                 action={updateClassAction}
                 hidden={{ classId: klass.id }}
@@ -229,12 +271,9 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
 
           {canEnroll && (
             <Card title="Ghi danh học sinh">
-              <form method="get" className="mb-4 flex items-end gap-2">
-                <TextField name="q" label="Tìm theo tên hoặc mã HS" defaultValue={q} maxLength={80} className="flex-1" />
-                <button type="submit" className={buttonClass("secondary")}>
-                  Tìm
-                </button>
-              </form>
+              <FilterForm className="mb-4">
+                <TextField name="q" label="Tìm theo tên hoặc mã HS" defaultValue={q} maxLength={80} />
+              </FilterForm>
               {candidates.length === 0 ? (
                 <p className="text-sm text-muted">Không có học sinh phù hợp để ghi danh.</p>
               ) : (
@@ -261,7 +300,7 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                 action={setClassStatusAction}
                 hidden={{ classId: klass.id }}
                 submitLabel="Cập nhật"
-                confirm="Đổi trạng thái lớp? Kết thúc/hủy lớp không hoàn tác được."
+                confirm="Đổi trạng thái lớp? Kết thúc lớp không hoàn tác được."
                 fields={[
                   {
                     type: "select",
@@ -269,7 +308,7 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
                     label: "Chuyển sang",
                     required: true,
                     placeholder: "Chọn",
-                    hint: "Kết thúc: học sinh đang học → hoàn thành. Hủy: các buổi chưa diễn ra bị hủy.",
+                    hint: "Kết thúc: học sinh đang học → hoàn thành. Muốn hủy lớp: dùng nút \"Hủy lớp\" ở đầu trang.",
                     options: nextStatuses.map((s) => ({ value: s, label: CLASS_STATUS[s].label })),
                   },
                 ]}
@@ -277,9 +316,29 @@ export default async function ManageClassPage({ params, searchParams }: Props) {
             </Card>
           )}
 
-          {klass.enrollments.length === 0 && (
-            <Card title="Xóa lớp">
-              <ConfigForm action={deleteClassAction} hidden={{ classId: klass.id }} submitLabel="Xóa lớp" submitVariant="danger" confirm="Xóa lớp và toàn bộ buổi học?" fields={[]} />
+          {(canCancel || canDelete) && (
+            <Card title="Hủy / xóa lớp">
+              <ul className="mb-3 space-y-1 text-sm text-muted">
+                <li>
+                  <strong className="text-ink">Hủy lớp:</strong> giữ lại lịch sử, các buổi chưa học bị hủy, GV/HS/PH nhận thông báo.
+                </li>
+                <li>
+                  <strong className="text-ink">Xóa lớp:</strong> xóa hẳn. Lớp đã có học sinh phải hủy trước rồi mới xóa được.
+                </li>
+              </ul>
+              <RowActions>
+                {canCancel && (
+                  <ActionButton action={cancelClassAction} hidden={{ classId: klass.id }} icon="cancel" tone="danger" prompt={{ name: "reason", message: `Hủy lớp ${klass.code}?
+Lý do (không bắt buộc):` }}>
+                    Hủy lớp
+                  </ActionButton>
+                )}
+                {canDelete && (
+                  <ActionButton action={deleteClassAction} hidden={{ classId: klass.id }} icon="delete" tone="danger" confirm={`Xóa hẳn lớp ${klass.code}? Không hoàn tác được.`}>
+                    Xóa lớp
+                  </ActionButton>
+                )}
+              </RowActions>
             </Card>
           )}
         </div>

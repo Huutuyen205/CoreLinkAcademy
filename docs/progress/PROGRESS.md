@@ -1,5 +1,46 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-22 (chiều) — Giao diện quản lý, hủy/xóa lớp, khóa dây chuyền, cài ứng dụng (DECISION-D31)
+
+- **Trang bị kéo ngang:** cột nội dung `minmax(0,1fr)` + `min-w-0`; `html, body { overflow-x: clip }`; bảng quá rộng cuộn trong khung (`DataTable` `overflow-x-auto`).
+- **Lọc tự động:** `FilterForm` — chọn ô là lọc, gõ chữ lọc sau 0,5 giây, giữ con trỏ ở ô tìm; áp cho Người dùng, Học viên, Phụ huynh, Giáo viên, Lớp (thêm tìm mã/khóa/GV), Lead, Lịch tổng, Nhật ký, Báo cáo, Tài liệu, Môn học, ghi danh lớp; trang Khóa học công khai lọc ngay nhưng vẫn giữ nút cho trình duyệt không JS.
+- **Nút thao tác thống nhất:** `RowActions`/`ActionLink`/`ActionButton` (cùng cỡ, icon, xác nhận, hỏi lý do, lỗi hiện dưới nút); `UserRowActions` dùng chung (Hồ sơ · Sửa · Đặt lại MK · Khóa/Mở khóa — 3 nút sau chỉ Admin). Có ở Người dùng, Học viên, Phụ huynh, Giáo viên (danh sách + trang chi tiết), Lớp, Khóa học (Sửa · Xem trên web · Ẩn/Xuất bản · Xóa), Phòng (Lịch · Tạm ngừng/Dùng lại · Xóa), Lead (Xử lý · Gọi · Chuyển HS), Môn & cấp học.
+- **Học viên:** thẻ mới (ảnh, mã, khối, trạng thái, nút thao tác ở đầu thẻ; lớp đang học dạng chip; phụ huynh dạng chip có nút gỡ; ô "Thêm phụ huynh" gõ tìm + nút cùng một hàng); lọc "Tài khoản", "Chưa có phụ huynh", "Chưa có lớp".
+- **Lớp học:** nút **Hủy lớp** (hỏi lý do, hủy buổi chưa học, thông báo lớp, audit `class.cancel`) và **Xóa lớp** (lớp có học sinh phải hủy trước) ở danh sách và chi tiết.
+- **Khóa dây chuyền:** khóa/mở HS ↔ PH một cấp, cả hai chiều; câu xác nhận nói rõ ai bị khóa theo; thu hồi phiên; audit từng tài khoản.
+- **Môn & cấp học:** thẻ cấp học có nút Sửa/Ngừng/Xóa; bảng ma trận môn × cấp (✓); form Thêm/Sửa ở cột phải; slug tự tạo từ tên (cả khóa học).
+- **Tài liệu:** tệp là chính, "Liên kết ngoài (tùy chọn)" đặt sau và hiển thị nhỏ.
+- **Cài ứng dụng:** trang `/cai-ung-dung` (nút cài một chạm trên Android/Chrome/Edge, hướng dẫn iPhone "Thêm vào MH chính", máy tính); manifest có icon 192/512 + maskable, shortcut Thông báo/Tin nhắn; `appleWebApp`; liên kết ở trang đăng nhập và sidebar.
+- **Tài liệu:** docs/01 (v3.4), 03, 05 (P2-44), 17 (DECISION-D31).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` ✓ **19 file / 115 test** (thêm `slugify`) · `pnpm build` ✓.
+- **Thật trên DB + server bản build (31/31 đạt):** khóa HS → PH khóa theo, HS khác của PH không bị (một cấp), phiên PH bị thu hồi; mở khóa theo; khóa PH → 2 con; audit 10 dòng; lớp có HS không xóa được → hủy (3 buổi hủy kèm lý do, HS có thông báo, audit) → xóa được; phòng tạm ngừng; xóa cấp học chưa dùng / chặn cấp đang có môn; 15 trang quản lý + `/cai-ung-dung` trả 200 với nội dung mới; manifest đủ 4 icon. Dữ liệu "[Kiểm thử]" đã xóa (đếm lại = 0, không tài khoản demo nào bị khóa).
+- **Chưa kiểm thử bằng trình duyệt thật:** cảm giác kéo trang trên điện thoại, lọc khi gõ, hộp thoại cài ứng dụng — PO thử trên máy.
+
+
+## 2026-10-22 — Bổ sung theo yêu cầu PO (DECISION-D30): thao tác theo tài khoản, Excel, thông báo đẩy, chat kiểu Zalo, ảnh tự luận, ảnh đại diện
+
+- **DB:** migration chỉ thêm `20261024090000_chat_files_push_avatar` (`stored_files.questionId/messageId`, `users.avatarFileId`, bảng `push_subscriptions`) — **đã áp lên Supabase** (`pnpm db:migrate`). docs/10 §5c.
+- **Người dùng (FR-013):** cột "Thao tác" (Sửa · Hồ sơ HS/PH/GV · Đặt lại MK · Khóa/Mở khóa, không tự khóa) + bảng "Thao tác được phép theo vai trò" (`ROLE_CAPABILITIES` trong `policy.ts`, chỉ để hiển thị); trang chi tiết có thẻ thao tác của vai trò.
+- **Xuất Excel (FR-052):** `/quan-ly/bao-cao/xuat` trả `.xlsx` (exceljs), thêm "Xuất Excel tất cả" (3 sheet). Cột %: công thức (`IF(C>0,(D+E)/C,"")`…), dòng Tổng dùng `SUM`/`SUMPRODUCT`, Excel tính lại khi mở. Gỡ xuất CSV.
+- **Liên kết phụ huynh (FR-014):** ô gõ chữ lọc tên/SĐT/mã HS không dấu (`ComboboxField`, `lib/search.ts`) ở Học viên, hồ sơ HS, hồ sơ PH, và ô "Người nhận" tin nhắn.
+- **Thông báo đẩy (FR-048):** `src/server/push/*`, `public/sw.js`, `app/manifest.ts`, nút bật/tắt/gửi thử ở `/thong-bao`. Mọi `notifyUsers` + tin nhắn mới đều đẩy; gửi bằng `after()` sau response và chỉ khi thông báo đã commit. Cần env `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (đã thêm vào `.env` dev; docs/14).
+- **Tin nhắn (FR-050):** bố cục 2 cột kiểu Zalo, gửi ảnh (chụp/chọn/dán, tự thu nhỏ) và tệp, tin chỉ có tệp, gộp tin liên tiếp, danh sách thành viên nhóm lớp + "Nhắn riêng"; quy tắc 1-1 mới `messaging/rules.ts` (thay D29); tệp tin riêng chỉ người trong cuộc mở được; làm mới 4 giây.
+- **Bài tự luận (FR-031):** mỗi câu ESSAY có "Chụp ảnh" (camera sau) / "Chọn ảnh/PDF" (≤ 6), gửi ngay không mất chữ đang gõ; nhắc khi nộp còn câu tự luận trống; nộp bài cần chấm → GV nhận thông báo; GV thấy ảnh đúng câu khi chấm; HS xem lại sau công bố.
+- **Ảnh đại diện (FR-051):** đổi/chụp/gỡ ở `/tai-khoan`, hiện ở sidebar, tin nhắn, danh sách thành viên.
+- **Tài liệu:** docs/00, 01 (v3.3), 03, 05 (P2-03/18/27/39 cập nhật, thêm P2-42, P2-43), 10 §5c, 14, 17 (DECISION-D30, D29 bị thay).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ (0 lỗi, 0 cảnh báo) · `pnpm test` ✓ **19 file / 114 test** (mới: `messaging/rules.test.ts`, `lib/search.test.ts`, test Excel trong `reports.test.ts`, `formatChatTime`) · `pnpm build` ✓.
+- **Kiểm thử thật trên DB + server bản build (48/48 đạt):** quy tắc nhắn riêng (HS1↔HS2, HS1↔GV, HS1↔PH1 được; HS1↔PH2 bị chặn), tin + ảnh, Admin mở ảnh tin riêng qua `/tep` → 404, nhóm lớp có thành viên và nút nhắn riêng đúng quyền, GV Văn vào nhóm Toán → 404; bài tự luận: tải 2 ảnh, câu MCQ không nhận ảnh, PH1 xem được/PH2 & HS2 → 404, nộp → GV có thông báo, không tải thêm sau nộp, GV thấy 2 ảnh, chấm 8,5 + 2 = 10,5; ảnh đại diện đổi/xóa tệp cũ; lưu/chuyển/tắt đăng ký đẩy; 11 trang trả 200 có nội dung mới; xuất Excel tất cả là `.xlsx` hợp lệ, HS gọi route xuất → 404; `sw.js`/manifest phục vụ được. Dữ liệu "[Kiểm thử]" đã xóa (đếm lại = 0).
+- **Chưa kiểm thử:** nhận thông báo đẩy thật trên trình duyệt/điện thoại (cần bấm cho phép trên thiết bị thật) và thao tác giao diện bằng tay (ô gõ tìm, chụp ảnh bằng camera, dán ảnh) — PO thử trên điện thoại.
+
+### Việc PO
+1. Vercel → Environment Variables: thêm `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (lấy giá trị trong `.env` dev hoặc sinh cặp mới), rồi redeploy (khóa công khai nhúng lúc build).
+2. iPhone: mở web bằng Safari → Chia sẻ → "Thêm vào MH chính", mở từ màn hình chính rồi bật thông báo.
+3. Review, commit, push (trợ lý không commit).
+
 ## 2026-10-22 — Cập nhật Banner siêu nét, Dữ liệu Giáo viên chính thức, Thông tin liên hệ và Tối ưu Header công khai
 - **Yêu cầu & Mục tiêu:**
   1. Thay banner chính thức mới và tăng độ phân giải/độ nét để hiển thị sắc nét trên mọi loại màn hình.

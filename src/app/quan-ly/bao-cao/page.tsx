@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { SelectField, TextField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
 import { Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
 import { parseReportFilter } from "@/server/reports/filter";
@@ -36,7 +37,7 @@ function Bar({ value }: { value: number | null }) {
   );
 }
 
-// Admin §13A — FR-052: thống kê số lượng, chuyên cần, kết quả, hoàn thành bài tập; lọc thời gian/lớp/môn; xuất Excel (CSV).
+// Admin §13A — FR-052: thống kê số lượng, chuyên cần, kết quả, hoàn thành bài tập; lọc thời gian/lớp/môn; xuất Excel (.xlsx, cột % là công thức).
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const actor = await requireRole("ADMIN", "STAFF");
   const sp = await searchParams;
@@ -56,16 +57,21 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <PageHeader title="Báo cáo – thống kê" description={`Từ ${fromKey.split("-").reverse().join("/")} đến ${toKey.split("-").reverse().join("/")}.`} />
-      <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:items-end">
+      <PageHeader
+        title="Báo cáo – thống kê"
+        description={`Từ ${fromKey.split("-").reverse().join("/")} đến ${toKey.split("-").reverse().join("/")}.`}
+        action={
+          <ButtonLink href={`/quan-ly/bao-cao/xuat?loai=tat-ca&${qs}`} size="sm">
+            Xuất Excel tất cả
+          </ButtonLink>
+        }
+      />
+      <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:items-end">
         <TextField type="date" name="tu" label="Từ ngày" defaultValue={fromKey} />
         <TextField type="date" name="den" label="Đến ngày" defaultValue={toKey} />
         <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
         <SelectField name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-        <button type="submit" className={buttonClass()}>
-          Xem
-        </button>
-      </form>
+      </FilterForm>
 
       <section aria-label="Số liệu chung" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Học sinh đang học" value={summary.students} hint={`${summary.studentsOnLeave} bảo lưu · ${summary.studentsInactive} đã nghỉ`} />

@@ -151,6 +151,7 @@ model User {
   address            String?      @db.VarChar(255)
   expertise          String?      @db.VarChar(200) // GV: chuyên môn / môn dạy
   profileNote        String?      @db.Text // ghi chú hồ sơ (năng lực đầu vào, mục tiêu…) — chỉ quản lý sửa
+  avatarFileId       String?      @unique // ảnh đại diện (FR-051) — mọi người đã đăng nhập xem được
   createdAt          DateTime     @default(now())
   updatedAt          DateTime     @updatedAt
 
@@ -183,6 +184,8 @@ model User {
   evaluationsWritten      Evaluation[]         @relation("EvaluationTeacher")
   conversationMemberships ConversationMember[]
   messages                Message[]
+  avatarFile              StoredFile?          @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
+  pushSubscriptions       PushSubscription[]
 
   @@index([role, fullName]) // listUsers/listLearners: lọc vai trò + sắp xếp theo tên
   @@map("users")
@@ -467,6 +470,7 @@ model Question {
   points          Float
   assignment      Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   answers         Answer[]
+  files           StoredFile[] // ảnh bài làm câu tự luận (cùng `submissionId`)
 
   @@index([assignmentId, order])
   @@map("questions")
@@ -527,7 +531,8 @@ model AuditLog {
 }
 
 /// Metadata tệp tải lên. Nội dung nằm ở `file_blobs` để truy vấn danh sách không bao giờ kéo dữ liệu nhị phân.
-/// Mỗi tệp thuộc đúng một chủ sở hữu (bài tập / bài nộp / tài liệu) — quyền tải xuống suy ra từ chủ sở hữu.
+/// Mỗi tệp thuộc đúng một chủ sở hữu (bài tập / bài nộp / tài liệu / tin nhắn / ảnh đại diện) — quyền tải xuống suy ra từ chủ sở hữu.
+/// Ảnh câu tự luận: `submissionId` + `questionId` (quyền như bài nộp).
 model StoredFile {
   id           String      @id @default(cuid())
   fileName     String      @db.VarChar(200)
@@ -536,17 +541,23 @@ model StoredFile {
   uploadedById String
   assignmentId String?
   submissionId String?
+  questionId   String?
   documentId   String?
+  messageId    String?
   createdAt    DateTime    @default(now())
   uploadedBy   User        @relation(fields: [uploadedById], references: [id])
   assignment   Assignment? @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question     Question?   @relation(fields: [questionId], references: [id], onDelete: Cascade)
   document     Document?   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  message      Message?    @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  avatarOf     User?       @relation("UserAvatar")
   blob         FileBlob?
 
   @@index([assignmentId])
-  @@index([submissionId])
+  @@index([submissionId, questionId])
   @@index([documentId])
+  @@index([messageId])
   @@map("stored_files")
 }
 
@@ -751,9 +762,25 @@ model Message {
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id])
+  files          StoredFile[] // ảnh/tệp đính kèm (body có thể rỗng khi chỉ gửi tệp)
 
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+/// Đăng ký thông báo đẩy (Web Push) của một trình duyệt/thiết bị. Endpoint hết hạn (404/410) bị xóa khi gửi.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique @db.VarChar(1000)
+  p256dh    String   @db.VarChar(200)
+  auth      String   @db.VarChar(100)
+  userAgent String?  @db.VarChar(300)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model RateLimitBucket {

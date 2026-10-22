@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { WeekSchedule } from "@/components/schedule/week-schedule";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { SelectField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
 import { PageHeader } from "@/components/ui/feedback";
 import { listSessionsForManager, scheduleFilterOptions } from "@/server/academic/operations";
 import { requireRole } from "@/server/auth/guard";
@@ -36,7 +37,7 @@ export default async function ManagerSchedulePage({ searchParams }: { searchPara
   return (
     <>
       <PageHeader title="Lịch tổng" description="Toàn bộ buổi học trong tuần. Lọc theo giáo viên, phòng hoặc lớp để kiểm tra lịch trống và tình trạng sử dụng phòng." />
-      <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+      <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
         <input type="hidden" name="tuan" value={weekStart} />
         <SelectField name="gv" label="Giáo viên" placeholder="Tất cả" defaultValue={teacherId ?? ""} options={options.teachers.map((t) => ({ value: t.id, label: t.fullName }))} />
         <SelectField
@@ -48,16 +49,13 @@ export default async function ManagerSchedulePage({ searchParams }: { searchPara
         />
         <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
         <div className="flex gap-2">
-          <button type="submit" className={buttonClass()}>
-            Lọc
-          </button>
           {(teacherId || roomId || classId) && (
             <ButtonLink href={`/quan-ly/lich?tuan=${weekStart}`} variant="ghost">
               Bỏ lọc
             </ButtonLink>
           )}
         </div>
-      </form>
+      </FilterForm>
       {roomName && (
         <p className="mb-4 text-sm text-muted">
           Phòng {roomName}: {sessions.filter((s) => s.status !== "CANCELLED").length} buổi có lịch trong tuần. Ngày không có buổi là phòng trống cả ngày.

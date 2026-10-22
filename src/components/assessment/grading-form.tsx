@@ -2,6 +2,7 @@
 
 import type { QuestionType } from "@prisma/client";
 import { useActionState } from "react";
+import { PhotoGrid, type PhotoItem } from "@/components/assessment/essay-photos";
 import { FormMessage } from "@/components/forms/config-form";
 import { TextareaField, TextField } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -19,6 +20,8 @@ export type GradingItem = {
   autoPoints: number | null;
   teacherPoints: number | null;
   feedback: string | null;
+  /** Ảnh bài làm câu tự luận học sinh chụp gửi. */
+  photos: PhotoItem[];
 };
 
 type Props = {
@@ -56,7 +59,9 @@ export function GradingForm({ submissionId, items, comment, publishedWarning, ma
             <p className="mt-1 whitespace-pre-line font-medium">{it.prompt}</p>
             <div className="mt-3 rounded-control bg-paper p-3">
               <p className="text-sm text-muted">Bài làm</p>
-              <p className="whitespace-pre-line">{it.responseText || <span className="text-muted">(Bỏ trống)</span>}</p>
+              <p className="whitespace-pre-line">{it.responseText || (it.photos.length === 0 ? <span className="text-muted">(Bỏ trống)</span> : null)}</p>
+              {it.photos.length > 0 && <p className="mt-2 text-sm text-muted">{`Ảnh bài làm (${it.photos.length}) — bấm vào ảnh để xem cỡ lớn:`}</p>}
+              <PhotoGrid photos={it.photos} />
             </div>
             {it.correctText && <p className="mt-2 text-sm text-success">Đáp án: {it.correctText}</p>}
             {it.answerId && (

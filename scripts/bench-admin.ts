@@ -28,7 +28,7 @@ async function main() {
 
   const admin = await db.user.findFirst({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true, role: true, fullName: true } });
   if (!admin) throw new Error("Không có tài khoản ADMIN để đo.");
-  const actor = { ...admin, mustChangePassword: false };
+  const actor = { ...admin, mustChangePassword: false, avatarFileId: null };
   const [firstClass, firstLead, counts] = await Promise.all([
     db.class.findFirst({ select: { id: true } }),
     db.lead.findFirst({ select: { id: true } }),

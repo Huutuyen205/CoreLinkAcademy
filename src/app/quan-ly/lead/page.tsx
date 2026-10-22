@@ -1,9 +1,11 @@
 import type { LeadStatus } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
 import { SelectField, TextField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
+import { ActionLink, RowActions } from "@/components/ui/row-actions";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
 import { listSubjects } from "@/server/catalog/public";
@@ -35,7 +37,7 @@ export default async function LeadListPage({ searchParams }: { searchParams: Pro
   return (
     <>
       <PageHeader title="Lead" description="Khách đăng ký học thử và khách nhập tay." action={<ButtonLink href="/quan-ly/lead/moi">Nhập lead</ButtonLink>} />
-      <form method="get" className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end">
+      <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm theo tên hoặc SĐT" defaultValue={q} maxLength={100} />
         <SelectField
           name="status"
@@ -46,16 +48,13 @@ export default async function LeadListPage({ searchParams }: { searchParams: Pro
         />
         <SelectField name="mon" label="Môn" placeholder="Tất cả" defaultValue={subjectId ?? ""} options={subjects.map((s) => ({ value: s.id, label: s.name }))} />
         <div className="flex gap-2">
-          <button type="submit" className={buttonClass()}>
-            Lọc
-          </button>
           {filtered && (
             <ButtonLink href="/quan-ly/lead" variant="ghost">
               Bỏ lọc
             </ButtonLink>
           )}
         </div>
-      </form>
+      </FilterForm>
       <p className="mb-4 text-sm">
         {overdue ? (
           <Link href="/quan-ly/lead">Xem tất cả lead</Link>
@@ -99,6 +98,25 @@ export default async function LeadListPage({ searchParams }: { searchParams: Pro
               ),
             },
             { header: "Ngày tạo", cell: (r) => formatDateTime(r.createdAt) },
+            {
+              header: "Thao tác",
+              className: "md:w-[1%] md:whitespace-nowrap",
+              cell: (r) => (
+                <RowActions>
+                  <ActionLink href={`/quan-ly/lead/${r.id}`} icon="edit" tone={r.status === "NEW" ? "primary" : "default"}>
+                    Xử lý
+                  </ActionLink>
+                  <ActionLink href={`tel:${r.phone}`} icon="message">
+                    Gọi
+                  </ActionLink>
+                  {r.status !== "ENROLLED" && r.status !== "LOST" && (
+                    <ActionLink href={`/quan-ly/lead/${r.id}#chuyen-hoc-vien`} icon="profile">
+                      Chuyển HS
+                    </ActionLink>
+                  )}
+                </RowActions>
+              ),
+            },
           ]}
         />
       )}

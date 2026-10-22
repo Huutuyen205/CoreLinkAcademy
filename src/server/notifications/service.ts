@@ -4,14 +4,19 @@ import { isManager } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db, type Tx } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { queuePush } from "@/server/push/service";
 
 export type NotificationInput = { kind: string; title: string; body: string; link?: string | null };
 
-/** Ghi một thông báo cho nhiều người (bỏ trùng). Gọi trong transaction của nghiệp vụ để thông báo và thay đổi cùng thành công. */
+/**
+ * Ghi một thông báo cho nhiều người (bỏ trùng). Gọi trong transaction của nghiệp vụ để thông báo và thay đổi cùng thành công.
+ * Kèm thông báo đẩy tới thiết bị đã bật — gửi sau response, chỉ khi transaction đã commit.
+ */
 export async function notifyUsers(tx: Tx, userIds: Iterable<string>, input: NotificationInput & { announcementId?: string }): Promise<number> {
   const ids = [...new Set(userIds)];
   if (ids.length === 0) return 0;
-  await tx.notification.createMany({
+  const created = await tx.notification.createManyAndReturn({
+    select: { id: true },
     data: ids.map((userId) => ({
       userId,
       kind: input.kind,
@@ -21,6 +26,7 @@ export async function notifyUsers(tx: Tx, userIds: Iterable<string>, input: Noti
       announcementId: input.announcementId ?? null,
     })),
   });
+  queuePush(ids, { title: input.title, body: input.body, url: input.link ?? "/thong-bao", tag: input.kind }, created.map((n) => n.id));
   return ids.length;
 }
 

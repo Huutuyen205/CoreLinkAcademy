@@ -130,6 +130,11 @@ export default async function LoginPage() {
           {/* Footer Navigation */}
           <div className="mt-6 space-y-3.5 border-t border-line/70 pt-5 text-xs text-muted">
             <p className="text-center">
+              <Link href="/cai-ung-dung" className="text-sm font-semibold text-primary hover:underline">
+                📲 Cài ứng dụng CoreLink lên điện thoại
+              </Link>
+            </p>
+            <p className="text-center">
               Quên mật khẩu? Vui lòng liên hệ <span className="font-semibold text-ink">Ban giáo vụ</span> để được cấp lại tức thời.
             </p>
             <div className="flex items-center justify-between pt-1">

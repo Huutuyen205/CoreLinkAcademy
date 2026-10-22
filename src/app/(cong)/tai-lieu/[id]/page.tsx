@@ -57,14 +57,16 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                 Gắn với buổi {d.session.index} lớp {d.session.class.code} ({formatDateTime(d.session.startsAt)})
               </p>
             )}
+            <FileList files={d.files} empty={d.url ? "Không có tệp tải lên — xem liên kết bên dưới." : "Chưa có tệp."} deleteAction={d.canManage ? deleteDocumentFileAction : undefined} deleteHidden={{ documentId: d.id }} />
             {d.url && (
-              <p className="mb-4">
-                <a href={d.url} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex min-h-11 items-center break-all">
-                  Mở đường dẫn tài liệu ↗
+              <p className="mt-2 text-sm text-muted">
+                Liên kết ngoài:{" "}
+                <a href={d.url} target="_blank" rel="noopener noreferrer nofollow" className="break-all">
+                  {d.url.replace(/^https?:\/\//, "").slice(0, 60)}
+                  {d.url.length > 68 ? "…" : ""} ↗
                 </a>
               </p>
             )}
-            <FileList files={d.files} empty={d.url ? "Không có tệp tải lên." : "Chưa có tệp."} deleteAction={d.canManage ? deleteDocumentFileAction : undefined} deleteHidden={{ documentId: d.id }} />
             {d.canManage && (
               <ConfigForm
                 className="mt-4"
@@ -127,7 +129,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                   { type: "textarea", name: "description", label: "Mô tả", maxLength: 5000, rows: 3, defaultValue: d.description ?? "" },
                   { type: "select", name: "subjectId", label: "Môn", placeholder: "Không gắn", options: options.subjects.map((s) => ({ value: s.id, label: s.name })), defaultValue: d.subject?.id ?? "" },
                   { type: "select", name: "levelId", label: "Cấp học", placeholder: "Không gắn", options: options.levels.map((l) => ({ value: l.id, label: l.name })), defaultValue: d.level?.id ?? "" },
-                  { type: "text", name: "url", label: "Đường dẫn", maxLength: 500, defaultValue: d.url ?? "" },
+                  { type: "text", name: "url", label: "Liên kết ngoài (tùy chọn)", maxLength: 500, defaultValue: d.url ?? "", hint: "Video, thư mục Drive… — để trống nếu đã có tệp." },
                   ...(d.kind !== "LESSON_PLAN"
                     ? ([
                         { type: "checkbox", name: "visibleToStudents", label: "Học sinh được xem", defaultChecked: d.visibleToStudents },

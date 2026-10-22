@@ -4,6 +4,7 @@ import { verifyPassword } from "@/server/auth/password";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError } from "@/server/errors";
+import { storeFiles, type PreparedFile } from "@/server/files/storage";
 import { isUniqueViolation } from "@/server/users/credentials";
 
 export async function getMyAccount(actor: Actor) {
@@ -11,6 +12,7 @@ export async function getMyAccount(actor: Actor) {
     where: { id: actor.id },
     select: {
       fullName: true,
+      avatarFileId: true,
       email: true,
       phone: true,
       address: true,
@@ -53,4 +55,26 @@ export async function updateMyContact(actor: Actor, input: ContactInput): Promis
     if (isUniqueViolation(error, "phone")) throw new DomainError("DUPLICATE_PHONE", "Số điện thoại đã được dùng.", { phone: "Số điện thoại đã được dùng." });
     throw error;
   }
+}
+
+const AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
+/** FR-051: tự đổi ảnh đại diện (JPG/PNG/WEBP). Ảnh cũ bị xóa cùng transaction. */
+export async function updateMyAvatar(actor: Actor, files: PreparedFile[]): Promise<void> {
+  const file = files[0];
+  if (!file || files.length !== 1) throw new DomainError("NO_FILE", "Chọn một ảnh.", { avatar: "Chọn một ảnh." });
+  if (!AVATAR_TYPES.has(file.mimeType)) throw new DomainError("INVALID_FILE", "Ảnh đại diện phải là JPG, PNG hoặc WEBP.", { avatar: "Chọn ảnh JPG, PNG hoặc WEBP." });
+  await db.$transaction(async (tx) => {
+    const old = await tx.user.findUniqueOrThrow({ where: { id: actor.id }, select: { avatarFileId: true } });
+    const [fileId] = await storeFiles(tx, [file], {}, actor.id);
+    await tx.user.update({ where: { id: actor.id }, data: { avatarFileId: fileId } });
+    if (old.avatarFileId) await tx.storedFile.delete({ where: { id: old.avatarFileId } });
+  });
+}
+
+export async function removeMyAvatar(actor: Actor): Promise<void> {
+  const user = await db.user.findUniqueOrThrow({ where: { id: actor.id }, select: { avatarFileId: true } });
+  if (!user.avatarFileId) return;
+  // Xóa tệp → `users.avatarFileId` tự về NULL (ON DELETE SET NULL).
+  await db.storedFile.delete({ where: { id: user.avatarFileId } });
 }

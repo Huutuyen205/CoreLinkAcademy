@@ -24,6 +24,7 @@ import {
   setAssignmentStatus,
   submitAssignment,
   updateAssignment,
+  uploadEssayPhotos,
   uploadSubmissionFiles,
 } from "./service";
 
@@ -271,6 +272,17 @@ export async function uploadSubmissionFilesAction(_prev: ActionState, formData: 
   if (!result.ok) return result.state;
   revalidatePath(`/hoc-sinh/bai-tap/${assignmentId}`);
   return { ok: true, message: "Đã tải bài làm lên. Nhớ bấm \"Nộp bài\" khi hoàn thành." };
+}
+
+/** Ảnh bài làm cho một câu tự luận (chụp bằng điện thoại hoặc chọn từ máy) — gửi ngay, không cần lưu nháp. */
+export async function uploadEssayPhotosAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("STUDENT");
+  const parsed = parseForm(z.object({ assignmentId: id, questionId: id }), formFields(formData, ["assignmentId", "questionId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(async () => uploadEssayPhotos(actor, parsed.data.assignmentId, parsed.data.questionId, await readUploads(formData, "files")));
+  if (!result.ok) return result.state;
+  revalidatePath(`/hoc-sinh/bai-tap/${parsed.data.assignmentId}`);
+  return { ok: true, message: "Đã gửi ảnh bài làm." };
 }
 
 export async function deleteSubmissionFileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

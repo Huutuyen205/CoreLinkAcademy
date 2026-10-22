@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { ButtonLink, buttonClass } from "@/components/ui/button";
+import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
 import { SelectField } from "@/components/ui/field";
+import { FilterForm } from "@/components/ui/filter-form";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
 import { AUDIT_ACTION_LABELS, AUDIT_PAGE_SIZE, listAuditLogs } from "@/server/audit/queries";
 import { requireRole } from "@/server/auth/guard";
@@ -20,17 +21,14 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader title="Nhật ký" description="Các thao tác nhạy cảm. Nhật ký không thể sửa hoặc xóa." />
-      <form method="get" className="mb-6 flex flex-wrap items-end gap-2">
+      <FilterForm className="mb-6 flex flex-wrap items-end gap-2">
         <SelectField name="action" label="Loại thao tác" placeholder="Tất cả" defaultValue={action ?? ""} options={Object.entries(AUDIT_ACTION_LABELS).map(([value, label]) => ({ value, label }))} />
-        <button type="submit" className={buttonClass("secondary")}>
-          Lọc
-        </button>
         {action && (
           <ButtonLink href="/quan-ly/nhat-ky" variant="ghost">
             Bỏ lọc
           </ButtonLink>
         )}
-      </form>
+      </FilterForm>
       {rows.length === 0 ? (
         <EmptyState message="Chưa có bản ghi nhật ký." />
       ) : (
