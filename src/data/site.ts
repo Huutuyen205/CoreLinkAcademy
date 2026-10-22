@@ -1,13 +1,13 @@
-// Thông tin liên hệ của trung tâm. Giá trị trong ngoặc vuông là placeholder — thay bằng thông tin thật (QUESTION-Q02).
+// Thông tin liên hệ chính thức của trung tâm Core Link Academy.
 
 export const SITE = {
   name: "Core Link Academy",
-  hotline: "[SỐ HOTLINE]",
-  email: "[EMAIL TRUNG TÂM]",
-  address: "[ĐỊA CHỈ TRUNG TÂM]",
-  zalo: "[SỐ ZALO]",
+  hotline: "035 633 1603",
+  email: "corelinkacademyvsc@gmail.com",
+  address: "Lô AL2-IC-04 Vinhomes Smart City",
+  zalo: "035 633 1603",
   facebook: "https://www.facebook.com/CoreLinkAcademy",
-  studentCount: "[SỐ HỌC VIÊN]",
+  studentCount: "500+",
 } as const;
 
 export function isPlaceholder(value: string): boolean {

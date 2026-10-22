@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, LogIn, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Brand } from "@/components/layout/brand";
@@ -44,7 +44,7 @@ export function Header() {
   }, [mobileOpen]);
 
   return (
-    <header className={cn("sticky top-0 z-40 bg-white transition-shadow duration-300", scrolled ? "shadow-lg" : "shadow-sm")}>
+    <header className={cn("sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-line/60 transition-all duration-300", scrolled ? "shadow-md shadow-primary/5" : "shadow-2xs")}>
       <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-4 py-3">
         <Brand href="/" />
 
@@ -54,7 +54,14 @@ export function Header() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <Link
+            href="/dang-nhap"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-primary/25 bg-white px-3.5 py-1.5 text-sm font-semibold text-primary shadow-xs transition-all duration-200 hover:border-primary hover:bg-primary-soft hover:shadow-sm"
+          >
+            <LogIn className="size-4" aria-hidden="true" />
+            <span>Đăng nhập</span>
+          </Link>
           <Link href="/dang-ky-hoc-thu" className={cn(pillCta, "hidden sm:inline-flex")}>
             Đăng ký học thử
           </Link>
@@ -156,9 +163,19 @@ export function Header() {
                   </li>
                 ))}
               </ul>
-              <Link href="/dang-ky-hoc-thu" onClick={() => setMobileOpen(false)} className={cn(pillCta, "mt-6 flex w-full")}>
-                Đăng ký học thử
-              </Link>
+              <div className="mt-6 space-y-2">
+                <Link
+                  href="/dang-nhap"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-primary/30 bg-primary-soft/40 text-sm font-semibold text-primary transition-colors hover:bg-primary-soft"
+                >
+                  <LogIn className="size-4" aria-hidden="true" />
+                  Đăng nhập
+                </Link>
+                <Link href="/dang-ky-hoc-thu" onClick={() => setMobileOpen(false)} className={cn(pillCta, "flex w-full")}>
+                  Đăng ký học thử
+                </Link>
+              </div>
             </motion.nav>
           </>
         )}

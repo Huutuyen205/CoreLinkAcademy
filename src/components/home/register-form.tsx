@@ -24,7 +24,9 @@ export function RegisterForm() {
       <Reveal className="mx-auto grid max-w-[1200px] overflow-hidden rounded-3xl bg-white shadow-xl ring-1 ring-line lg:grid-cols-[0.85fr_1.15fr]">
         <div className="on-brand relative flex flex-col justify-between gap-8 bg-primary p-7 sm:p-10">
           <div>
-            <Image src="/brand/logo.png" alt="" width={64} height={64} className="size-16 rounded-2xl ring-1 ring-white/30" />
+            <div className="relative size-16 shrink-0 aspect-square overflow-hidden rounded-2xl ring-1 ring-white/30 shadow-md">
+              <Image src="/brand/logo.png" alt="" width={64} height={64} className="size-full object-cover" />
+            </div>
             <h2 id="tieu-de-dang-ky" className="mt-6 text-2xl text-white sm:text-3xl">
               Đăng ký học thử miễn phí
             </h2>

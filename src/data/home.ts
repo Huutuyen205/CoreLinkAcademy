@@ -137,7 +137,7 @@ export const STATS: { label: string; kind: "count" | "range" | "text"; value?: n
   { kind: "count", value: 10, suffix: "+", label: "năm kinh nghiệm giảng dạy" },
   { kind: "range", range: [7, 12], label: "học sinh tối đa mỗi lớp" },
   { kind: "count", value: 3, label: "môn trọng tâm Toán – Văn – Anh" },
-  { kind: "text", text: "[SỐ HỌC VIÊN]", label: "học viên đã đồng hành" },
+  { kind: "text", text: "500+", label: "học viên đã đồng hành" },
 ];
 
 export const WHY_US = [
@@ -147,11 +147,48 @@ export const WHY_US = [
   { icon: "shield", title: "Cam kết đầu ra", detail: "Đánh giá định kỳ, báo cáo tiến độ cho phụ huynh hằng tháng." },
 ] as const;
 
-export const TEACHERS = [
-  { subject: "Toán", name: "[Họ tên giáo viên]", degree: "[Bằng cấp / chứng chỉ]", photo: null as string | null },
-  { subject: "Ngữ văn", name: "[Họ tên giáo viên]", degree: "[Bằng cấp / chứng chỉ]", photo: null as string | null },
-  { subject: "Tiếng Anh", name: "[Họ tên giáo viên]", degree: "[Bằng cấp / chứng chỉ]", photo: null as string | null },
-  { subject: "Tiếng Anh", name: "[Họ tên giáo viên]", degree: "[Bằng cấp / chứng chỉ]", photo: null as string | null },
+export type Teacher = {
+  subject: string;
+  name: string;
+  degree: string;
+  workplace: string;
+  photo: string | null;
+  poster?: string | null;
+  highlights: string[];
+};
+
+export const TEACHERS: Teacher[] = [
+  {
+    subject: "Ngữ văn",
+    name: "Cô giáo Nguyễn Thanh Hải",
+    degree: "Giáo viên Ngữ văn Trường THPT Chuyên Hà Nội – Amsterdam",
+    workplace: "THPT Chuyên Hà Nội – Amsterdam",
+    photo: "/brand/teachers/co-nguyen-thanh-hai.jpg",
+    poster: "/brand/teachers/poster-nguyen-thanh-hai.jpg",
+    highlights: [
+      "Giáo viên Ngữ văn Trường THPT Chuyên Hà Nội – Amsterdam",
+      "Chuyên gia bồi dưỡng học sinh giỏi và luyện thi vào 10, THPT Quốc gia",
+      "Phương pháp gợi mở, rèn tư duy ngôn ngữ và kỹ năng viết nghị luận sắc bén",
+      "Đồng hành cùng nhiều thế hệ học sinh đạt điểm cao và trúng tuyển trường chuyên",
+    ],
+  },
+  {
+    subject: "Tiếng Anh",
+    name: "Cô giáo Trần Hà Nhi",
+    degree: "Thạc sĩ PP Giảng dạy Tiếng Anh (ULIS – ĐHQGHN) • Aptis Advanced C1",
+    workplace: "Giảng viên Cao đẳng Công Thương Hà Nội",
+    photo: "/brand/teachers/co-tran-ha-nhi.jpg",
+    poster: "/brand/teachers/poster-tran-ha-nhi.jpg",
+    highlights: [
+      "Tốt nghiệp Ngôn ngữ Anh – ĐH Sư phạm Hà Nội",
+      "Học viên Thạc sĩ Phương pháp giảng dạy & Lý luận bộ môn Tiếng Anh – ULIS, ĐHQGHN",
+      "Chứng chỉ Tiếng Anh Aptis Advanced C1 – Hội đồng Anh",
+      "Giáo viên THCS Tây Mỗ & THPT Hoàng Mai",
+      "Giảng viên Cao đẳng Công Thương Hà Nội",
+      "Kinh nghiệm giảng dạy từ 2019: đào tạo Cambridge, Critical Thinking, Public Speaking, Pre-Debate & luyện thi Aptis",
+      "Giám khảo giải đấu Tranh biện VSDC Bảng Trung Nam 2025 & Sunshine School S-Voice 2025",
+    ],
+  },
 ];
 
 export const MARQUEE_ITEMS = [

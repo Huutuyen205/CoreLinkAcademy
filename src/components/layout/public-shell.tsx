@@ -3,10 +3,9 @@ import { FloatingButtons } from "@/components/home/floating-buttons";
 import { Footer } from "@/components/home/footer";
 import { Header } from "@/components/home/header";
 import { MotionProvider } from "@/components/home/motion";
-import { TopBar } from "@/components/home/top-bar";
 
 /**
- * Khung các trang công khai: thanh trên cùng, header dính, chân trang, nút nổi.
+ * Khung các trang công khai: header dính, chân trang, nút nổi.
  * `bare`: nội dung tự quản chiều rộng (trang chủ có các khối tràn viền); mặc định bọc trong khung 1120px.
  */
 export function PublicShell({ children, bare = false }: { children: ReactNode; bare?: boolean }) {
@@ -19,7 +18,6 @@ export function PublicShell({ children, bare = false }: { children: ReactNode; b
         >
           Bỏ qua tới nội dung
         </a>
-        <TopBar />
         <Header />
         {bare ? (
           <main id="noi-dung" className="flex-1">

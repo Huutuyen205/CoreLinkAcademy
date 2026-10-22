@@ -68,7 +68,7 @@ export const NAV_ITEMS: NavItem[] = [
 ];
 
 export const TOP_LINKS: NavChild[] = [
-  { label: "Tra cứu kết quả", href: "/dang-nhap" },
-  { label: "Cổng học viên", href: "/dang-nhap" },
-  { label: "Cổng phụ huynh", href: "/dang-nhap" },
+  { label: "Lịch khai giảng", href: "/khoa-hoc" },
+  { label: "Đăng ký học thử", href: "/dang-ky-hoc-thu" },
+  { label: "Cổng học viện & Đăng nhập", href: "/dang-nhap" },
 ];

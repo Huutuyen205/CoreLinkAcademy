@@ -29,12 +29,25 @@ export function TopBar() {
           </a>
         </div>
         <div className="flex items-center gap-4">
-          <nav aria-label="Liên kết nhanh" className="hidden items-center gap-5 sm:flex">
-            {TOP_LINKS.map((l) => (
-              <Link key={l.label} href={l.href} className={linkClass}>
-                {l.label}
-              </Link>
-            ))}
+          <nav aria-label="Liên kết nhanh" className="hidden items-center gap-4 sm:flex">
+            {TOP_LINKS.map((l) => {
+              if (l.href === "/dang-nhap") {
+                return (
+                  <Link
+                    key={l.label}
+                    href={l.href}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold text-white no-underline transition-colors hover:bg-white/25"
+                  >
+                    <span>{l.label}</span>
+                  </Link>
+                );
+              }
+              return (
+                <Link key={l.label} href={l.href} className={linkClass}>
+                  {l.label}
+                </Link>
+              );
+            })}
           </nav>
           <Link
             href="/khoa-hoc"

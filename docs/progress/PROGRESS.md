@@ -1,5 +1,80 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-22 — Cập nhật Banner siêu nét, Dữ liệu Giáo viên chính thức, Thông tin liên hệ và Tối ưu Header công khai
+- **Yêu cầu & Mục tiêu:**
+  1. Thay banner chính thức mới và tăng độ phân giải/độ nét để hiển thị sắc nét trên mọi loại màn hình.
+  2. Quét thông tin và ảnh giáo viên từ các poster chính thức để hoàn thiện mục "Đội ngũ giáo viên" trên trang chủ (thay thế hoàn toàn dữ liệu placeholder).
+  3. Bổ sung thông tin liên hệ chính thức: Lô AL2-IC-04 Vinhomes Smart City, email `corelinkacademyvsc@gmail.com`, hotline `035 633 1603`.
+  4. Khắc phục thanh TopBar thừa ở đỉnh trang giao diện, loại bỏ việc trùng lặp 2 nút Đăng nhập và 2 nút Đăng ký học thử.
+- **Nội dung thực hiện chi tiết:**
+  1. **Nâng cấp Banner (`public/brand/banner.png`, `src/components/home/hero-banner.tsx`):**
+     - Xử lý ảnh gốc, upscale lên 2560x975 với thuật toán nội suy Lanczos cao cấp và bộ lọc Unsharp Mask, tăng cường độ tương phản và viền chữ.
+     - Khóa tỉ lệ `aspect-[2560/975]` chuẩn xác với ảnh thực tế, đặt `quality={95}`.
+     - Giảm chiều cao dải gradient fade chân banner (`h-10 sm:h-14`), gỡ overlay tối bên trái, giữ trọn vẹn độ rõ nét của chữ "TIỀN TIỂU HỌC - TIỂU HỌC - THCS - THPT" và logo vòm cầu.
+  2. **Quét dữ liệu & Cập nhật Đội ngũ Giáo viên (`src/data/home.ts`, `src/components/home/teachers.tsx`):**
+     - Bổ sung thông tin đầy đủ, chính xác quét từ poster cho 2 giáo viên tiêu biểu:
+       - **Cô giáo Nguyễn Thanh Hải:** Môn Ngữ văn, Giáo viên Ngữ văn Trường THPT Chuyên Hà Nội – Amsterdam, chuyên gia bồi dưỡng học sinh giỏi và luyện thi vào 10/THPT Quốc gia.
+       - **Cô giáo Trần Hà Nhi:** Môn Tiếng Anh, Giảng viên Cao đẳng Công Thương Hà Nội, ThS PP Giảng dạy Tiếng Anh ULIS – ĐHQGHN, Cử nhân ĐH Sư phạm Hà Nội, C1 Aptis Advanced Hội đồng Anh, Giám khảo Tranh biện VSDC 2025 & Sunshine School S-Voice 2025.
+     - Tạo chân dung đại diện tối ưu (`co-nguyen-thanh-hai.jpg`, `co-tran-ha-nhi.jpg`) và lưu poster gốc độ phân giải cao (`poster-*.jpg`).
+     - Thiết kế lại thẻ giáo viên: hiển thị huy hiệu môn học, trường công tác, danh sách thành tích nổi bật có icon ngôi sao, tích hợp **Modal Lightbox xem poster chính thức** khi click vào ảnh hoặc nút "Xem poster chính thức".
+  3. **Đồng bộ Thông tin Liên hệ (`src/data/site.ts`):**
+     - Cập nhật địa chỉ `Lô AL2-IC-04 Vinhomes Smart City`.
+     - Cập nhật email `corelinkacademyvsc@gmail.com`.
+     - Cập nhật số điện thoại & Zalo `035 633 1603`.
+     - Tự động đồng bộ toàn bộ Footer, bản đồ Google Maps embed, form đăng ký học thử và các nút gọi điện/Zalo nổi một chạm.
+  4. **Tối ưu Thanh điều hướng (`src/components/layout/public-shell.tsx`):**
+     - Loại bỏ component `TopBar` khỏi `PublicShell`. Header công khai giờ đây bắt đầu trực tiếp với thanh điều hướng chính, logo, menu và đúng 1 nút "Đăng nhập" + 1 nút "Đăng ký học thử", giải phóng không gian đỉnh trang và mang lại diện mạo hiện đại, tinh tế.
+- **Kiểm thử chất lượng:**
+  - `pnpm typecheck` (tsc --noEmit): Exit code 0 ✓
+  - `pnpm lint` (eslint .): Exit code 0 ✓
+  - `pnpm test` (vitest run): 17 file / 103 test pass 100% ✓
+  - `pnpm build` (next build): Biên dịch thành công toàn bộ 47 routes ✓
+
+
+## 2026-10-22 — Thiết kế lại toàn bộ giao diện "Academic Premium WOW" đồng bộ từ Công khai đến 4 Cổng Nội bộ
+- **Yêu cầu & Mục tiêu:** Nâng tầm toàn diện trải nghiệm thị giác và tương tác (visual & micro-interaction) mang phong cách "Academic Premium WOW", bao phủ toàn bộ hệ thống từ trang công khai (Trang chủ, Khóa học, Đăng ký học thử), trang xác thực (Đăng nhập, Đổi mật khẩu) đến toàn bộ 4 Cổng nghiệp vụ nội bộ (Quản lý, Giảng viên, Học sinh, Phụ huynh) và các trang hệ thống (Tài khoản, 404 Not Found).
+- **Các thành phần & Giao diện nâng cấp:**
+  1. **Hệ thống Design Tokens & CSS Utilities (`src/app/globals.css`):**
+     - Bổ sung hiệu ứng cao cấp: `.glow-card`, `.stat-card-premium`, `.glass-card-dark`, `.glass-card-light`, `.glass-card-elevated`, `.btn-shimmer`, `.pulse-ring`, thanh cuộn mảnh thanh lịch `.custom-scrollbar`.
+     - Phối màu Sapphire Royal (`#09103a` đến `#1f2f98`), vàng ánh kim (`amber-400`), viền kính đa lớp mờ (`border-white/10`, `border-white/20`), đổ bóng ambient nhiều tầng (`shadow-soft-xl`, `shadow-glow-primary`).
+  2. **Khung giao diện Cổng & Điều hướng (`src/components/layout/app-shell.tsx`):**
+     - Nâng cấp Sidebar desktop: Nền gradient Sapphire hoàng gia, dải trang trí vòm cầu sáng, phân tách nhóm rành mạch, pill điều hướng active có chấm đèn phát quang (`pulse-ring`), thanh người dùng dính chân sidebar tích hợp avatar nổi bật, huy hiệu vai trò, menu thao tác nhanh (Hồ sơ, Đổi MK, Đăng xuất).
+     - Thanh Header di động: Kính mờ siêu nét, nút chuông thông báo có pulse badge, drawer di động bo góc mượt mà.
+  3. **Trang Đăng nhập Trải nghiệm Showcase (`src/app/(public)/dang-nhap/page.tsx`, `login-form.tsx`):**
+     - Bố cục 2 cột: Cột trái giới thiệu chuẩn mực học viện & huy hiệu bảo mật; Cột phải tích hợp bộ **Chuyển đổi 1-Chạm Tài khoản Demo** (Admin, Giáo vụ, Giáo viên, Học sinh, Phụ huynh) tự động điền email và mật khẩu mẫu, có nút ẩn/hiện mật khẩu trực quan.
+  4. **Cổng Quản lý / Ban giám hiệu (`src/app/quan-ly/page.tsx`):**
+     - WelcomeBanner động theo buổi trong ngày (Sáng/Chiều/Tối) kèm lối tắt tác vụ nhanh 1 chạm (Nhập lead, Mở lớp, Lịch tổng, Báo cáo).
+     - Bento Grid 6 thẻ KPI với đồ họa vi mô, chỉ số tăng trưởng, cảnh báo đỏ nhấp nháy cho học sinh vắng.
+  5. **Cổng Giảng viên (`src/app/giao-vien/page.tsx`):**
+     - Lịch dạy hôm nay dạng thẻ sự kiện cao cấp: đếm giờ, phòng học, mã môn học, nút "Điểm danh ngay" nổi bật.
+     - Hàng đợi chấm bài: danh sách bài tập chưa chấm, thông tin học sinh & lớp học, đếm ngày nộp, CTA "Chấm điểm ngay".
+  6. **Cổng Học sinh (`src/app/hoc-sinh/page.tsx`):**
+     - Hub học tập tràn đầy năng lượng: Thẻ lớp học sắp tới (thời gian, phòng học, giáo viên phụ trách), danh sách bài tập cần nộp kèm thời hạn chót & nút "Làm bài ngay", bảng tổng hợp bài nộp đã có điểm.
+  7. **Cổng Phụ huynh (`src/app/phu-huynh/page.tsx`, `src/components/learner/child-picker.tsx`):**
+     - Bộ chọn con em `ChildPicker` thiết kế dạng thẻ định danh sang trọng kèm mã học sinh và khối lớp.
+     - Thẻ danh tính học sinh, thời khóa biểu các lớp con đang học trong tuần, theo dõi chuyên cần và kết quả bài tập trực quan.
+  8. **Danh mục Khóa học & Đăng ký học thử (`src/app/(public)/khoa-hoc/page.tsx`, `course-card.tsx`, `src/app/(public)/dang-ky-hoc-thu/page.tsx`):**
+     - `CourseCard` với badge môn gradient, tag khối lớp, thời lượng kèm icon đồng hồ, học phí định dạng VND chuẩn và hover lift card.
+     - Hero header danh mục khóa học với thanh lọc nhanh bộ môn (Toán, Văn, Anh, Lý, Hóa, Tin).
+     - Form Đăng ký học thử hiện đại với cam kết bảo mật & tư vấn 24/7.
+  9. **Trang bổ trợ:**
+     - Đổi mật khẩu (`/doi-mat-khau`), Tài khoản cá nhân (`/tai-khoan`), Báo lỗi 404 (`/not-found`) đồng bộ nhận diện thương hiệu.
+- **Kiểm tra chất lượng:** `tsc --noEmit` hoàn tất không lỗi (exit code 0), `next build` hoàn tất tối ưu hóa toàn bộ 47 routes.
+
+## 2026-10-22 — Sửa hiển thị Logo thành Ô vuông Bo tròn chuẩn tỉ lệ (Aspect-Square)
+- **Nguyên nhân lỗi biến dạng logo hình viên thuốc (pill):** Trên màn hình nhỏ/mobile, component `Brand` nằm trong container flexbox nhưng thẻ `div` bọc ảnh logo trước đây thiếu `shrink-0` và `aspect-square`. Khi không gian ngang bị nén, phần chữ "CORE LINK" có `whitespace-nowrap` nên trình duyệt đã ép co chiều ngang của khung ảnh (chỉ còn ~20px trong khi chiều dọc 44px), khiến bo góc biến logo thành hình viên thuốc dọc bị bẹp ngang.
+- **Khắc phục toàn diện:**
+  - `src/components/layout/brand.tsx`: Cố định khung logo thành ô vuông hoàn hảo `size-11 shrink-0 aspect-square overflow-hidden rounded-xl`, ảnh hiển thị `size-full object-cover`. Đồng thời bổ sung viền thích ứng `ring-1 ring-white/25` cho nền tối (`tone="light"` ở Footer & Sidebar) và `ring-primary/20` cho nền sáng, giúp khối bo tròn sắc nét và tách biệt rõ ràng khỏi màu nền.
+  - `src/app/(public)/dang-nhap/page.tsx`: Chuyển logo từ ô vuông sắc cạnh sang ô vuông bo tròn cao cấp `size-20 sm:size-24 shrink-0 aspect-square rounded-2xl ring-1 ring-primary/20 shadow-md`.
+  - `src/components/home/register-form.tsx`: Khóa cứng khung bo tròn `size-16 shrink-0 aspect-square rounded-2xl ring-1 ring-white/30 shadow-md`.
+- **Kiểm tra:** `tsc --noEmit` ✓, `eslint .` ✓ (0 errors, exit code 0).
+
+## 2026-10-22 — Tối ưu giao diện Đăng nhập & Dọn dẹp Source Control
+- **Giao diện Đăng nhập:** Gộp layout 2 cột tách biệt thành **1 Card Đăng nhập trung tâm duy nhất** (`src/app/(public)/dang-nhap/page.tsx`), tích hợp logo học viện, dải gradient trang trí, form tinh gọn, và nút **Đăng nhập** nổi bật có icon `LogIn` (`login-form.tsx`).
+- **Thanh điều hướng:** Thêm nút hành động **Đăng nhập** trực tiếp trên Header (`src/components/home/header.tsx`) cạnh nút "Đăng ký học thử" (cả trên Desktop và Menu Drawer Mobile). Gộp 3 liên kết trùng lặp trên TopBar thành 1 liên kết "Cổng học viện & Đăng nhập" đồng nhất.
+- **Dọn dẹp Source Control:** Phát hiện và xóa thư mục `.git` thừa vô tình khởi tạo ở thư mục máy cá nhân `C:\Users\TUYEN`, loại bỏ hoàn toàn hiển thị nhánh `TUYEN master*+` gây nhầm lẫn trên IDE.
+- **Kiểm tra:** `tsc --noEmit` hoàn tất không lỗi (exit code 0).
+
 ## 2026-10-21 (tối) — Bổ sung chức năng theo 4 file của PO (FR-036..FR-052, DECISION-D26) + giao diện cổng
 
 ### Bước 1 — Kiểm kê

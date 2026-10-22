@@ -8,14 +8,39 @@ import { cn } from "@/lib/format";
  */
 export function Brand({ href, tone = "dark", className }: { href: string; tone?: "dark" | "light"; className?: string }) {
   return (
-    <Link href={href} className={cn("group inline-flex items-center gap-3 no-underline transition-transform duration-200", className)} aria-label="Core Link Academy — trang chủ">
-      <div className="relative overflow-hidden rounded-[10px] ring-1 ring-primary/20 shadow-xs transition-all duration-300 group-hover:scale-105 group-hover:shadow-md group-hover:ring-accent/50">
-        <Image src="/brand/logo.png" alt="" width={44} height={44} priority className="size-11 shrink-0 object-cover" />
+    <Link
+      href={href}
+      className={cn("group inline-flex shrink-0 items-center gap-3 no-underline transition-transform duration-200", className)}
+      aria-label="Core Link Academy — trang chủ"
+    >
+      <div
+        className={cn(
+          "relative size-11 shrink-0 aspect-square overflow-hidden rounded-xl shadow-xs transition-all duration-300 group-hover:scale-105 group-hover:shadow-md",
+          tone === "light"
+            ? "ring-1 ring-white/25 shadow-white/5 group-hover:ring-white/40"
+            : "ring-1 ring-primary/20 group-hover:ring-accent/50"
+        )}
+      >
+        <Image src="/brand/logo.png" alt="" width={44} height={44} priority className="size-full object-cover" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-white/0 via-white/15 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </div>
-      <span className="leading-none" aria-hidden="true">
-        <span className={cn("block whitespace-nowrap font-serif text-lg font-bold tracking-wide transition-colors duration-200", tone === "light" ? "text-white group-hover:text-brand-tint" : "text-primary group-hover:text-accent")}>CORE LINK</span>
-        <span className={cn("mt-1 block text-[0.65rem] font-medium tracking-[0.32em] transition-colors duration-200", tone === "light" ? "text-on-brand-muted" : "text-muted group-hover:text-ink")}>ACADEMY</span>
+      <span className="leading-none shrink-0" aria-hidden="true">
+        <span
+          className={cn(
+            "block whitespace-nowrap font-serif text-lg font-bold tracking-wide transition-colors duration-200",
+            tone === "light" ? "text-white group-hover:text-brand-tint" : "text-primary group-hover:text-accent"
+          )}
+        >
+          CORE LINK
+        </span>
+        <span
+          className={cn(
+            "mt-1 block text-[0.65rem] font-medium tracking-[0.32em] transition-colors duration-200",
+            tone === "light" ? "text-on-brand-muted" : "text-muted group-hover:text-ink"
+          )}
+        >
+          ACADEMY
+        </span>
       </span>
     </Link>
   );

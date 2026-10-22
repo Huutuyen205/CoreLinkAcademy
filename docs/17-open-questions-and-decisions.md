@@ -60,7 +60,7 @@
 | ID | Câu hỏi | Tác động | Owner | Cần trước |
 |---|---|---|---|---|
 | QUESTION-Q01 | Logo, tên miền chính thức? | Header, metadata, `APP_URL` | PO | Production |
-| QUESTION-Q02 | Địa chỉ, hotline, giờ làm việc thật cho footer? | Nội dung công khai (đang để chữ "sẽ được cập nhật") | PO | Production |
+| QUESTION-Q02 | **Đã xong (2026-10-22)**: Lô AL2-IC-04 Vinhomes Smart City, email corelinkacademyvsc@gmail.com, SĐT 035 633 1603 | Cập nhật src/data/site.ts, footer, bản đồ | PO | Đã xong |
 | QUESTION-Q03 | Giữ lead LOST bao lâu? Quy trình xóa/xuất dữ liệu theo yêu cầu? | Chính sách riêng tư, job dọn dữ liệu | PO | Production |
 | QUESTION-Q04 | Hosting (VPS, Vercel + MySQL cloud…)? | Triển khai, proxy/IP (RISK-009), backup | PO | Production |
 | QUESTION-Q05 | CSP chặt, giám sát lỗi, audit đăng nhập? | Bảo mật/vận hành | PO | Production |
