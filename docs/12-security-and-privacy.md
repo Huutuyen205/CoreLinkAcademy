@@ -99,7 +99,7 @@ Khả năng (L) / Tác động (I): T = thấp, TB = trung bình, C = cao. Trạ
 | IP rate limit phụ thuộc proxy | Chưa có hosting | Chủ dự án | Khi chọn hosting (RISK-009) |
 | Không có 2FA cho Admin | Quy mô nhỏ; P2-13 | Chủ dự án | Pha 2 |
 | Chưa có chính sách lưu trữ/xóa | Cần quyết định nghiệp vụ/pháp lý | Chủ dự án | Trước production (Q03, Q10, Q11) |
-| Gửi bài làm HS cho nhà cung cấp AI ngoài | Chỉ khi GV bấm; không kèm tên; có thể tắt bằng cách không đặt `AI_API_KEY` | Chủ dự án | Trước khi bật AI thật (Q10) — docs/23 §3 |
+| Gửi bài làm HS cho nhà cung cấp AI ngoài | Chỉ khi GV bấm; không kèm tên; có thể tắt bằng cách không đặt `AI_API_KEY` | Chủ dự án | Trước khi bật AI thật (Q10) — docs/24 §3 |
 | AI sai (đáp án đề, điểm gợi ý) | Mọi đầu ra là nháp/gợi ý, GV xác nhận; điểm không bao giờ tự ghi/công bố | GV + chủ dự án | Sau 1–2 tháng dùng, đo tỷ lệ sửa (P2-51) |
 
 Phê duyệt: **chưa** — chủ dự án xem xét trước release (docs/18).

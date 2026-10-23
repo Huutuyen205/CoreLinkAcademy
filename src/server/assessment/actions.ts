@@ -15,10 +15,12 @@ import {
   deleteAssignment,
   deleteAssignmentFile,
   deleteQuestion,
+  deleteSubmission,
   deleteSubmissionFile,
   gradeSubmission,
   publishResults,
   remindUnsubmitted,
+  returnSubmission,
   saveDraftAnswers,
   saveQuestion,
   setAssignmentStatus,
@@ -26,6 +28,7 @@ import {
   updateAssignment,
   uploadEssayPhotos,
   uploadSubmissionFiles,
+  uploadSubmissionForStudent,
 } from "./service";
 
 const id = z.string().min(1).max(40);
@@ -42,6 +45,12 @@ const assignmentSchema = z
       .transform((v) => vnToUtc(v.slice(0, 10), v.slice(11, 16))),
     allowLate: z.boolean(),
     acceptsFiles: z.boolean(),
+    isTest: z.boolean(),
+    solution: z
+      .string()
+      .trim()
+      .max(20000, "Tối đa 20000 ký tự.")
+      .transform((v) => v || null),
     manualMaxScore: z.string().transform((v) => (v.trim() === "" ? null : Number(v.trim().replace(",", ".")))),
   })
   .superRefine((v, ctx) => {
@@ -55,13 +64,15 @@ const assignmentSchema = z
 function assignmentInput(formData: FormData) {
   const allowLate = formData.get("allowLate") === "on";
   const acceptsFiles = formData.get("acceptsFiles") === "on";
+  const isTest = formData.get("isTest") === "on";
   // Checkbox trả lại dạng "on"/"" để ConfigForm giữ trạng thái khi lỗi.
   const fields = {
-    ...formFields(formData, ["title", "instructions", "dueAt", "manualMaxScore"]),
+    ...formFields(formData, ["title", "instructions", "dueAt", "manualMaxScore", "solution"]),
     allowLate: allowLate ? "on" : "",
     acceptsFiles: acceptsFiles ? "on" : "",
+    isTest: isTest ? "on" : "",
   };
-  return { fields, data: { ...fields, allowLate, acceptsFiles } };
+  return { fields, data: { ...fields, allowLate, acceptsFiles, isTest } };
 }
 
 /** API-016 — FR-027, FR-040 (tệp đề bài tùy chọn). */
@@ -293,4 +304,46 @@ export async function deleteSubmissionFileAction(_prev: ActionState, formData: F
   if (!result.ok) return result.state;
   revalidatePath(`/hoc-sinh/bai-tap/${parsed.data.assignmentId}`);
   return { ok: true, message: "Đã xóa tệp." };
+}
+
+const noteText = z
+  .string()
+  .trim()
+  .max(500, "Tối đa 500 ký tự.")
+  .transform((v) => v || null);
+
+/** GV §8: yêu cầu học sinh nộp lại (bài trở về "đang làm"). */
+export async function returnSubmissionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const fields = formFields(formData, ["submissionId", "note"]);
+  const parsed = parseForm(z.object({ submissionId: id, note: noteText }), fields);
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => returnSubmission(actor, parsed.data.submissionId, parsed.data.note), fields);
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${result.value}/bai-nop`);
+  redirect(`/giao-vien/bai-tap/${result.value}/bai-nop?thongbao=tra-bai`);
+}
+
+/** GV §8: xóa bài làm của một học sinh. */
+export async function deleteSubmissionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ submissionId: id }), formFields(formData, ["submissionId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => deleteSubmission(actor, parsed.data.submissionId));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${result.value}/bai-nop`);
+  redirect(`/giao-vien/bai-tap/${result.value}/bai-nop?thongbao=xoa-bai-lam`);
+}
+
+/** GV §8: tải lên bài làm (ảnh bài trên giấy) thay học sinh. */
+export async function uploadSubmissionForStudentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ assignmentId: id, studentId: id }), formFields(formData, ["assignmentId", "studentId"]));
+  if (!parsed.ok) return parsed.state;
+  const { assignmentId, studentId } = parsed.data;
+  const result = await runAction(async () => uploadSubmissionForStudent(actor, assignmentId, studentId, await readUploads(formData, "files")));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${assignmentId}/bai-nop`);
+  revalidatePath(`/giao-vien/bai-nop/${result.value}`);
+  return { ok: true, message: "Đã tải bài làm lên. Bài chuyển sang \"chờ chấm\"." };
 }

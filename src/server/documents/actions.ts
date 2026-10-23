@@ -13,7 +13,9 @@ import {
   createDocument,
   deleteDocument,
   deleteDocumentFile,
+  reviewLessonPlan,
   setDocumentActive,
+  submitLessonPlan,
   shareDocument,
   unshareDocument,
   updateDocument,
@@ -141,4 +143,27 @@ export async function unshareDocumentAction(_prev: ActionState, formData: FormDa
   if (!result.ok) return result.state;
   revalidateDocs();
   return { ok: true, message: "Đã gỡ chia sẻ." };
+}
+
+/** GV §4: gửi duyệt giáo án. */
+export async function submitLessonPlanAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ documentId: id }), formFields(formData, ["documentId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => submitLessonPlan(actor, parsed.data.documentId));
+  if (!result.ok) return result.state;
+  revalidatePath(`/tai-lieu/${parsed.data.documentId}`);
+  return { ok: true, message: "Đã gửi duyệt giáo án. Trung tâm sẽ phản hồi qua thông báo." };
+}
+
+/** Quản lý duyệt / yêu cầu sửa giáo án. */
+export async function reviewLessonPlanAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN", "STAFF");
+  const fields = formFields(formData, ["documentId", "decision", "note"]);
+  const parsed = parseForm(z.object({ documentId: id, decision: z.enum(["approve", "reject"], { errorMap: () => ({ message: "Chọn quyết định." }) }), note: optionalText(500) }), fields);
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => reviewLessonPlan(actor, parsed.data.documentId, parsed.data.decision === "approve", parsed.data.note), fields);
+  if (!result.ok) return result.state;
+  revalidateDocs();
+  return { ok: true, message: parsed.data.decision === "approve" ? "Đã duyệt giáo án." : "Đã yêu cầu giáo viên sửa giáo án." };
 }

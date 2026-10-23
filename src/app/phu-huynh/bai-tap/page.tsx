@@ -53,23 +53,41 @@ export default async function ParentAssignmentsPage({ searchParams }: { searchPa
             rows={[...rows].reverse()}
             rowKey={(r) => r.id}
             columns={[
-              { header: "Bài", primary: true, cell: (r) => <span className="font-medium">{r.title}</span> },
+              {
+                header: "Bài",
+                primary: true,
+                cell: (r) => (
+                  <span className="font-medium">
+                    {r.title}
+                    {r.isTest && <span className="ml-1 text-xs font-normal text-warning">(kiểm tra)</span>}
+                  </span>
+                ),
+              },
               { header: "Lớp", cell: (r) => r.classCode },
               { header: "Hạn nộp", cell: (r) => formatDateTime(r.dueAt) },
               { header: "Trạng thái", cell: (r) => submissionBadge(r, now) },
               {
                 header: "Điểm / nhận xét",
-                cell: (r) =>
-                  r.resultsPublished ? (
-                    <span>
-                      <strong>
-                        {r.score ?? 0}/{r.maxScore}
-                      </strong>
-                      {r.teacherComment && <span className="block text-sm text-muted">{r.teacherComment}</span>}
-                    </span>
-                  ) : (
-                    <span className="text-muted">—</span>
-                  ),
+                cell: (r) => (
+                  <span id={r.id} className="block scroll-mt-24">
+                    {r.resultsPublished ? (
+                      <>
+                        <strong>
+                          {r.score ?? 0}/{r.maxScore}
+                        </strong>
+                        {r.teacherComment && <span className="block text-sm">Nhận xét: {r.teacherComment}</span>}
+                      </>
+                    ) : (
+                      <span className="text-muted">{r.awaitingGrade ? "Đang chờ chấm" : "Chưa có điểm"}</span>
+                    )}
+                    {r.solution && (
+                      <details className="mt-1">
+                        <summary className="cursor-pointer text-sm text-primary">Bài chữa của giáo viên</summary>
+                        <p className="mt-1 whitespace-pre-line text-sm">{r.solution}</p>
+                      </details>
+                    )}
+                  </span>
+                ),
               },
             ]}
           />

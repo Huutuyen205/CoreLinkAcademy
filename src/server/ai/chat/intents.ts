@@ -1,4 +1,4 @@
-// Danh mục ý định chatbot (DECISION-D33). Mỗi ý định ứng với MỘT hàm trong handlers.ts dùng service có kiểm tra phạm vi.
+// Danh mục ý định chatbot (DECISION-D34). Mỗi ý định ứng với MỘT hàm trong handlers.ts dùng service có kiểm tra phạm vi.
 import type { Role } from "@prisma/client";
 import type { IntentDef } from "./types";
 

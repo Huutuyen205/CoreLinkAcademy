@@ -10,7 +10,9 @@ import {
   addDocumentFilesAction,
   deleteDocumentAction,
   deleteDocumentFileAction,
+  reviewLessonPlanAction,
   setDocumentActiveAction,
+  submitLessonPlanAction,
   shareDocumentAction,
   unshareDocumentAction,
   updateDocumentAction,
@@ -18,7 +20,7 @@ import {
 import { documentFormOptions, getDocument } from "@/server/documents/service";
 import { ACCEPT_ATTRIBUTE, ACCEPT_LABEL } from "@/server/files/rules";
 import { orNotFound } from "@/server/page";
-import { DOCUMENT_KIND } from "@/lib/labels";
+import { DOCUMENT_KIND, REQUEST_STATUS } from "@/lib/labels";
 import { formatDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Tài liệu" };
@@ -45,9 +47,39 @@ export default async function DocumentPage({ params, searchParams }: { params: P
           <span className="flex flex-wrap gap-2">
             <Badge tone="primary">{DOCUMENT_KIND[d.kind]}</Badge>
             {!d.isActive && <Badge tone="neutral">Ngừng sử dụng</Badge>}
+            {d.kind === "LESSON_PLAN" && d.reviewStatus && <Badge tone={REQUEST_STATUS[d.reviewStatus].tone}>Duyệt: {REQUEST_STATUS[d.reviewStatus].label}</Badge>}
           </span>
         }
       />
+      {d.kind === "LESSON_PLAN" && !learner && (
+        <Card title="Duyệt giáo án" className="mb-6">
+          <p className="mb-3 text-sm text-muted">
+            {d.reviewStatus === "PENDING"
+              ? "Giáo án đang chờ trung tâm duyệt."
+              : d.reviewStatus === "APPROVED"
+                ? `Đã duyệt${d.reviewedAt ? ` lúc ${formatDateTime(d.reviewedAt)}` : ""}.`
+                : d.reviewStatus === "REJECTED"
+                  ? "Trung tâm yêu cầu sửa giáo án."
+                  : "Giáo án chưa gửi duyệt."}
+            {d.reviewNote ? ` Ghi chú: ${d.reviewNote}` : ""}
+          </p>
+          {actor.role === "TEACHER" && d.ownerId === actor.id && d.reviewStatus !== "PENDING" && (
+            <ConfigForm action={submitLessonPlanAction} hidden={{ documentId: d.id }} submitLabel={d.reviewStatus ? "Gửi duyệt lại" : "Gửi duyệt"} submitVariant="secondary" fields={[]} />
+          )}
+          {isManager(actor) && d.reviewStatus === "PENDING" && (
+            <ConfigForm
+              action={reviewLessonPlanAction}
+              hidden={{ documentId: d.id }}
+              submitLabel="Gửi quyết định"
+              columns={2}
+              fields={[
+                { type: "select", name: "decision", label: "Quyết định", required: true, options: [{ value: "approve", label: "Duyệt" }, { value: "reject", label: "Yêu cầu sửa" }] },
+                { type: "text", name: "note", label: "Ghi chú cho giáo viên", maxLength: 500 },
+              ]}
+            />
+          )}
+        </Card>
+      )}
       <div className={d.canManage ? "grid gap-6 lg:grid-cols-[1fr_340px]" : "space-y-6"}>
         <div className="space-y-6">
           <Card title="Nội dung">

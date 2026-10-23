@@ -2,9 +2,9 @@
 
 | Mục | Giá trị |
 |---|---|
-| Phiên bản | 1.0 (2026-10-23) — DECISION-D33; FR-053, FR-054, FR-055 |
+| Phiên bản | 1.0 (2026-10-23) — DECISION-D34; FR-054, FR-055, FR-056 |
 | Owner | Trợ lý (BA/Dev) ghi; chủ dự án quyết định |
-| Đọc kèm | docs/12 (bảo mật, quyền riêng tư), docs/14 (biến môi trường), docs/17 (D33) |
+| Đọc kèm | docs/12 (bảo mật, quyền riêng tư), docs/14 (biến môi trường), docs/17 (D34) |
 
 ## 1. Tóm tắt cho chủ dự án
 
@@ -63,7 +63,7 @@ Quy tắc bất biến:
 
 **Trên Vercel:** các trang soạn bài/chấm phiếu đặt `maxDuration = 60` giây; gói Hobby có thể giới hạn thấp hơn — nếu hết thời gian, giảm số câu hoặc nâng gói.
 
-## 4. Chatbot (FR-053)
+## 4. Chatbot (FR-054)
 
 Nút nổi ở mọi trang nội bộ. Bấm câu gợi ý hoặc gõ tự do. Câu trả lời gồm: chữ, danh sách ý, nút liên kết tới trang liên quan, nút chọn (vd. chọn con).
 
@@ -85,7 +85,7 @@ Các trường hợp biên đã xử lý (có test):
 - **Không hiểu**: hiện nút gợi ý theo vai trò. **AI lỗi/hết lượt**: vẫn trả lời bằng luật từ khóa.
 - **Giới hạn**: 120 câu/10 phút/người (mọi câu); 30 lần/ngày/người gọi AI nhận diện ý định (câu khớp luật không tính).
 
-## 5. Soạn bài với AI (FR-054)
+## 5. Soạn bài với AI (FR-055)
 
 Trang `/giao-vien/soan-bai` (giáo viên dạy buổi đó — phụ trách hoặc dạy thay; sai buổi → 404).
 
@@ -103,7 +103,7 @@ Trang `/giao-vien/soan-bai` (giáo viên dạy buổi đó — phụ trách ho�
 - **Văn**: chưa hỗ trợ đề tự luận có đáp án mẫu (chấm văn cần rubric riêng — P2-55).
 - Giới hạn: 20 lần sinh/ngày/giáo viên; tối đa 30 câu (tự luận 8).
 
-## 6. Hỗ trợ chấm bài (FR-055)
+## 6. Hỗ trợ chấm bài (FR-056)
 
 - **Gợi ý điểm tự luận** (trang chấm bài): AI đọc bài làm chữ gõ **và ảnh JPG/PNG/WEBP chụp bài viết tay** (tối đa 3 ảnh/câu), gợi ý điểm (bước 0,25, trong [0, tối đa]) + nhận xét + **độ tin cậy**; bài viết tay không bao giờ được coi là "tin cậy cao". Có ô dán đáp án mẫu/thang điểm để AI chấm sát. Bấm **Áp dụng** mới điền vào ô; giáo viên phải bấm **Lưu điểm**. Ảnh HEIC/PDF chưa đọc được (báo rõ).
 - **Chấm phiếu trắc nghiệm giấy** (`/giao-vien/bai-tap/<id>/phieu-giay`, bài toàn trắc nghiệm đã giao): chụp phiếu → AI đọc ô được tô → giáo viên đối chiếu/sửa từng câu → lưu. Điểm do `autoGrade` có sẵn tính từ đáp án đúng đã soạn (**không phải AI chấm**); ảnh phiếu lưu kèm bài nộp; ghi audit số câu giáo viên đã sửa so với AI. Học sinh đã nộp trên hệ thống thì không nhập lại được. Câu AI đọc không rõ → để trống cho giáo viên chọn.

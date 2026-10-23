@@ -130,6 +130,37 @@ export async function listRoomsAdmin(actor: Actor) {
   return db.room.findMany({ orderBy: { name: "asc" }, include: { _count: { select: { classes: true, sessions: true } } } });
 }
 
+/**
+ * Admin §8 "Kiểm tra tình trạng sử dụng phòng theo lịch học": với mỗi phòng — đang có lớp học ngay lúc này không,
+ * buổi kế tiếp, số buổi và số giờ đã xếp trong tuần [from, to).
+ */
+export async function roomUsage(actor: Actor, from: Date, to: Date, now = new Date()) {
+  assertCan(actor, "room.manage");
+  const sessions = await db.classSession.findMany({
+    where: { roomId: { not: null }, status: { not: "CANCELLED" }, endsAt: { gt: from < now ? from : now }, startsAt: { lt: to > now ? to : now } },
+    orderBy: { startsAt: "asc" },
+    select: { roomId: true, startsAt: true, endsAt: true, class: { select: { code: true } } },
+  });
+  const upcoming = await db.classSession.findMany({
+    where: { roomId: { not: null }, status: "SCHEDULED", startsAt: { gt: now } },
+    orderBy: { startsAt: "asc" },
+    distinct: ["roomId"],
+    select: { roomId: true, startsAt: true, class: { select: { code: true } } },
+  });
+  const usage = new Map<string, { weekSessions: number; weekMinutes: number; current: { classCode: string; endsAt: Date } | null; next: { classCode: string; startsAt: Date } | null }>();
+  const get = (id: string) => usage.get(id) ?? usage.set(id, { weekSessions: 0, weekMinutes: 0, current: null, next: null }).get(id)!;
+  for (const s of sessions) {
+    const u = get(s.roomId!);
+    if (s.startsAt >= from && s.startsAt < to) {
+      u.weekSessions += 1;
+      u.weekMinutes += Math.round((s.endsAt.getTime() - s.startsAt.getTime()) / 60_000);
+    }
+    if (s.startsAt <= now && now < s.endsAt) u.current = { classCode: s.class.code, endsAt: s.endsAt };
+  }
+  for (const s of upcoming) get(s.roomId!).next = { classCode: s.class.code, startsAt: s.startsAt };
+  return usage;
+}
+
 /** API-010 — FR-016: tên phòng duy nhất. */
 export async function saveRoom(actor: Actor, id: string | null, input: { name: string; capacity: number; isActive: boolean; note: string | null }): Promise<void> {
   assertCan(actor, "room.manage");
@@ -161,22 +192,30 @@ export async function deleteRoom(actor: Actor, id: string): Promise<void> {
 
 /* ───────────── Cấp học (Admin §1 — FR-036) ───────────── */
 
-export type LevelInput = { name: string; gradeFrom: number; gradeTo: number; description: string | null; sortOrder: number; isActive: boolean };
+/** `subjectIds`: môn dạy ở cấp này (Admin §1 "Liên kết môn học với cấp học" — sửa được từ cả hai phía). Bỏ trống = không đổi. */
+export type LevelInput = { name: string; gradeFrom: number; gradeTo: number; description: string | null; sortOrder: number; isActive: boolean; subjectIds?: string[] };
 
 export async function listLevelsAdmin(actor: Actor) {
   assertCan(actor, "level.manage");
   return db.educationLevel.findMany({
     orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    include: { subjects: { select: { subject: { select: { name: true } } } }, _count: { select: { documents: true } } },
+    include: { subjects: { select: { subjectId: true, subject: { select: { name: true } } } }, _count: { select: { documents: true } } },
   });
 }
 
 export async function saveLevel(actor: Actor, id: string | null, input: LevelInput): Promise<void> {
   assertCan(actor, "level.manage");
   if (input.gradeTo < input.gradeFrom) throw new DomainError("INVALID_RANGE", "Khối kết thúc phải lớn hơn hoặc bằng khối bắt đầu.", { gradeTo: "Phải lớn hơn hoặc bằng khối bắt đầu." });
+  const { subjectIds, ...data } = input;
   try {
-    if (id) await db.educationLevel.update({ where: { id }, data: input });
-    else await db.educationLevel.create({ data: input });
+    await db.$transaction(async (tx) => {
+      const levelId = id ? (await tx.educationLevel.update({ where: { id }, data, select: { id: true } })).id : (await tx.educationLevel.create({ data, select: { id: true } })).id;
+      if (subjectIds) {
+        const valid = subjectIds.length ? await tx.subject.findMany({ where: { id: { in: subjectIds } }, select: { id: true } }) : [];
+        await tx.subjectLevel.deleteMany({ where: { levelId } });
+        if (valid.length) await tx.subjectLevel.createMany({ data: valid.map((s) => ({ subjectId: s.id, levelId })) });
+      }
+    });
   } catch (error) {
     if (isUniqueViolation(error, "name")) throw new DomainError("DUPLICATE_NAME", "Tên cấp học đã tồn tại.", { name: "Tên cấp học đã tồn tại." });
     throw error;

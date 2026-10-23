@@ -1,4 +1,4 @@
-// Cấu hình AI (DECISION-D33). Hàm thuần đọc từ `env` truyền vào để unit test, không chạm process.env trực tiếp.
+// Cấu hình AI (DECISION-D34). Hàm thuần đọc từ `env` truyền vào để unit test, không chạm process.env trực tiếp.
 
 export type ProviderId = "mock" | "gemini" | "openai" | "anthropic";
 

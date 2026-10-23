@@ -9,6 +9,7 @@ import { requireActor } from "@/server/auth/guard";
 import { markAllReadAction, openNotificationAction } from "@/server/notifications/actions";
 import { listMyNotifications, NOTIFICATION_PAGE_SIZE } from "@/server/notifications/service";
 import { cn } from "@/lib/format";
+import { NOTIFICATION_GROUPS } from "@/lib/labels";
 import { formatDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Thông báo" };
@@ -27,15 +28,31 @@ const ICONS: Record<string, typeof Bell> = {
   schedule_reminder: CalendarClock,
   evaluation: MessageSquareText,
   document: FileText,
+  assignment: ClipboardCheck,
+  test: ClipboardCheck,
+  due_soon: ClipboardCheck,
+  overdue: ClipboardCheck,
+  resubmit: ClipboardCheck,
+  grade_update: ClipboardCheck,
+  solution: BookOpen,
+  review: FileText,
 };
 
 // FR-048: hộp thư thông báo của mọi vai trò.
-export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: string; chua?: string }> }) {
+export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: string; chua?: string; loai?: string }> }) {
   const actor = await requireActor();
   const sp = await searchParams;
   const page = parsePage(sp.page);
   const onlyUnread = sp.chua === "1";
-  const { total, unread, rows } = await listMyNotifications(actor, page, onlyUnread);
+  const group = NOTIFICATION_GROUPS.find((g) => g.key === sp.loai);
+  const { total, unread, rows } = await listMyNotifications(actor, page, onlyUnread, group?.kinds);
+  const href = (p: { chua?: boolean; loai?: string }) => {
+    const q = new URLSearchParams();
+    if (p.chua) q.set("chua", "1");
+    if (p.loai) q.set("loai", p.loai);
+    const s = q.toString();
+    return s ? `/thong-bao?${s}` : "/thong-bao";
+  };
   const canSend = actor.role === "ADMIN" || actor.role === "STAFF" || actor.role === "TEACHER";
 
   return (
@@ -50,6 +67,11 @@ export default async function NotificationsPage({ searchParams }: { searchParams
                 Gửi thông báo
               </ButtonLink>
             )}
+            {canSend && (
+              <ButtonLink href="/thong-bao/gui#da-gui" size="sm" variant="secondary">
+                Đã gửi &amp; trạng thái
+              </ButtonLink>
+            )}
             {unread > 0 && (
               <form action={markAllReadAction}>
                 <button type="submit" className="inline-flex min-h-9 items-center rounded-control border border-primary/30 bg-surface px-3 text-sm font-semibold text-primary hover:bg-primary-soft">
@@ -61,10 +83,23 @@ export default async function NotificationsPage({ searchParams }: { searchParams
         }
       />
       <PushToggle />
+      {canSend && <p className="mb-3 text-sm text-muted">Đây là hộp thư thông báo <strong>bạn nhận được</strong> (đơn xin nghỉ, đề xuất đổi lịch, bài cần chấm, thông báo của trung tâm…). Thông báo bạn đã gửi xem ở &ldquo;Đã gửi &amp; trạng thái&rdquo;.</p>}
+      <nav aria-label="Lọc theo loại" className="mb-3 flex flex-wrap gap-2">
+        {[{ key: undefined as string | undefined, label: "Mọi loại" }, ...NOTIFICATION_GROUPS.map((g) => ({ key: g.key as string | undefined, label: g.label }))].map((t) => (
+          <Link
+            key={t.key ?? "all"}
+            href={href({ chua: onlyUnread, loai: t.key })}
+            aria-current={t.key === group?.key ? "page" : undefined}
+            className={cn("inline-flex min-h-9 items-center rounded-full border px-3 text-sm no-underline", t.key === group?.key ? "border-primary bg-primary text-white" : "border-line bg-surface text-ink")}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </nav>
       <nav aria-label="Lọc thông báo" className="mb-4 flex gap-2">
         {[
-          { href: "/thong-bao", label: "Tất cả", active: !onlyUnread },
-          { href: "/thong-bao?chua=1", label: `Chưa đọc (${unread})`, active: onlyUnread },
+          { href: href({ loai: group?.key }), label: "Tất cả", active: !onlyUnread },
+          { href: href({ chua: true, loai: group?.key }), label: `Chưa đọc (${unread})`, active: onlyUnread },
         ].map((t) => (
           <Link
             key={t.href}
@@ -108,7 +143,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
           })}
         </ul>
       )}
-      <Pagination page={page} pageSize={NOTIFICATION_PAGE_SIZE} total={total} basePath="/thong-bao" params={{ chua: onlyUnread ? "1" : undefined }} />
+      <Pagination page={page} pageSize={NOTIFICATION_PAGE_SIZE} total={total} basePath="/thong-bao" params={{ chua: onlyUnread ? "1" : undefined, loai: group?.key }} />
     </>
   );
 }

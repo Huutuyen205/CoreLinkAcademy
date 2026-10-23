@@ -5,12 +5,13 @@ import Link from "next/link";
 import { ChildPicker } from "@/components/learner/child-picker";
 import { BannerLink, WelcomeBanner } from "@/components/layout/welcome-banner";
 import { EvaluationList } from "@/components/learner/evaluation-list";
-import { AttendanceSummary, ResultsList } from "@/components/learner/learner-progress";
+import { AttendanceSummary } from "@/components/learner/learner-progress";
+import { CourseProgress, resultFilterHref, ResultsSummary } from "@/components/learner/results-summary";
 import { ProgressCharts } from "@/components/learner/progress-charts";
 import { Flash } from "@/components/layout/flash";
 import { WeekSchedule } from "@/components/schedule/week-schedule";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
-import { listStudentClasses } from "@/server/academic/learner";
+import { learnerProgress, listStudentClasses } from "@/server/academic/learner";
 import { listSessionsInRange } from "@/server/academic/service";
 import { listPublishedResults } from "@/server/assessment/service";
 import { getStudentAttendance } from "@/server/attendance/service";
@@ -24,7 +25,8 @@ import { formatDate, parseWeekParam, vnWeekRange } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Theo dõi con" };
 
-type SP = { con?: string; tuan?: string; thongbao?: string };
+type SP = { con?: string; tuan?: string; thongbao?: string; mon?: string; lop?: string; ky?: string };
+const str = (v: unknown) => (typeof v === "string" && v.length <= 80 ? v : undefined);
 
 // UC-011 — FR-022, FR-025, FR-033, FR-034. Con không liên kết → 404 (TC-034).
 export default async function ParentDashboard({ searchParams }: { searchParams: Promise<SP> }) {
@@ -48,13 +50,15 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
 
   const weekStart = parseWeekParam(sp.tuan);
   const { from, to } = vnWeekRange(weekStart);
-  const [sessions, attendance, results, classes, evaluations] = await Promise.all([
+  const [sessions, attendance, results, classes, evaluations, progress] = await Promise.all([
     orNotFound(listSessionsInRange(actor, from, to, child.id)),
     orNotFound(getStudentAttendance(actor, child.id)),
     orNotFound(listPublishedResults(actor, child.id)),
     orNotFound(listStudentClasses(actor, child.id)),
     orNotFound(listEvaluationsOfStudent(actor, child.id)),
+    orNotFound(learnerProgress(actor, child.id)),
   ]);
+  const resultFilter = { subject: str(sp.mon), classCode: str(sp.lop), period: str(sp.ky) };
 
   return (
     <div className="space-y-6">
@@ -74,7 +78,7 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
         </BannerLink>
         <BannerLink href="/tin-nhan">
           <MessageSquare className="size-4" />
-          <span>Nhắn tin với giáo viên</span>
+          <span>Nhắn giáo viên / trung tâm</span>
         </BannerLink>
       </WelcomeBanner>
 
@@ -148,6 +152,12 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
                       <User className="size-3.5 text-muted" />
                       Giáo viên phụ trách: <span className="font-semibold text-ink">{c.teacher.fullName}</span>
                     </p>
+                    {c.teacher.introPublished && (
+                      <details>
+                        <summary className="cursor-pointer text-primary">Giới thiệu giáo viên</summary>
+                        <p className="mt-1 whitespace-pre-line text-ink">{c.teacher.introPublished}</p>
+                      </details>
+                    )}
                     <p className="text-subtle">
                       Khai giảng: {formatDate(c.startDate)}
                     </p>
@@ -173,11 +183,12 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
         />
 
         {/* Tiến độ (biểu đồ) + Chuyên cần & Kết quả */}
-        <ProgressCharts results={results} attendance={attendance.records} />
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <AttendanceSummary data={attendance} />
-          <ResultsList results={results} />
+        <CourseProgress rows={progress} />
+        <div className="scroll-mt-24" id="tong-hop">
+          <ResultsSummary results={results} filter={resultFilter} baseHref={(f) => resultFilterHref("/phu-huynh", f, { con: child.id })} />
         </div>
+        <ProgressCharts results={results} attendance={attendance.records} />
+        <AttendanceSummary data={attendance} />
 
         {/* Nhận xét giáo viên */}
         {evaluations && evaluations.length > 0 && (

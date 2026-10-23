@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageSquarePlus, Search, Users } from "lucide-react";
+import { Building2, MessageSquarePlus, Search, TextSearch, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/format";
 import { foldVietnamese } from "@/lib/search";
 import { formatChatTime } from "@/lib/time";
-import { startConversationAction } from "@/server/messaging/actions";
+import { openDirectAction, startCenterConversationAction, startConversationAction } from "@/server/messaging/actions";
 
 export type ChatListItem = {
   id: string;
@@ -27,10 +27,14 @@ type Props = {
   unopenedClasses: { classId: string; title: string; subtitle: string }[];
   contacts: { value: string; label: string }[];
   contactHint: string;
+  /** PH/HS: giáo viên đang dạy (nút nhắn nhanh). */
+  teachers?: { id: string; fullName: string; classes: string }[];
+  /** Không phải quản lý: hiện nút "Nhắn trung tâm". */
+  showCenter?: boolean;
 };
 
 /** Cột trái kiểu Zalo: tìm nhanh, tin nhắn mới, danh sách cuộc trò chuyện. Trên điện thoại chỉ hiện ở `/tin-nhan`. */
-export function ChatSidebar({ conversations, unopenedClasses, contacts, contactHint }: Props) {
+export function ChatSidebar({ conversations, unopenedClasses, contacts, contactHint, teachers = [], showCenter }: Props) {
   const pathname = usePathname();
   const [q, setQ] = useState("");
   const [composing, setComposing] = useState(false);
@@ -66,6 +70,26 @@ export function ChatSidebar({ conversations, unopenedClasses, contacts, contactH
           <p className="mt-2 text-xs text-muted">{contactHint}</p>
         </div>
       )}
+      {(showCenter || teachers.length > 0) && (
+        <div className="mb-3 flex flex-wrap gap-2">
+          {showCenter && (
+            <form action={startCenterConversationAction}>
+              <button type="submit" className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-primary/30 bg-surface px-3 text-sm font-semibold text-primary hover:bg-primary-soft">
+                <Building2 className="size-4" aria-hidden="true" />
+                Nhắn trung tâm
+              </button>
+            </form>
+          )}
+          {teachers.map((t) => (
+            <form key={t.id} action={openDirectAction}>
+              <input type="hidden" name="userId" value={t.id} />
+              <button type="submit" title={`Lớp ${t.classes}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-sm hover:border-primary/40 hover:bg-primary-soft">
+                Nhắn GV {t.fullName}
+              </button>
+            </form>
+          ))}
+        </div>
+      )}
       <label className="relative mb-3 block">
         <span className="sr-only">Tìm cuộc trò chuyện</span>
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden="true" />
@@ -77,6 +101,10 @@ export function ChatSidebar({ conversations, unopenedClasses, contacts, contactH
           className="block min-h-11 w-full rounded-full border border-line-strong bg-surface pl-9 pr-4 text-base"
         />
       </label>
+      <Link href="/tin-nhan/tim" className="mb-3 inline-flex items-center gap-1.5 text-sm">
+        <TextSearch className="size-4" aria-hidden="true" />
+        Tìm trong nội dung mọi tin nhắn
+      </Link>
       {shown.length === 0 && shownClasses.length === 0 ? (
         <p className="rounded-block border border-dashed border-line p-4 text-center text-sm text-muted">{q ? "Không tìm thấy cuộc trò chuyện." : "Chưa có cuộc trò chuyện nào."}</p>
       ) : (

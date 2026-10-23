@@ -122,3 +122,40 @@ export async function listLeaveRequestsForHandler(actor: Actor, status?: Request
 export async function countPendingLeaveRequests(actor: Actor): Promise<number> {
   return db.leaveRequest.count({ where: { ...handlerScope(actor), status: "PENDING" } });
 }
+
+/** PH §2: buổi sắp tới (30 ngày) của các con để chọn khi gửi đơn ngay ở trang Đơn xin nghỉ. Bỏ buổi đã có đơn chờ/đã duyệt. */
+export async function upcomingLeaveTargets(actor: Actor) {
+  if (actor.role !== "PARENT") throw new ForbiddenError();
+  const ids = await linkedStudentIds(actor.id);
+  if (ids.length === 0) return [];
+  const now = new Date();
+  const until = new Date(now.getTime() + 30 * 86_400_000);
+  const students = await db.user.findMany({
+    where: { id: { in: ids } },
+    orderBy: { fullName: "asc" },
+    select: {
+      id: true,
+      fullName: true,
+      enrollments: {
+        where: { status: { in: [...LEARNING] } },
+        select: {
+          class: {
+            select: {
+              code: true,
+              sessions: {
+                where: { status: "SCHEDULED", startsAt: { gt: now, lt: until } },
+                orderBy: { startsAt: "asc" },
+                select: { id: true, startsAt: true, leaveRequests: { where: { status: { in: ["PENDING", "APPROVED"] } }, select: { studentId: true } } },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  return students.flatMap((st) =>
+    st.enrollments
+      .flatMap((e) => e.class.sessions.filter((s) => !s.leaveRequests.some((l) => l.studentId === st.id)).map((s) => ({ studentId: st.id, studentName: st.fullName, sessionId: s.id, startsAt: s.startsAt, classCode: e.class.code })))
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime()),
+  );
+}

@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Chấm phiếu giấy" };
 
 export const maxDuration = 60;
 
-// DECISION-D33 — bài làm trên giấy: AI đọc phiếu trắc nghiệm, giáo viên xác nhận.
+// DECISION-D34 — bài làm trên giấy: AI đọc phiếu trắc nghiệm, giáo viên xác nhận.
 export default async function PaperSheetPage({ params }: { params: Promise<{ id: string }> }) {
   const actor = await requireRole("TEACHER");
   const { id } = await params;

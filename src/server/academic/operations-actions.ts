@@ -7,7 +7,7 @@ import { requireRole } from "@/server/auth/guard";
 import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
 import { isValidTime, vnToUtc } from "@/lib/time";
-import { addMakeupSession, assignSessionTeacher, transferStudent, updateClass } from "./operations";
+import { addMakeupSession, assignSessionTeacher, setSessionRoom, transferStudent, updateClass } from "./operations";
 
 const id = z.string().min(1).max(40);
 const optionalId = z.string().max(40).transform((v) => v || null);
@@ -85,4 +85,17 @@ export async function transferStudentAction(_prev: ActionState, formData: FormDa
   if (!result.ok) return result.state;
   revalidatePath(`/quan-ly/hoc-vien/${result.value.studentId}`);
   return { ok: true, message: "Đã chuyển lớp." };
+}
+
+/** Admin §7: đổi phòng cho một buổi. */
+export async function setSessionRoomAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("ADMIN", "STAFF");
+  const fields = formFields(formData, ["sessionId", "roomId"]);
+  const parsed = parseForm(z.object({ sessionId: id, roomId: optionalId }), fields);
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => setSessionRoom(actor, parsed.data.sessionId, parsed.data.roomId), fields);
+  if (!result.ok) return result.state;
+  revalidatePath(`/quan-ly/lop/${result.value}`);
+  revalidatePath(`/quan-ly/buoi/${parsed.data.sessionId}`);
+  return { ok: true, message: "Đã đổi phòng cho buổi học. Lớp đã nhận thông báo." };
 }

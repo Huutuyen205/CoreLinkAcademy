@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
+import { TextField } from "@/components/ui/field";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { FilterForm } from "@/components/ui/filter-form";
 import { getClassForTeacher } from "@/server/academic/service";
 import { getGradebook, listClassAssignments } from "@/server/assessment/service";
 import { listAbsenceAlerts } from "@/server/attendance/service";
@@ -10,20 +12,24 @@ import { requireRole } from "@/server/auth/guard";
 import { orNotFound } from "@/server/page";
 import { ASSIGNMENT_STATUS, CLASS_STATUS, ENROLLMENT_STATUS, SESSION_STATUS } from "@/lib/labels";
 import { formatSchedule } from "@/lib/schedule";
+import { foldVietnamese } from "@/lib/search";
 import { formatDateTime, formatTime, formatVn } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Lớp học" };
 
 // FR-033 + UC-007/UC-008: học sinh, buổi, bài tập, bảng điểm của lớp mình dạy.
-export default async function TeacherClassPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string }> }) {
+export default async function TeacherClassPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string; q?: string }> }) {
   const actor = await requireRole("TEACHER");
   const { id } = await params;
-  const { thongbao } = await searchParams;
+  const { thongbao, q: rawQ } = await searchParams;
+  const q = typeof rawQ === "string" ? rawQ.trim().slice(0, 80) : "";
   const klass = await orNotFound(getClassForTeacher(actor, id));
   const [assignments, gradebook, alerts] = klass.isOwner
     ? await Promise.all([listClassAssignments(actor, id), getGradebook(actor, id), listAbsenceAlerts(actor)])
     : [[], null, []];
   const classAlerts = alerts.filter((a) => a.classId === id);
+  const terms = foldVietnamese(q).split(/\s+/).filter(Boolean);
+  const students = klass.enrollments.filter((e) => terms.every((t) => foldVietnamese(`${e.student.fullName} ${e.student.studentCode ?? ""}`).includes(t)));
   const mySessions = klass.isOwner ? klass.sessions : klass.sessions.filter((s) => s.teacherId === actor.id);
 
   return (
@@ -39,6 +45,9 @@ export default async function TeacherClassPage({ params, searchParams }: { param
       />
       {klass.isOwner && (
         <nav aria-label="Công cụ lớp" className="mb-6 flex flex-wrap gap-2">
+          <ButtonLink href={`/giao-vien/bai-tap?lop=${klass.id}`} variant="secondary" size="sm">
+            Bài tập của lớp
+          </ButtonLink>
           <ButtonLink href={`/giao-vien/lop/${klass.id}/danh-gia`} variant="secondary" size="sm">
             Đánh giá định kỳ
           </ButtonLink>
@@ -63,11 +72,18 @@ export default async function TeacherClassPage({ params, searchParams }: { param
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title={`Học sinh (${klass.enrollments.length})`}>
+          {klass.enrollments.length > 6 && (
+            <FilterForm className="mb-3">
+              <TextField name="q" label="Tìm học sinh (tên hoặc mã)" defaultValue={q} maxLength={80} />
+            </FilterForm>
+          )}
           {klass.enrollments.length === 0 ? (
             <EmptyState message="Lớp chưa có học sinh." />
+          ) : students.length === 0 ? (
+            <EmptyState message="Không có học sinh phù hợp." />
           ) : (
             <ul className="divide-y divide-line">
-              {klass.enrollments.map((e) => (
+              {students.map((e) => (
                 <li key={e.student.id} className="flex items-center justify-between gap-2 py-2">
                   <span>
                     {klass.isOwner ? <Link href={`/giao-vien/hoc-sinh/${e.student.id}`}>{e.student.fullName}</Link> : e.student.fullName}{" "}
@@ -131,7 +147,7 @@ export default async function TeacherClassPage({ params, searchParams }: { param
           </Card>
 
           {gradebook && gradebook.assignments.length > 0 && (
-            <Card title="Bảng điểm" className="mt-6">
+            <Card title="Bảng điểm" className="mt-6 scroll-mt-24" id="bang-diem">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-max text-left text-sm">
                   <caption className="sr-only">Bảng điểm lớp {klass.code}</caption>

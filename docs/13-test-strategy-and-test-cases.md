@@ -171,7 +171,7 @@ Cột "Tự động": **U** = unit có sẵn · **I** = integration (code P3, ch
 
 **Known gaps (2026-10-21):** chưa có DB đã migrate → mọi TC loại I, M, E chưa chạy (RISK-007); chưa có DB test (Q08); chưa có Playwright/axe (Pha 1.5); chưa đo NFR-009.
 
-## AI (DECISION-D33) — các bộ test đã có
+## AI (DECISION-D34) — các bộ test đã có
 
 | Tệp | Loại | Nội dung |
 |---|---|---|

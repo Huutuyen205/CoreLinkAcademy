@@ -35,13 +35,15 @@ export const ROLE_CAPABILITIES: Record<Role, { area: string; actions: string }[]
   ],
   TEACHER: [
     { area: "Lớp của mình", actions: "Xem lịch dạy, điểm danh trong khung giờ, hồ sơ học sinh lớp mình" },
-    { area: "Bài tập", actions: "Soạn/giao/đóng bài, chấm (kể cả ảnh bài tự luận), công bố điểm, bảng điểm" },
+    { area: "Bài tập", actions: "Soạn/giao/đóng bài, chấm (kể cả ảnh bài tự luận), yêu cầu nộp lại, công bố điểm và bài chữa, bảng điểm" },
+    { area: "Ôn luyện", actions: "Soạn đề luyện tập (trắc nghiệm, trả lời ngắn, lời giải) cho học sinh tự ôn" },
     { area: "Yêu cầu", actions: "Gửi đề xuất đổi lịch/xin nghỉ; duyệt đơn xin nghỉ của học sinh lớp mình" },
     { area: "Tài liệu & đánh giá", actions: "Tài liệu, giáo án; đánh giá định kỳ học sinh" },
     { area: "Giao tiếp", actions: "Thông báo cho lớp mình; nhắn nhóm lớp, nhắn riêng học sinh/phụ huynh lớp mình và trung tâm" },
   ],
   STUDENT: [
-    { area: "Học tập", actions: "Xem lịch học, làm và nộp bài (chụp ảnh bài tự luận), xem điểm đã công bố, chuyên cần" },
+    { area: "Học tập", actions: "Xem lịch học, làm và nộp bài (chụp ảnh bài tự luận), xem điểm/bài chữa đã công bố, chuyên cần" },
+    { area: "Tự ôn luyện", actions: "Lọc đề theo chuyên đề, dạng bài, mức độ; làm bài, xem đáp án, lời giải và lịch sử luyện tập" },
     { area: "Tài liệu", actions: "Xem tài liệu được chia sẻ cho lớp" },
     { area: "Giao tiếp", actions: "Nhắn nhóm lớp, nhắn riêng giáo viên và bạn cùng lớp; nhận thông báo" },
   ],
@@ -79,6 +81,9 @@ const PERMISSIONS = {
   "request.handle": ["ADMIN", "STAFF"], // duyệt đề xuất đổi lịch
   "report.view": ["ADMIN", "STAFF"],
   "level.manage": ["ADMIN"],
+  // Checklist v4 (DECISION-D33)
+  "practice.author": ["ADMIN", "STAFF", "TEACHER"], // soạn đề luyện tập
+  "practice.take": ["STUDENT"], // làm đề luyện tập
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;

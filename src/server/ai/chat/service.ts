@@ -1,5 +1,5 @@
 // Chatbot: câu hỏi → ý định (luật từ khóa, hoặc AI khi luật yếu) → hàm lấy dữ liệu có kiểm tra phạm vi → câu trả lời.
-// Gửi cho AI CHỈ có chữ của câu hỏi + danh mục ý định; không có dữ liệu học sinh (DECISION-D33).
+// Gửi cho AI CHỈ có chữ của câu hỏi + danh mục ý định; không có dữ liệu học sinh (DECISION-D34).
 import type { Actor } from "@/server/auth/session";
 import { auditAiUse, completeJson, consumeAiQuota, getProvider } from "@/server/ai/client";
 import { intentGuessSchema } from "@/server/ai/generate/schemas";

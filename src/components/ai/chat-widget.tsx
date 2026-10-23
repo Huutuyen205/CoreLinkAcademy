@@ -22,7 +22,7 @@ type Props = {
 const chipClass =
   "rounded-full border border-primary/30 bg-surface px-3 py-1.5 text-left text-sm font-medium text-primary transition-colors hover:border-primary hover:bg-primary-soft disabled:opacity-60";
 
-/** Trợ lý hỏi đáp nổi ở mọi trang nội bộ. Dữ liệu trả lời do server lấy bằng service có kiểm tra phạm vi (DECISION-D33). */
+/** Trợ lý hỏi đáp nổi ở mọi trang nội bộ. Dữ liệu trả lời do server lấy bằng service có kiểm tra phạm vi (DECISION-D34). */
 export function ChatWidget({ suggestions, mock, userName, hasBottomNav }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);

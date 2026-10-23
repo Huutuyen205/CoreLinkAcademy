@@ -16,7 +16,14 @@ const OPTIONS: { value: AttendanceStatus; label: string; className: string }[] =
   { value: "EXCUSED", label: "Có phép", className: "has-[:checked]:border-muted has-[:checked]:bg-paper" },
 ];
 
-type Row = { id: string; fullName: string; studentCode: string | null; status: AttendanceStatus | null; note: string | null };
+type Row = { id: string; fullName: string; studentCode: string | null; status: AttendanceStatus | null; note: string | null; attitude?: string | null };
+
+const ATTITUDES = [
+  { value: "", label: "Thái độ: —" },
+  { value: "GOOD", label: "Tích cực" },
+  { value: "NORMAL", label: "Bình thường" },
+  { value: "NEEDS_WORK", label: "Cần cố gắng" },
+];
 
 /** GOAL-003: mặc định "có mặt", giáo viên chỉ chỉnh các em vắng/muộn rồi lưu. */
 export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: string; rows: Row[]; needsReason: boolean }) {
@@ -47,16 +54,28 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
                   </label>
                 ))}
               </div>
-              <label className="mt-2 block">
-                <span className="sr-only">Ghi chú cho {r.fullName}</span>
-                <input
-                  name={`note:${r.id}`}
-                  defaultValue={r.note ?? ""}
-                  maxLength={255}
-                  placeholder="Ghi chú (không bắt buộc)"
-                  className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base"
-                />
-              </label>
+              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_180px]">
+                <label className="block">
+                  <span className="sr-only">Ghi chú cho {r.fullName}</span>
+                  <input
+                    name={`note:${r.id}`}
+                    defaultValue={r.note ?? ""}
+                    maxLength={255}
+                    placeholder="Ghi chú (không bắt buộc)"
+                    className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base"
+                  />
+                </label>
+                <label className="block">
+                  <span className="sr-only">Thái độ học tập của {r.fullName}</span>
+                  <select name={`attitude:${r.id}`} defaultValue={r.attitude ?? ""} className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base">
+                    {ATTITUDES.map((a) => (
+                      <option key={a.value} value={a.value}>
+                        {a.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             </fieldset>
           </li>
         ))}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { monthlyAttendance, scoreDelta, scoreTrend } from "./progress";
+import { groupResults, inPeriod, monthlyAttendance, periodKeys, periodLabel, periodOptions, scoreDelta, scoreTrend } from "./progress";
 
 const r = (iso: string, score: number | null, max = 10) => ({ publishedAt: new Date(iso), score, maxScore: max, title: iso, classCode: "A" });
 
@@ -35,5 +35,35 @@ describe("monthlyAttendance", () => {
     expect(rows[5]).toMatchObject({ rate: 0.5, total: 2 });
     expect(rows[4]).toMatchObject({ rate: 1, total: 1 });
     expect(rows[3]!.rate).toBeNull();
+  });
+});
+
+describe("kết quả tổng hợp theo môn / lớp / kỳ (HS §4, PH §5)", () => {
+  const r = (iso: string, score: number, max: number, classCode: string, subjectName: string) => ({ publishedAt: new Date(iso), score, maxScore: max, classCode, subjectName });
+  const rows = [
+    r("2026-09-10T03:00:00Z", 8, 10, "T9A", "Toán"),
+    r("2026-10-05T03:00:00Z", 6, 10, "T9A", "Toán"),
+    r("2026-10-20T03:00:00Z", 9, 10, "A9", "Tiếng Anh"),
+    r("2026-10-21T03:00:00Z", 0, 0, "A9", "Tiếng Anh"),
+  ];
+
+  it("kỳ theo giờ VN: tháng và quý", () => {
+    expect(periodKeys(new Date("2026-09-30T18:00:00Z"))).toEqual({ month: "2026-10", quarter: "2026-Q4" });
+    expect(periodLabel("2026-Q4")).toBe("Quý 4/2026");
+    expect(periodLabel("2026-10")).toBe("Tháng 10/2026");
+  });
+
+  it("danh sách kỳ: quý trước, mới nhất trước", () => {
+    expect(periodOptions(rows)).toEqual(["2026-Q4", "2026-Q3", "2026-10", "2026-09"]);
+    expect(inPeriod(rows[0]!.publishedAt, "2026-Q3")).toBe(true);
+    expect(inPeriod(rows[0]!.publishedAt, "2026-10")).toBe(false);
+  });
+
+  it("gom theo môn: số bài, trung bình, cao/thấp; bỏ bài điểm tối đa 0", () => {
+    expect(groupResults(rows, "subject")).toEqual([
+      { key: "Tiếng Anh", count: 1, avgPct: 90, bestPct: 90, worstPct: 90 },
+      { key: "Toán", count: 2, avgPct: 70, bestPct: 80, worstPct: 60 },
+    ]);
+    expect(groupResults(rows, "class").map((g) => g.key)).toEqual(["A9", "T9A"]);
   });
 });

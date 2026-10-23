@@ -7,6 +7,10 @@ import { cleanup, createCatalog, createUser, makeTag } from "@/test/fixtures";
 import { addDays } from "@/lib/schedule";
 import { vnDateKey, vnToUtc } from "@/lib/time";
 
+// `.env` của dev có thể đặt AI thật (AI_PROVIDER + AI_API_KEY): test luôn chạy chế độ mẫu, không gọi mạng/không tốn quota.
+// Phải đặt TRƯỚC khi nạp các module AI (chúng đọc cấu hình khi gọi, nhưng đặt sớm cho chắc).
+process.env.AI_PROVIDER = "mock";
+
 // Ngoài Next, `unstable_cache` không chạy được → thay bằng hàm gọi thẳng.
 vi.mock("next/cache", () => ({ unstable_cache: <T,>(fn: T) => fn, revalidateTag: () => {}, revalidatePath: () => {} }));
 

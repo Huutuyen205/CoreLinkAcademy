@@ -59,10 +59,57 @@ export async function listStudentClasses(actor: Actor, studentId: string) {
           endTime: true,
           startDate: true,
           course: { select: { title: true } },
-          teacher: { select: { id: true, fullName: true } },
+          teacher: { select: { id: true, fullName: true, introPublished: true } },
           room: { select: { name: true } },
         },
       },
     },
+  });
+}
+
+/**
+ * HS §4 "Xem tiến độ học tập (tiến độ hoàn thành khóa, tỷ lệ hoàn thành bài tập)", PH §5:
+ * theo từng lớp đang học — số buổi đã học / tổng buổi, số bài đã nộp / bài đã giao.
+ */
+export async function learnerProgress(actor: Actor, studentId: string) {
+  await assertCanViewStudent(actor, studentId);
+  const now = new Date();
+  const enrollments = await db.enrollment.findMany({
+    where: { studentId, status: { in: ["ACTIVE", "PAUSED", "COMPLETED"] } },
+    orderBy: { enrolledAt: "desc" },
+    select: {
+      status: true,
+      class: {
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          course: { select: { title: true, subject: { select: { name: true } } } },
+          _count: { select: { sessions: { where: { status: { not: "CANCELLED" } } } } },
+          sessions: { where: { status: { not: "CANCELLED" }, startsAt: { lte: now } }, select: { id: true } },
+          assignments: {
+            where: { status: { in: ["PUBLISHED", "CLOSED"] } },
+            select: { id: true, dueAt: true, submissions: { where: { studentId, status: { not: "IN_PROGRESS" } }, select: { id: true } } },
+          },
+        },
+      },
+    },
+  });
+  return enrollments.map(({ status, class: c }) => {
+    const assigned = c.assignments.length;
+    const submitted = c.assignments.filter((a) => a.submissions.length > 0).length;
+    const overdue = c.assignments.filter((a) => a.submissions.length === 0 && a.dueAt < now).length;
+    return {
+      classId: c.id,
+      classCode: c.code,
+      courseTitle: c.course.title,
+      subjectName: c.course.subject.name,
+      enrollmentStatus: status,
+      sessionsDone: c.sessions.length,
+      sessionsTotal: c._count.sessions,
+      assigned,
+      submitted,
+      overdue,
+    };
   });
 }

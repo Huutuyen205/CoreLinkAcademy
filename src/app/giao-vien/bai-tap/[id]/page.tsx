@@ -37,7 +37,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href={`/giao-vien/lop/${a.class.id}`}>← Lớp {a.class.code}</Link>
+        <Link href={`/giao-vien/lop/${a.class.id}`}>← Lớp {a.class.code}</Link> · <Link href="/giao-vien/bai-tap">Tất cả bài tập</Link>
       </p>
       <Flash code={(await searchParams).thongbao} />
       <PageHeader
@@ -45,6 +45,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
         description={`Hạn nộp ${formatDateTime(a.dueAt)} · ${a.questions.length} câu · tổng ${total} điểm${a.acceptsFiles ? " · nhận bài nộp tệp/ảnh" : ""}${a.allowLate ? " · cho nộp muộn" : ""}`}
         action={
           <span className="flex flex-wrap gap-2">
+            {a.isTest && <Badge tone="warning">Bài kiểm tra</Badge>}
             <Badge tone={ASSIGNMENT_STATUS[a.status].tone}>{ASSIGNMENT_STATUS[a.status].label}</Badge>
             {a.resultsPublishedAt && <Badge tone="success">Đã công bố kết quả</Badge>}
           </span>
@@ -125,7 +126,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                 action={setAssignmentStatusAction}
                 hidden={{ assignmentId: a.id, status: "PUBLISHED" }}
                 submitLabel="Giao bài cho lớp"
-                confirm="Sau khi giao sẽ không sửa được câu hỏi. Tiếp tục?"
+                confirm="Học sinh và phụ huynh sẽ nhận thông báo bài mới. Sau khi giao sẽ không sửa được câu hỏi. Tiếp tục?"
                 fields={[]}
               />
             )}
@@ -183,6 +184,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                 { type: "text", name: "title", label: "Tên bài", required: true, maxLength: 200, defaultValue: a.title },
                 { type: "textarea", name: "instructions", label: "Hướng dẫn", maxLength: 5000, rows: 3, defaultValue: a.instructions },
                 { type: "datetime-local", name: "dueAt", label: "Hạn nộp (giờ Việt Nam)", required: true, defaultValue: formatVn(a.dueAt, "yyyy-MM-dd'T'HH:mm") },
+                { type: "checkbox", name: "isTest", label: "Bài kiểm tra / mock test", defaultChecked: a.isTest },
                 { type: "checkbox", name: "allowLate", label: "Cho phép nộp muộn", defaultChecked: a.allowLate },
                 { type: "checkbox", name: "acceptsFiles", label: "Nhận bài nộp dạng tệp/ảnh", defaultChecked: a.acceptsFiles },
                 {
@@ -193,6 +195,15 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                   max: "100",
                   step: "0.25",
                   defaultValue: a.manualMaxScore === null ? "" : String(a.manualMaxScore),
+                },
+                {
+                  type: "textarea",
+                  name: "solution",
+                  label: "Bài chữa / lời giải",
+                  hint: "HS, PH xem được sau khi công bố kết quả. Sửa được bất cứ lúc nào.",
+                  maxLength: 20000,
+                  rows: 5,
+                  defaultValue: a.solution ?? "",
                 },
               ]}
             />

@@ -1,7 +1,7 @@
-// Vercel Cron (vercel.json) gọi mỗi ngày 12:00 UTC = 19:00 giờ VN — FEAT-B4.
+// Vercel Cron (vercel.json) gọi mỗi ngày 12:00 UTC = 19:00 giờ VN — FEAT-B4 + nhắc bài sắp đến hạn / quá hạn (HS §7).
 // Vercel tự gửi `Authorization: Bearer <CRON_SECRET>` khi biến CRON_SECRET được đặt; thiếu biến → tắt.
 import { timingSafeEqual } from "node:crypto";
-import { sendTomorrowReminders } from "@/server/notifications/reminders";
+import { sendAssignmentReminders, sendTomorrowReminders } from "@/server/notifications/reminders";
 
 export const dynamic = "force-dynamic";
 
@@ -16,5 +16,6 @@ function authorized(request: Request): boolean {
 export async function GET(request: Request) {
   if (!authorized(request)) return new Response("Không tìm thấy.", { status: 404 });
   const result = await sendTomorrowReminders();
-  return Response.json({ ok: true, ...result });
+  const assignments = await sendAssignmentReminders();
+  return Response.json({ ok: true, ...result, assignments });
 }

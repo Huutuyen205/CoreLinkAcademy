@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Soạn bài với AI" };
 // Gọi AI có thể mất vài chục giây (Vercel: giới hạn thời gian chạy hàm).
 export const maxDuration = 60;
 
-// DECISION-D33 — giáo án, slide, giáo trình, đề trắc nghiệm/bài tập/tự luận cho một buổi học.
+// DECISION-D34 — giáo án, slide, giáo trình, đề trắc nghiệm/bài tập/tự luận cho một buổi học.
 export default async function ComposePage({ searchParams }: { searchParams: Promise<{ buoi?: string }> }) {
   const actor = await requireRole("TEACHER");
   const sp = await searchParams;

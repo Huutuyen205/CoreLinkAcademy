@@ -62,6 +62,15 @@ C = tạo, R = xem, U = sửa, D = xóa/ẩn, X = thao tác đặc biệt. "own"
 | Tìm nhanh Ctrl+K (FEAT-B6) | — | HS, PH, GV, lớp, lead | HS, PH, GV, lớp, lead | Lớp mình + HS lớp mình | — | — |
 | Xuất lịch .ics (FEAT-B5) | — | — | — | own | own | con đã liên kết (`?con`) |
 | Nhắc lịch ngày mai (FEAT-B4) | — | X gửi ngay | X gửi ngay | R (nhận) | R (nhận) | R (nhận) |
+| Đề luyện tập — soạn (FR-053) | — | CRUD mọi đề | CRUD mọi đề | CRUD đề của mình; R đề đang mở của GV khác | — | — |
+| Đề luyện tập — làm, kết quả, lịch sử (FR-053) | — | — | — | — | R đề đang mở; CR lượt làm own | — |
+| Kiểm duyệt nhóm lớp: gỡ tin, chặn gửi (FR-050) | — | X mọi nhóm lớp | X mọi nhóm lớp | X nhóm lớp mình phụ trách (không chặn GV) | Thu hồi tin own | Thu hồi tin own |
+| Thông báo "từng người" + trạng thái gửi (FR-048) | — | CR + R trạng thái mọi thông báo | CR + R trạng thái mọi thông báo | R trạng thái thông báo mình gửi | — | — |
+| Yêu cầu nộp lại / xóa / tải bài làm thay (FR-031) | — | — | — | X lớp mình phụ trách | R (thông báo, nộp lại) | R (thông báo) |
+| Chuyên cần lớp, đánh giá của GV (Admin §11) | — | R | R | R bảng chuyên cần lớp mình | — | — |
+| Lịch rảnh, hồ sơ giới thiệu GV (giả định) | — | R lịch rảnh; duyệt hồ sơ | R lịch rảnh; duyệt hồ sơ | CRUD own; gửi duyệt | — | R bản đã duyệt (thẻ lớp của con) |
+| Giáo án gửi duyệt (giả định) | — | Duyệt / yêu cầu sửa | Duyệt / yêu cầu sửa | Gửi duyệt giáo án own | — | — |
+| Đổi phòng từng buổi, đổi nhanh trạng thái hồ sơ | — | X | X (trạng thái: chỉ HS/PH) | — | — | — |
 
 Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Pha 1 (ma trận cũ ghi R nhưng không có FR yêu cầu; chuyển thành Pha 2 — xem 05 §5).
 
@@ -117,7 +126,7 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 - Admin không tự khóa hoặc tự đổi vai trò của chính mình (tránh mất quyền quản trị cuối cùng).
 - Không tin tham số ẩn từ client (`studentIds`, `answerIds`, `classId`): service luôn đối chiếu với DB (vd. chỉ upsert điểm danh cho HS thuộc lớp; `answerId` phải thuộc bài nộp đang chấm).
 - Tài khoản `DISABLED` không có phiên hợp lệ (bị thu hồi khi khóa, và `getCurrentActor` bỏ qua user không ACTIVE).
-- **AI** (docs/23): không bao giờ ghi điểm, giao bài, công bố kết quả hay đọc CSDL trực tiếp; chatbot chỉ gọi hàm có sẵn kiểm tra phạm vi; không gửi dữ liệu cá nhân học sinh cho nhà cung cấp AI (trừ bài làm không kèm tên khi giáo viên chủ động bấm gợi ý chấm).
+- **AI** (docs/24): không bao giờ ghi điểm, giao bài, công bố kết quả hay đọc CSDL trực tiếp; chatbot chỉ gọi hàm có sẵn kiểm tra phạm vi; không gửi dữ liệu cá nhân học sinh cho nhà cung cấp AI (trừ bài làm không kèm tên khi giáo viên chủ động bấm gợi ý chấm).
 
 ## 6. Hành vi khi bị từ chối (DECISION-D11, D14)
 

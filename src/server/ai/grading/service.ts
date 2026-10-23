@@ -1,4 +1,4 @@
-// AI hỗ trợ chấm bài (DECISION-D33): gợi ý điểm tự luận (chữ gõ hoặc ảnh viết tay) và đọc phiếu trắc nghiệm giấy.
+// AI hỗ trợ chấm bài (DECISION-D34): gợi ý điểm tự luận (chữ gõ hoặc ảnh viết tay) và đọc phiếu trắc nghiệm giấy.
 // AI không bao giờ ghi điểm: kết quả chỉ trả về giao diện để giáo viên xem, sửa và bấm lưu.
 import { Prisma } from "@prisma/client";
 import { autoGrade, totalScore, type QuestionData } from "@/lib/grading";

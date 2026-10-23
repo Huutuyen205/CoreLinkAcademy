@@ -6,10 +6,10 @@ import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireActor, requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
-import { sendTomorrowReminders } from "./reminders";
+import { sendAssignmentReminders, sendTomorrowReminders } from "./reminders";
 import { createAnnouncement, markAllNotificationsRead, markNotificationRead } from "./service";
 
-const AUDIENCES = ["ALL", "STAFF", "TEACHERS", "STUDENTS", "PARENTS", "CLASS"] as const;
+const AUDIENCES = ["ALL", "STAFF", "TEACHERS", "STUDENTS", "PARENTS", "CLASS", "USERS"] as const;
 
 const announcementSchema = z.object({
   audience: z.enum(AUDIENCES, { errorMap: () => ({ message: "Chọn đối tượng nhận." }) }),
@@ -24,7 +24,9 @@ export async function createAnnouncementAction(_prev: ActionState, formData: For
   const fields = formFields(formData, ["audience", "classId", "title", "body"]);
   const parsed = parseForm(announcementSchema, fields);
   if (!parsed.ok) return parsed.state;
-  const result = await runAction(() => createAnnouncement(actor, parsed.data), fields);
+  // "Chọn từng người": danh sách id người nhận (ô ẩn `userIds`).
+  const userIds = formData.getAll("userIds").map(String).filter((v) => v.length > 0 && v.length <= 40).slice(0, 500);
+  const result = await runAction(() => createAnnouncement(actor, { ...parsed.data, userIds }), fields);
   if (!result.ok) return result.state;
   revalidatePath("/thong-bao", "layout");
   return { ok: true, message: `Đã gửi thông báo tới ${result.value.recipientCount} người.` };
@@ -39,7 +41,8 @@ export async function openNotificationAction(formData: FormData): Promise<void> 
   revalidatePath("/", "layout");
   const link = result.ok ? result.value : null;
   // Chỉ chuyển tới đường dẫn nội bộ (link do hệ thống ghi, vẫn kiểm tra để tránh open redirect).
-  redirect(link && link.startsWith("/") && !link.startsWith("//") ? link : "/thong-bao");
+  // Không có trang liên quan (thông báo chung) → trang chi tiết thông báo.
+  redirect(link && link !== "/thong-bao" && link.startsWith("/") && !link.startsWith("//") ? link : `/thong-bao/${id}`);
 }
 
 export async function markAllReadAction(): Promise<void> {
@@ -52,5 +55,7 @@ export async function markAllReadAction(): Promise<void> {
 export async function sendRemindersNowAction(): Promise<ActionState> {
   await requireRole("ADMIN", "STAFF");
   const r = await sendTomorrowReminders();
-  return { ok: true, message: r.sessions === 0 ? "Ngày mai không có buổi học nào." : `Đã nhắc ${r.recipients} người về ${r.sessions} buổi học ngày mai.` };
+  const b = await sendAssignmentReminders();
+  const hw = b.dueSoon + b.overdue > 0 ? ` Nhắc bài tập: ${b.dueSoon} sắp đến hạn, ${b.overdue} quá hạn.` : "";
+  return { ok: true, message: (r.sessions === 0 ? "Ngày mai không có buổi học nào." : `Đã nhắc ${r.recipients} người về ${r.sessions} buổi học ngày mai.`) + hw };
 }

@@ -174,7 +174,9 @@ export async function saveLevelAction(_prev: ActionState, formData: FormData): P
   const parsed = parseForm(levelSchema, fields);
   if (!parsed.ok) return parsed.state;
   const { id, ...data } = parsed.data;
-  const result = await runAction(() => saveLevel(actor, id, { ...data, isActive }), fields);
+  // Form cấp học có ô "Môn dạy ở cấp này" (`subjectField`) → cập nhật liên kết môn–cấp.
+  const subjectIds = formData.has("subjectField") ? formData.getAll("subjectIds").map(String).filter((v) => v.length > 0 && v.length <= 40) : undefined;
+  const result = await runAction(() => saveLevel(actor, id, { ...data, isActive, subjectIds }), fields);
   if (!result.ok) return result.state;
   revalidatePath("/quan-ly/mon-hoc");
   revalidateCatalog();

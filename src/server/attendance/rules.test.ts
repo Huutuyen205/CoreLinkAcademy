@@ -74,8 +74,23 @@ describe("planAttendanceWrites (ghi điểm danh theo lô)", () => {
     const plan = planAttendanceWrites([e("a", "PRESENT"), e("b", "PRESENT"), e("c", "LATE", "kẹt xe"), e("d", "PRESENT")], ["a", "b", "c"]);
     expect(plan.toCreate.map((x) => x.studentId)).toEqual(["d"]);
     expect(plan.updateGroups).toEqual([
-      { status: "PRESENT", note: null, studentIds: ["a", "b"] },
-      { status: "LATE", note: "kẹt xe", studentIds: ["c"] },
+      { status: "PRESENT", note: null, attitude: null, studentIds: ["a", "b"] },
+      { status: "LATE", note: "kẹt xe", attitude: null, studentIds: ["c"] },
+    ]);
+  });
+
+  it("thái độ học tập khác nhau → nhóm updateMany khác nhau", () => {
+    const plan = planAttendanceWrites(
+      [
+        { ...e("a", "PRESENT"), attitude: "GOOD" },
+        { ...e("b", "PRESENT"), attitude: "GOOD" },
+        { ...e("c", "PRESENT"), attitude: "NEEDS_WORK" },
+      ],
+      ["a", "b", "c"],
+    );
+    expect(plan.updateGroups).toEqual([
+      { status: "PRESENT", note: null, attitude: "GOOD", studentIds: ["a", "b"] },
+      { status: "PRESENT", note: null, attitude: "NEEDS_WORK", studentIds: ["c"] },
     ]);
   });
 

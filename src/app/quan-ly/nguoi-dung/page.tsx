@@ -111,6 +111,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
                   <span className="flex flex-wrap gap-1">
                     <Badge tone={USER_STATUS[u.status].tone}>{USER_STATUS[u.status].label}</Badge>
                     {u.lockedUntil && u.lockedUntil > now && <Badge tone="warning">Tạm khóa (sai MK)</Badge>}
+                    {u.mustChangePassword && <Badge tone="neutral">Chưa kích hoạt</Badge>}
                   </span>
                 ),
               },

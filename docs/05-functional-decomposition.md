@@ -125,9 +125,9 @@ CoreLink Academy v3
 | FEAT-042 | Audit | Ghi append-only, xem, lọc | Admin | Quản lý | — | audit_logs | SCREEN-023 / Q-034 | UC-019 | FR-035 | P1 | Code |
 | FEAT-043 | Điểm danh | 2 buổi gần nhất cùng ABSENT | Staff, GV | Cổng | BR-033 | attendances | SCREEN-008, 024, 027 / Q-017 | UC-018 | FR-026 | P1 | Code; Unit (TC-022) |
 | FEAT-044 | Nền tảng UI | AppShell, skip link, 404 có link tổng quan, error, loading | Mọi người | Web | — | — | SCREEN-039 | — | NFR-002, 003, 007 | P0 | Code; skip link + 404: Bổ sung P3 |
-| FEAT-045 | Trợ lý AI | Chatbot hỏi đáp dữ liệu thật theo vai trò (nút gợi ý, luật từ khóa, AI chọn ý định khi cần), chế độ mẫu | Mọi người đăng nhập | Cổng | BR-046, BR-047 | audit_logs, rate_limit_buckets | Nút nổi `ChatWidget` | — | FR-053 | P2 | Code; Unit; Integration (DB thật) |
-| FEAT-046 | Trợ lý AI | Soạn giáo án, slide, giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh cho một buổi → khuôn Word/PowerPoint hoặc bài tập nháp | GV | GV | BR-040..045 | assignments, questions, documents, stored_files | `/giao-vien/soan-bai` | — | FR-054 | P2 | Code; Unit; Integration; HTTP |
-| FEAT-047 | Trợ lý AI | Gợi ý điểm tự luận (kể cả ảnh viết tay); chấm phiếu trắc nghiệm giấy (AI đọc, GV xác nhận) | GV | GV | BR-042, BR-043, BR-046 | submissions, answers, stored_files | Trang chấm bài, `/giao-vien/bai-tap/[id]/phieu-giay` | — | FR-055 | P2 | Code; Unit; Integration; HTTP |
+| FEAT-045 | Trợ lý AI | Chatbot hỏi đáp dữ liệu thật theo vai trò (nút gợi ý, luật từ khóa, AI chọn ý định khi cần), chế độ mẫu | Mọi người đăng nhập | Cổng | BR-046, BR-047 | audit_logs, rate_limit_buckets | Nút nổi `ChatWidget` | — | FR-054 | P2 | Code; Unit; Integration (DB thật) |
+| FEAT-046 | Trợ lý AI | Soạn giáo án, slide, giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh cho một buổi → khuôn Word/PowerPoint hoặc bài tập nháp | GV | GV | BR-040..045 | assignments, questions, documents, stored_files | `/giao-vien/soan-bai` | — | FR-055 | P2 | Code; Unit; Integration; HTTP |
+| FEAT-047 | Trợ lý AI | Gợi ý điểm tự luận (kể cả ảnh viết tay); chấm phiếu trắc nghiệm giấy (AI đọc, GV xác nhận) | GV | GV | BR-042, BR-043, BR-046 | submissions, answers, stored_files | Trang chấm bài, `/giao-vien/bai-tap/[id]/phieu-giay` | — | FR-056 | P2 | Code; Unit; Integration; HTTP |
 
 ## 4. Ngoài phạm vi và trùng lặp
 
@@ -143,7 +143,7 @@ CoreLink Academy v3
 | P2-02 | Lương giáo viên theo buổi dạy | Tài chính | Brief | P2-01 |
 | P2-03 | Thông báo email/Zalo OA/SMS: lead mới, vắng, điểm mới, hủy/dời buổi (**Web Push đã làm — DECISION-D30**) | Giao tiếp | UC-007, 011, 015 | Nhà cung cấp gửi tin |
 | P2-04 | Chat/nhắn tin GV–PH | Giao tiếp | Brief | P2-03 |
-| P2-05 | ~~Chatbot/AI tư vấn khóa, AI chấm tự luận~~ **Đã làm (DECISION-D33): chatbot hỏi đáp dữ liệu thật, soạn bài, gợi ý chấm, phiếu giấy — xem docs/23**; còn lại: chatbot tư vấn khóa học cho khách chưa đăng nhập (công khai), đo chất lượng bằng dữ liệu thật | AI | v1/v2 | Khóa AI thật, đánh giá chất lượng, Q10 |
+| P2-05 | ~~Chatbot/AI tư vấn khóa, AI chấm tự luận~~ **Đã làm (DECISION-D34): chatbot hỏi đáp dữ liệu thật, soạn bài, gợi ý chấm, phiếu giấy — xem docs/24**; còn lại: chatbot tư vấn khóa học cho khách chưa đăng nhập (công khai), đo chất lượng bằng dữ liệu thật | AI | v1/v2 | Khóa AI thật, đánh giá chất lượng, Q10 |
 | P2-06 | Ngân hàng câu hỏi, nhân bản bài, ảnh/công thức trong câu hỏi | Khảo thí | UC-008 | Upload file |
 | P2-07 | Giới hạn thời gian làm bài (đếm ngược) | Khảo thí | UC-009 | — |
 | P2-08 | Thu hồi công bố, công bố từng học sinh | Khảo thí | UC-010 | — |
@@ -184,17 +184,17 @@ CoreLink Academy v3
 | P2-46 | Phụ huynh tự đặt lịch học thử / học bù theo khung trống | Tuyển sinh | docs/22 (TutorBird) | P2-32 |
 | P2-47 | Biểu đồ xu hướng cho quản lý (lead theo tuần, chuyên cần toàn trung tâm theo tuần) | Báo cáo | docs/22 | — |
 | P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
-| P2-41 | HS tự ôn luyện (đề luyện tập, lịch sử, chấm tự động); lịch tháng; biểu đồ tiến độ/xu hướng điểm | Học sinh | Bảng ưu tiên P2 | — |
+| P2-41 | ~~HS tự ôn luyện; lịch tháng~~ **Đã làm (FR-053, lịch tháng — D33)**; còn lại: ngân hàng câu hỏi dùng chung giữa đề, đề sinh ngẫu nhiên, câu có hình | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |
-| P2-48 | Trích văn bản từ tệp giáo trình/tài liệu (docx, pdf) để AI đọc nội dung thật (hiện AI chỉ nhận tên + mô tả tài liệu, khung chương trình, nhật ký buổi) | AI | DECISION-D33 | Thư viện đọc docx/pdf |
-| P2-49 | Giáo trình có cấu trúc theo từng buổi (mục tiêu, kiến thức, ví dụ) làm đầu vào chuẩn cho AI và hiển thị cho GV | AI / Đào tạo | DECISION-D33 | Migration |
-| P2-50 | Lưu đáp án mẫu/thang điểm câu tự luận cùng câu hỏi (cột mới) để AI chấm sát và GV dùng lại; hiện đáp án tự luận chỉ nằm trong tệp Word | AI / Khảo thí | DECISION-D33 | Migration |
-| P2-51 | Chấm gợi ý hàng loạt cả lớp bằng hàng đợi nền, so sánh điểm AI với điểm GV để đo chất lượng | AI | DECISION-D33 | P2-29 |
-| P2-52 | Công thức Toán dạng LaTeX/KaTeX trong đề, slide, Word | AI / Khảo thí | DECISION-D33 | P2-06 |
-| P2-53 | Chatbot nhớ ngữ cảnh hội thoại, lưu lịch sử, hỏi tiếp ("còn bé kia?"), thêm ý định học phí cá nhân | AI | DECISION-D33 | P2-01 |
-| P2-54 | Trang theo dõi lượt dùng/chi phí AI (token theo người, theo ngày) cho Admin | AI / Vận hành | DECISION-D33 | — |
-| P2-55 | Chấm/soạn tự luận Ngữ văn (cần rubric của trung tâm và đánh giá chất lượng riêng) | AI | DECISION-D33 | Rubric từ PO |
-| P2-56 | GV nhập hộ bài tự luận làm trên giấy của HS (mở rộng phiếu trắc nghiệm giấy đã làm — D33) | AI / Bài tập | P2-36 | — |
+| P2-48 | Trích văn bản từ tệp giáo trình/tài liệu (docx, pdf) để AI đọc nội dung thật (hiện AI chỉ nhận tên + mô tả tài liệu, khung chương trình, nhật ký buổi) | AI | DECISION-D34 | Thư viện đọc docx/pdf |
+| P2-49 | Giáo trình có cấu trúc theo từng buổi (mục tiêu, kiến thức, ví dụ) làm đầu vào chuẩn cho AI và hiển thị cho GV | AI / Đào tạo | DECISION-D34 | Migration |
+| P2-50 | Lưu đáp án mẫu/thang điểm câu tự luận cùng câu hỏi (cột mới) để AI chấm sát và GV dùng lại; hiện đáp án tự luận chỉ nằm trong tệp Word | AI / Khảo thí | DECISION-D34 | Migration |
+| P2-51 | Chấm gợi ý hàng loạt cả lớp bằng hàng đợi nền, so sánh điểm AI với điểm GV để đo chất lượng | AI | DECISION-D34 | P2-29 |
+| P2-52 | Công thức Toán dạng LaTeX/KaTeX trong đề, slide, Word | AI / Khảo thí | DECISION-D34 | P2-06 |
+| P2-53 | Chatbot nhớ ngữ cảnh hội thoại, lưu lịch sử, hỏi tiếp ("còn bé kia?"), thêm ý định học phí cá nhân | AI | DECISION-D34 | P2-01 |
+| P2-54 | Trang theo dõi lượt dùng/chi phí AI (token theo người, theo ngày) cho Admin | AI / Vận hành | DECISION-D34 | — |
+| P2-55 | Chấm/soạn tự luận Ngữ văn (cần rubric của trung tâm và đánh giá chất lượng riêng) | AI | DECISION-D34 | Rubric từ PO |
+| P2-56 | GV nhập hộ bài tự luận làm trên giấy của HS (mở rộng phiếu trắc nghiệm giấy đã làm — D34) | AI / Bài tập | P2-36 | — |
 
 ## 6. Coverage check
 

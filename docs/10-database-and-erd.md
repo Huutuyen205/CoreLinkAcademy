@@ -337,6 +337,24 @@ Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `pr
 | `users.avatarFileId` (UNIQUE) → `stored_files` (SET NULL) | Ảnh đại diện | Tệp không có chủ sở hữu khác; đổi ảnh xóa tệp cũ cùng transaction |
 | `push_subscriptions` (`endpoint` UNIQUE, `p256dh`, `auth`, `userAgent`, `userId` → `users` CASCADE) | Đăng ký Web Push theo thiết bị | Endpoint trả 404/410 khi gửi → xóa; đổi tài khoản trên cùng máy → chuyển `userId` |
 
+### 5d. Bổ sung v3.6 (DECISION-D33) — migration `20261027090000_checklist_v4` (chỉ thêm, đã áp 2026-10-23)
+
+| Thay đổi | Mục đích | Ghi chú |
+|---|---|---|
+| Enum `AnnouncementAudience` + `USERS` | Thông báo gửi từng người | Người nhận ghi ở `notifications` như các đối tượng khác |
+| Enum mới `PracticeDifficulty` (EASY, MEDIUM, HARD) | Mức độ đề luyện | — |
+| `assignments.isTest` (bool, mặc định false), `assignments.solution` (text) | Bài kiểm tra / mock test; bài chữa | Bài chữa chỉ trả về HS/PH khi `resultsPublishedAt` có giá trị |
+| `submissions.returnedAt`, `submissions.returnNote` | GV yêu cầu nộp lại | Có `returnedAt` → HS nộp được sau hạn |
+| `attendances.attitude` (varchar 20) | Thái độ học tập GOOD / NORMAL / NEEDS_WORK | Không bắt buộc |
+| `documents.reviewStatus` (RequestStatus), `reviewNote`, `reviewedAt`, `reviewedById` → `users` (SET NULL) | Giáo án gửi duyệt | Chỉ dùng cho `LESSON_PLAN` |
+| `users.introDraft`, `introPublished`, `introStatus` (RequestStatus), `introNote` | Hồ sơ giới thiệu GV | Bản công khai chỉ thay khi quản lý duyệt |
+| `messages.assignmentId` → `assignments` (SET NULL), `messages.deletedAt`, `deletedById` | Tin "Hỏi bài"; thu hồi / gỡ tin | Tin đã gỡ: xóa nội dung và tệp đính kèm, nội dung cũ vào `audit_logs` (`message.remove`) |
+| `conversation_members.mutedAt` | Tạm chặn gửi tin trong nhóm lớp | — |
+| `teacher_availabilities` (`teacherId` → `users` CASCADE, `weekday`, `startTime`, `endTime`, `note`) | Lịch rảnh GV | Index `(teacherId, weekday)`; không trùng khung (kiểm ở service) |
+| `practice_sets` (`title`, `description`, `topic`, `format`, `difficulty`, `subjectId`/`levelId` SET NULL, `isActive`, `createdById`) | Đề luyện tập | `isActive=false` là nháp |
+| `practice_questions` (`setId` CASCADE, `order`, `type` MCQ/SHORT, `prompt`, `options`, `correctOption`, `acceptedAnswers`, `explanation`, `points`) | Câu hỏi đề luyện | Đáp án + lời giải chỉ trả về sau khi nộp |
+| `practice_attempts` (`setId` CASCADE, `studentId` CASCADE, `answers` JSON, `score`, `maxScore`, `correctCount`, `total`, `submittedAt`) | Lượt làm (lịch sử luyện tập) | Index `(studentId, submittedAt)`, `(setId)` |
+
 ## 6. Migration and recovery
 
 **Migration `20261023090000_portal_features`** (chỉ thêm bảng/cột + dữ liệu cấp học): đã áp lên Supabase ngày 2026-10-21 cùng `20261022090000_admin_perf_indexes` (PO đồng ý). Rollback: `DROP TABLE` 14 bảng mới + `ALTER TABLE … DROP COLUMN` các cột mới (mất dữ liệu của tính năng mới).

@@ -104,6 +104,27 @@ export async function assignSessionTeacher(actor: Actor, sessionId: string, teac
   });
 }
 
+/** Admin §7 "Thiết lập thời gian và phòng học" cho một buổi: đổi phòng (chặn phòng ngừng dùng / trùng lịch phòng). */
+export async function setSessionRoom(actor: Actor, sessionId: string, roomId: string | null): Promise<string> {
+  assertCan(actor, "class.manage");
+  return db.$transaction(async (tx) => {
+    const s = await tx.classSession.findUnique({ where: { id: sessionId }, select: { classId: true, status: true, startsAt: true, endsAt: true, roomId: true } });
+    if (!s) throw new ForbiddenError();
+    if (s.status !== "SCHEDULED" || s.startsAt <= new Date()) throw new DomainError("INVALID_TRANSITION", "Chỉ đổi phòng được cho buổi chưa diễn ra.");
+    if (s.roomId === roomId) return s.classId;
+    const room = roomId ? await tx.room.findFirst({ where: { id: roomId, isActive: true }, select: { name: true } }) : null;
+    if (roomId && !room) throw new DomainError("INVALID", "Phòng không hợp lệ hoặc đang tạm ngừng.", { roomId: "Chọn phòng khác." });
+    if (roomId) {
+      const conflicts = await scheduleConflicts(tx, [s], { teacherId: null, roomId }, { sessionId });
+      if (conflicts.length > 0) throw new ScheduleConflictError(conflicts);
+    }
+    await tx.classSession.update({ where: { id: sessionId }, data: { roomId } });
+    await writeAudit({ actorId: actor.id, action: "session.room", entity: "ClassSession", entityId: sessionId, detail: { from: s.roomId, to: roomId } }, tx);
+    await notifySchedule(tx, s.classId, "Đổi phòng học", `Buổi ${formatDateTime(s.startsAt)} học tại ${room?.name ?? "phòng sẽ báo sau"}.`);
+    return s.classId;
+  });
+}
+
 export type MakeupInput = { startsAt: Date; endsAt: Date; teacherId: string | null; roomId: string | null; note: string | null };
 
 /** Admin §7: xếp buổi học bù (thêm buổi vào cuối lớp). Chặn trùng lịch GV/phòng, ghi audit, thông báo lớp. */

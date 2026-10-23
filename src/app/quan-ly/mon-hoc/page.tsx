@@ -29,13 +29,17 @@ function subjectFields(levels: LevelOption[], s?: { name: string; slug: string; 
   return fields;
 }
 
-function levelFields(l?: { name: string; gradeFrom: number; gradeTo: number; description: string | null; sortOrder: number; isActive: boolean }): FieldConfig[] {
+function levelFields(
+  subjects: LevelOption[],
+  l?: { name: string; gradeFrom: number; gradeTo: number; description: string | null; sortOrder: number; isActive: boolean; subjects: { subjectId: string }[] },
+): FieldConfig[] {
   const fields: FieldConfig[] = [
     { type: "text", name: "name", label: "Tên cấp học", required: true, maxLength: 60, defaultValue: l?.name },
     { type: "number", name: "gradeFrom", label: "Từ khối", required: true, min: "0", max: "12", defaultValue: l ? String(l.gradeFrom) : "", hint: "0 = tiền tiểu học" },
     { type: "number", name: "gradeTo", label: "Đến khối", required: true, min: "0", max: "12", defaultValue: l ? String(l.gradeTo) : "" },
     { type: "number", name: "sortOrder", label: "Thứ tự", min: "0", max: "999", defaultValue: String(l?.sortOrder ?? 0) },
     { type: "text", name: "description", label: "Mô tả", maxLength: 300, wide: true, defaultValue: l?.description ?? "" },
+    { type: "checkboxes", name: "subjectIds", label: "Môn dạy ở cấp này", wide: true, options: subjects, defaultValues: l?.subjects.map((s) => s.subjectId) ?? [] },
   ];
   if (l) fields.push({ type: "checkbox", name: "isActive", label: "Đang sử dụng", defaultChecked: l.isActive, wide: true });
   return fields;
@@ -53,6 +57,8 @@ export default async function SubjectsPage({ searchParams }: { searchParams: Pro
   const q = sp.q?.slice(0, 80);
   const [subjects, levels] = await Promise.all([listSubjectsAdmin(actor, q), listLevelsAdmin(actor)]);
   const levelOptions = levels.map((l) => ({ value: l.id, label: `${l.name}${l.isActive ? "" : " (ngừng)"}` }));
+  // Ô môn ở form cấp học: mọi môn (kể cả khi đang lọc danh sách).
+  const subjectOptions = (q ? await listSubjectsAdmin(actor) : subjects).map((s) => ({ value: s.id, label: `${s.name}${s.isActive ? "" : " (ngừng)"}` }));
   const editingSubject = subjects.find((s) => s.id === sp.sua);
   const editingLevel = levels.find((l) => l.id === sp.cap);
   const addingLevel = !editingSubject && !editingLevel && sp.them === "cap";
@@ -199,11 +205,11 @@ export default async function SubjectsPage({ searchParams }: { searchParams: Pro
             </Card>
           ) : editingLevel ? (
             <Card title={`Sửa cấp học: ${editingLevel.name}`} action={<Link href={keep({})} className="text-sm">Đóng</Link>}>
-              <ConfigForm key={editingLevel.id} action={saveLevelAction} hidden={{ id: editingLevel.id, statusField: "1" }} submitLabel="Lưu cấp học" columns={2} fields={levelFields(editingLevel)} />
+              <ConfigForm key={editingLevel.id} action={saveLevelAction} hidden={{ id: editingLevel.id, statusField: "1", subjectField: "1" }} submitLabel="Lưu cấp học" columns={2} fields={levelFields(subjectOptions, editingLevel)} />
             </Card>
           ) : addingLevel ? (
             <Card title="Thêm cấp học" action={<Link href={keep({})} className="text-sm">Thêm môn thay vào</Link>}>
-              <ConfigForm key="new-level" action={saveLevelAction} submitLabel="Thêm cấp học" columns={2} fields={levelFields()} />
+              <ConfigForm key="new-level" action={saveLevelAction} hidden={{ subjectField: "1" }} submitLabel="Thêm cấp học" columns={2} fields={levelFields(subjectOptions)} />
             </Card>
           ) : (
             <Card title="Thêm môn học">

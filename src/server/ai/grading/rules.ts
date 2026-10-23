@@ -1,4 +1,4 @@
-// Quy tắc thuần cho chấm bài có AI hỗ trợ: AI chỉ GỢI Ý, mọi điểm đều do giáo viên xác nhận (DECISION-D33).
+// Quy tắc thuần cho chấm bài có AI hỗ trợ: AI chỉ GỢI Ý, mọi điểm đều do giáo viên xác nhận (DECISION-D34).
 import { LETTERS } from "../generate/rules";
 import type { AnswerSheet, EssayGrade } from "../generate/schemas";
 

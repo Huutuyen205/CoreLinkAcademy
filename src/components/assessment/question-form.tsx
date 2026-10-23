@@ -6,9 +6,21 @@ import { FormMessage } from "@/components/forms/config-form";
 import { SelectField, TextareaField, TextField } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { saveQuestionAction } from "@/server/assessment/actions";
-import { initialActionState } from "@/server/errors";
+import { initialActionState, type ActionState } from "@/server/errors";
 
-type Initial = { id: string; type: QuestionType; prompt: string; points: number; options: string[] | null; correctOption: number | null; acceptedAnswers: string[] | null };
+type Initial = {
+  id: string;
+  type: QuestionType;
+  prompt: string;
+  points: number;
+  options: string[] | null;
+  correctOption: number | null;
+  acceptedAnswers: string[] | null;
+  explanation?: string | null;
+};
+
+/** Dùng lại cho đề luyện tập (Tự ôn luyện): action riêng, không có tự luận, thêm ô lời giải. */
+type PracticeMode = { action: (state: ActionState, formData: FormData) => Promise<ActionState>; parentName: "setId" };
 
 const TYPE_OPTIONS = [
   { value: "MCQ", label: "Trắc nghiệm (1 đáp án)" },
@@ -17,8 +29,9 @@ const TYPE_OPTIONS = [
 ];
 
 /** Thêm/sửa câu hỏi (FR-027). Lựa chọn và đáp án nhập mỗi dòng một giá trị. */
-export function QuestionForm({ assignmentId, initial }: { assignmentId: string; initial?: Initial }) {
-  const [state, action] = useActionState(saveQuestionAction, initialActionState);
+export function QuestionForm({ assignmentId, initial, practice }: { assignmentId: string; initial?: Initial; practice?: PracticeMode }) {
+  const [state, action] = useActionState(practice?.action ?? saveQuestionAction, initialActionState);
+  const typeOptions = practice ? TYPE_OPTIONS.filter((o) => o.value !== "ESSAY") : TYPE_OPTIONS;
   const v = state.ok ? {} : (state.values ?? {});
   const [type, setType] = useState<QuestionType>((v.type as QuestionType) || initial?.type || "MCQ");
   const e = state.fieldErrors ?? {};
@@ -27,10 +40,10 @@ export function QuestionForm({ assignmentId, initial }: { assignmentId: string; 
   return (
     <form action={action} noValidate className="space-y-4">
       <FormMessage state={state} />
-      <input type="hidden" name="assignmentId" value={assignmentId} />
+      <input type="hidden" name={practice?.parentName ?? "assignmentId"} value={assignmentId} />
       <input type="hidden" name="questionId" value={initial?.id ?? ""} />
       <div className="grid gap-4 sm:grid-cols-[1fr_140px]">
-        <SelectField id={`${prefix}-type`} name="type" label="Dạng câu hỏi" options={TYPE_OPTIONS} value={type} onChange={(ev) => setType(ev.target.value as QuestionType)} error={e.type} />
+        <SelectField id={`${prefix}-type`} name="type" label="Dạng câu hỏi" options={typeOptions} value={type} onChange={(ev) => setType(ev.target.value as QuestionType)} error={e.type} />
         <TextField
           id={`${prefix}-points`}
           name="points"
@@ -80,6 +93,17 @@ export function QuestionForm({ assignmentId, initial }: { assignmentId: string; 
           maxLength={2000}
           defaultValue={v.acceptedAnswers ?? initial?.acceptedAnswers?.join("\n")}
           error={e.acceptedAnswers}
+        />
+      )}
+      {practice && (
+        <TextareaField
+          id={`${prefix}-explanation`}
+          name="explanation"
+          label="Lời giải / giải thích (hiện cho học sinh sau khi nộp)"
+          rows={3}
+          maxLength={5000}
+          defaultValue={v.explanation ?? initial?.explanation ?? ""}
+          error={e.explanation}
         />
       )}
       <SubmitButton variant={initial ? "secondary" : "primary"}>{initial ? "Lưu câu hỏi" : "Thêm câu hỏi"}</SubmitButton>

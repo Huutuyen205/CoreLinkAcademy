@@ -41,6 +41,9 @@ const listSelect = {
   createdAt: true,
   updatedAt: true,
   ownerId: true,
+  reviewStatus: true,
+  reviewNote: true,
+  reviewedAt: true,
   owner: { select: { fullName: true } },
   subject: { select: { id: true, name: true } },
   level: { select: { id: true, name: true } },
@@ -49,7 +52,7 @@ const listSelect = {
   shares: { select: { class: { select: { id: true, code: true } } } },
 } as const;
 
-export type DocumentFilter = { kind?: DocumentKind; q?: string; subjectId?: string; levelId?: string; classId?: string; includeInactive?: boolean };
+export type DocumentFilter = { kind?: DocumentKind; q?: string; subjectId?: string; levelId?: string; classId?: string; includeInactive?: boolean; pendingReview?: boolean };
 
 export async function listDocuments(actor: Actor, filter: DocumentFilter = {}) {
   const q = filter.q?.trim();
@@ -60,6 +63,7 @@ export async function listDocuments(actor: Actor, filter: DocumentFilter = {}) {
       filter.subjectId ? { subjectId: filter.subjectId } : {},
       filter.levelId ? { levelId: filter.levelId } : {},
       filter.classId ? { shares: { some: { classId: filter.classId } } } : {},
+      filter.pendingReview ? { kind: "LESSON_PLAN", reviewStatus: "PENDING" } : {},
       q ? { OR: [{ title: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }] } : {},
       filter.includeInactive && isManager(actor) ? {} : { isActive: true },
     ],
@@ -189,13 +193,22 @@ export async function unshareDocument(actor: Actor, documentId: string, classId:
   await db.documentShare.delete({ where: { documentId_classId: { documentId, classId } } });
 }
 
-/** Lựa chọn cho form tài liệu. */
+/**
+ * Lựa chọn cho form/bộ lọc tài liệu. HS/PH (HS §2 "theo môn, lớp"): lớp em/con đang hoặc đã học.
+ */
 export async function documentFormOptions(actor: Actor) {
+  const learning = { in: ["ACTIVE", "PAUSED", "COMPLETED"] as ("ACTIVE" | "PAUSED" | "COMPLETED")[] };
+  const classWhere: Prisma.ClassWhereInput =
+    actor.role === "STUDENT"
+      ? { enrollments: { some: { studentId: actor.id, status: learning } } }
+      : actor.role === "PARENT"
+        ? { enrollments: { some: { status: learning, student: { parentLinks: { some: { parentId: actor.id } } } } } }
+        : { status: { in: ["OPEN", "IN_PROGRESS"] }, ...(isManager(actor) ? {} : { teacherId: actor.id }) };
   const [subjects, levels, classes] = await Promise.all([
     db.subject.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
     db.educationLevel.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" }, select: { id: true, name: true } }),
     db.class.findMany({
-      where: { status: { in: ["OPEN", "IN_PROGRESS"] }, ...(isManager(actor) ? {} : { teacherId: actor.id }) },
+      where: classWhere,
       orderBy: { code: "asc" },
       select: { id: true, code: true },
     }),
@@ -216,5 +229,37 @@ export async function lessonPlanSessionOptions(actor: Actor) {
     orderBy: { startsAt: "asc" },
     take: 200,
     select: { id: true, index: true, startsAt: true, class: { select: { code: true } } },
+  });
+}
+
+/* ───────────── Gửi duyệt giáo án (GV §4, Admin §9 — giả định, DECISION-D33) ───────────── */
+
+/** GV chủ giáo án gửi duyệt (hoặc gửi lại sau khi bị từ chối / sửa). Báo quản lý. */
+export async function submitLessonPlan(actor: Actor, documentId: string): Promise<void> {
+  const doc = await db.document.findUnique({ where: { id: documentId }, select: { kind: true, ownerId: true, title: true, reviewStatus: true } });
+  if (!doc || doc.kind !== "LESSON_PLAN" || actor.role !== "TEACHER" || doc.ownerId !== actor.id) throw new ForbiddenError();
+  if (doc.reviewStatus === "PENDING") throw new DomainError("PENDING", "Giáo án đang chờ duyệt.");
+  await db.$transaction(async (tx) => {
+    await tx.document.update({ where: { id: documentId }, data: { reviewStatus: "PENDING", reviewNote: null, reviewedAt: null, reviewedById: null } });
+    const managers = await tx.user.findMany({ where: { role: { in: ["ADMIN", "STAFF"] }, status: "ACTIVE" }, select: { id: true } });
+    await notifyUsers(tx, managers.map((m) => m.id), { kind: "review", title: `Giáo án chờ duyệt: ${doc.title}`, body: `${actor.fullName} gửi giáo án để duyệt.`, link: `/tai-lieu/${documentId}` });
+  });
+}
+
+/** Quản lý duyệt / yêu cầu sửa giáo án đang chờ. Báo giáo viên. */
+export async function reviewLessonPlan(actor: Actor, documentId: string, approve: boolean, note: string | null): Promise<void> {
+  if (!isManager(actor)) throw new ForbiddenError();
+  const doc = await db.document.findUnique({ where: { id: documentId }, select: { kind: true, ownerId: true, title: true, reviewStatus: true } });
+  if (!doc || doc.kind !== "LESSON_PLAN") throw new ForbiddenError();
+  if (doc.reviewStatus !== "PENDING") throw new DomainError("NOT_PENDING", "Giáo án không ở trạng thái chờ duyệt.");
+  await db.$transaction(async (tx) => {
+    await tx.document.update({ where: { id: documentId }, data: { reviewStatus: approve ? "APPROVED" : "REJECTED", reviewNote: note, reviewedAt: new Date(), reviewedById: actor.id } });
+    await writeAudit({ actorId: actor.id, action: approve ? "lesson_plan.approve" : "lesson_plan.reject", entity: "Document", entityId: documentId, detail: { note } }, tx);
+    await notifyUsers(tx, [doc.ownerId], {
+      kind: "review",
+      title: approve ? `Giáo án đã được duyệt: ${doc.title}` : `Giáo án cần sửa: ${doc.title}`,
+      body: note ? `Ghi chú: ${note}` : approve ? "Trung tâm đã duyệt giáo án." : "Sửa lại rồi gửi duyệt lần nữa.",
+      link: `/tai-lieu/${documentId}`,
+    });
   });
 }

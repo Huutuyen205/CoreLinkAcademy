@@ -1,4 +1,4 @@
-// Sinh giáo án / slide / giáo trình / đề / bài tập cho MỘT buổi học (DECISION-D33).
+// Sinh giáo án / slide / giáo trình / đề / bài tập cho MỘT buổi học (DECISION-D34).
 // AI trả JSON → Zod kiểm tra → hệ thống đổ vào khuôn mẫu (Word/PowerPoint) hoặc tạo bài tập NHÁP. Không bao giờ tự giao bài.
 import { Prisma } from "@prisma/client";
 import { validateQuestion } from "@/lib/grading";

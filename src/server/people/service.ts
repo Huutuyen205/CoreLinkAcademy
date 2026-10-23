@@ -66,6 +66,9 @@ export async function getTeacherProfile(actor: Actor, teacherId: string) {
       dateOfBirth: true,
       profileNote: true,
       createdAt: true,
+      introDraft: true,
+      introPublished: true,
+      introStatus: true,
       teachingClasses: {
         orderBy: [{ status: "asc" }, { startDate: "desc" }],
         select: {

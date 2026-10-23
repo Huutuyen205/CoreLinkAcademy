@@ -1,15 +1,19 @@
 # Tiến độ — CoreLink Academy v3
 
-## 2026-10-23 — Trợ lý AI: chatbot, soạn bài, hỗ trợ chấm bài (DECISION-D33)
+## 2026-10-24 — Gộp nhánh AI với `demo10` (checklist v4) trên remote
 
-PO yêu cầu "thực hiện đi" + "cả các phase luôn" sau khi nghe đề xuất. Tài liệu thiết kế và hướng dẫn nối AI: **docs/23-ai-tro-ly.md**.
+Push bị từ chối vì remote có `demo10`. Gộp `origin/main` vào; hai bên cùng lấy mã mới nên **đánh lại số phần AI** (giữ nguyên số của checklist v4 đã push): FR-053..055 → **FR-054..056**, DECISION-D33 → **DECISION-D34**, `docs/23-ai-tro-ly.md` → **`docs/24-ai-tro-ly.md`**, docs/01 v3.6 → **v3.7**. FR-053 / D33 / docs/23 giờ là tự ôn luyện / checklist v4 / `docs/23-checklist-v4.md`. Xung đột `nav-icons.ts`: giữ cả "Bài tập", "Soạn bài", "Hồ sơ" của GV.
+
+## 2026-10-23 — Trợ lý AI: chatbot, soạn bài, hỗ trợ chấm bài (DECISION-D34)
+
+PO yêu cầu "thực hiện đi" + "cả các phase luôn" sau khi nghe đề xuất. Tài liệu thiết kế và hướng dẫn nối AI: **docs/24-ai-tro-ly.md**.
 
 - **Lớp AI dùng chung** (`src/server/ai/`): đổi nhà cung cấp bằng env (`AI_PROVIDER` = `mock`/`gemini`/`openai`[Groq, OpenRouter…]/`anthropic`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`, `AI_JSON_MODE`). **Thiếu khóa → chế độ mẫu (mock)**: không gọi mạng, chạy đủ mọi luồng, có nhãn "Bản mẫu". Mọi đầu ra AI qua Zod, thử lại 1 lần, giới hạn lượt/người/ngày (dùng lại `rate_limit_buckets`), audit chỉ ghi siêu dữ liệu (không ghi nội dung).
-- **Chatbot (FR-053)**: nút nổi ở mọi trang nội bộ; 28 ý định theo vai trò (PH/HS, GV, quản lý, chung) + nút gợi ý; luật từ khóa không cần AI, AI chỉ chọn ý định khi luật yếu; dữ liệu lấy bằng service có sẵn (đúng phạm vi D11/D14). Xử lý: phụ huynh nhiều con (hỏi lại), chưa điểm danh ≠ vắng, buổi hủy/dạy thay, điểm chưa công bố không lộ, ngày tương đối giờ VN, sai phạm vi → "không tìm thấy".
-- **Soạn bài (FR-054)** `/giao-vien/soan-bai`: giáo án, slide `.pptx`, tóm tắt giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh (có đáp án mẫu + thang điểm) → khuôn Word/PowerPoint hoặc **bài tập NHÁP** có đáp án (tổng 10 điểm, bước 0,25); tệp riêng tư của giáo viên (không chia sẻ HS/PH).
-- **Hỗ trợ chấm (FR-055)**: gợi ý điểm tự luận (chữ gõ + ảnh viết tay) trong trang chấm bài, chỉ điền khi GV bấm "Áp dụng" rồi "Lưu điểm"; **chấm phiếu trắc nghiệm giấy** `/giao-vien/bai-tap/<id>/phieu-giay` (AI đọc → GV sửa → lưu; điểm do `autoGrade`).
+- **Chatbot (FR-054)**: nút nổi ở mọi trang nội bộ; 28 ý định theo vai trò (PH/HS, GV, quản lý, chung) + nút gợi ý; luật từ khóa không cần AI, AI chỉ chọn ý định khi luật yếu; dữ liệu lấy bằng service có sẵn (đúng phạm vi D11/D14). Xử lý: phụ huynh nhiều con (hỏi lại), chưa điểm danh ≠ vắng, buổi hủy/dạy thay, điểm chưa công bố không lộ, ngày tương đối giờ VN, sai phạm vi → "không tìm thấy".
+- **Soạn bài (FR-055)** `/giao-vien/soan-bai`: giáo án, slide `.pptx`, tóm tắt giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh (có đáp án mẫu + thang điểm) → khuôn Word/PowerPoint hoặc **bài tập NHÁP** có đáp án (tổng 10 điểm, bước 0,25); tệp riêng tư của giáo viên (không chia sẻ HS/PH).
+- **Hỗ trợ chấm (FR-056)**: gợi ý điểm tự luận (chữ gõ + ảnh viết tay) trong trang chấm bài, chỉ điền khi GV bấm "Áp dụng" rồi "Lưu điểm"; **chấm phiếu trắc nghiệm giấy** `/giao-vien/bai-tap/<id>/phieu-giay` (AI đọc → GV sửa → lưu; điểm do `autoGrade`).
 - **Không đổi schema, không migration.** Thêm thư viện `docx`, `pptxgenjs` (cập nhật `package.json` + `pnpm-lock.yaml`, chỉ thêm dòng); `next.config.ts` thêm 2 gói vào `serverExternalPackages`.
-- **Tài liệu**: docs/23 (mới), 01 (v3.6, FR-053..055), 03, 05 (FEAT-045..047, P2-05 cập nhật, P2-48..56), 12, 13, 14, 17 (D33), `.env.example`.
+- **Tài liệu**: docs/24 (mới), 01 (v3.6, FR-054..055), 03, 05 (FEAT-045..047, P2-05 cập nhật, P2-48..56), 12, 13, 14, 17 (D34), `.env.example`.
 
 ### Kiểm thử
 - `pnpm typecheck` ✓ · `pnpm lint` ✓ (0 lỗi, 0 cảnh báo) · `pnpm test` ✓ **26 file / 207 test** (mới +83: cấu hình, JSON, chia điểm, 18 dữ liệu mẫu qua schema, 6 khuôn Word/PowerPoint, khớp 20 câu hỏi mẫu theo vai trò, adapter Gemini/OpenAI/Claude bằng `fetch` giả) · `pnpm build` ✓.
@@ -19,8 +23,31 @@ PO yêu cầu "thực hiện đi" + "cả các phase luôn" sau khi nghe đề x
 
 ### Việc PO
 1. **Chạy `pnpm install`** (lockfile đã thêm `docx`, `pptxgenjs`). Máy dev hiện chưa có `pnpm` và `node_modules` được cài bằng npm — tệp `package-lock.json` chưa theo dõi là do `npm`, không phải của phiên này.
-2. Bật AI thật (tùy chọn): lấy khóa miễn phí (vd. Google AI Studio) → đặt `AI_PROVIDER`, `AI_API_KEY` trên Vercel → redeploy (docs/23 §3). **Trước đó xác nhận chính sách dữ liệu (Q10):** gợi ý chấm/đọc phiếu gửi bài làm không kèm tên tới nhà cung cấp; gói miễn phí có thể dùng để huấn luyện.
+2. Bật AI thật (tùy chọn): lấy khóa miễn phí (vd. Google AI Studio) → đặt `AI_PROVIDER`, `AI_API_KEY` trên Vercel → redeploy (docs/24 §3). **Trước đó xác nhận chính sách dữ liệu (Q10):** gợi ý chấm/đọc phiếu gửi bài làm không kèm tên tới nhà cung cấp; gói miễn phí có thể dùng để huấn luyện.
 3. Review, commit, push.
+## 2026-10-23 — Checklist chức năng v4 của PO (DECISION-D33)
+
+Đối chiếu từng mục chưa tích, kết quả ghi ở **docs/23-checklist-v4.md** (có sẵn ở đâu / bổ sung / sửa). Migration chỉ thêm `20261027090000_checklist_v4` (đã áp).
+
+- **Bài tập:** đánh dấu bài kiểm tra; bài chữa (xem sau công bố); GV yêu cầu nộp lại / xóa bài làm / tải bài làm thay HS; trang "Bài tập" của GV (tìm, lọc); HS lọc Chưa nộp / Đã nộp / Nộp muộn / Đã chấm.
+- **Thông báo bài tập:** bài mới / lịch kiểm tra khi giao; cron 19:00 thêm "sắp đến hạn" và "quá hạn chưa nộp" (cả PH); nộp lại, đã chấm, điểm cập nhật, bài chữa — không trùng.
+- **Tự ôn luyện (FR-053)** `/on-luyen`: soạn đề (chuyên đề, dạng bài, mức độ, lời giải), HS lọc, làm, chấm ngay, xem đáp án + lời giải, lịch sử.
+- **Tin nhắn:** tìm trong nội dung (`/tin-nhan/tim`, theo người); "Hỏi bài" gắn thẻ bài tập; thu hồi tin; quản lý/GV phụ trách gỡ tin và tạm chặn gửi trong nhóm lớp; nút "Nhắn GV …", "Nhắn trung tâm".
+- **Thông báo:** gửi từng người; trang trạng thái gửi (đã đọc/chưa đọc, thông báo đẩy); trang chi tiết; hộp thư lọc theo loại.
+- **Admin:** trang Chuyên cần và Đánh giá của GV; quản lý buổi ngay trang buổi (đổi GV, **đổi phòng**, dời, hủy); tình trạng sử dụng phòng; liên kết môn từ form cấp học; đổi nhanh trạng thái GV; kích hoạt / liên kết hồ sơ ở trang tài khoản; giáo án chờ duyệt.
+- **GV (giả định):** lịch rảnh, hồ sơ giới thiệu gửi duyệt, giáo án gửi duyệt, thái độ học tập khi điểm danh; tìm lớp, tìm học sinh; sửa đánh giá đã gửi.
+- **HS / PH:** lịch tháng; tài liệu tìm/lọc theo môn, lớp; số buổi có mặt/muộn/vắng/có phép; kết quả tổng hợp lọc môn/lớp/kỳ; tiến độ khóa + tỷ lệ nộp bài; PH gửi đơn xin nghỉ ngay ở trang Đơn xin nghỉ; bài chữa ở trang bài tập của con; menu "Tài khoản".
+- **Sửa nhỏ:** transaction gửi tin nhắn tăng timeout 15 giây (DB ở xa từng vượt 5 giây → P2028).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` ✓ **128 test** (mới: gom kết quả theo môn/lớp/kỳ, thái độ trong ghi điểm danh theo lô) · `pnpm build` ✓.
+- **Thật trên DB + server bản build: 100/100 đạt** — giao bài kiểm tra báo HS/HS2/PH; nhắc sắp đến hạn đúng 2 HS, chạy lại không trùng; quá hạn chỉ HS chưa nộp; công bố → "đã chấm" + "bài chữa" cho HS chưa nộp; nộp lại (xóa điểm, báo HS+PH, nộp lại được); chấm lại → "điểm được cập nhật"; GV khác không xóa được bài làm; đề luyện không lộ đáp án trước khi nộp, chấm đúng "hà  nội" ≈ "Hà Nội", HS khác/PH bị chặn; tìm tin không lộ tin riêng, tin đã gỡ không hiện; chặn gửi / bỏ chặn; GV không chặn được GV; thông báo từng người đúng 2 người, trạng thái 1/2 đã đọc; trùng phòng bị chặn; thái độ lưu đúng; sửa đánh giá đã gửi báo lần 2; giáo án từ chối → gửi lại → duyệt; hồ sơ giới thiệu duyệt thành bản công khai; lịch rảnh trùng bị chặn; PH gửi đơn từ danh sách; 37 trang trả 200 với nội dung mới, PH mở `/on-luyen` → 404. Dữ liệu "[Kiểm thử]" đã xóa, hồ sơ GV demo khôi phục; kiểm tra lại không còn sót.
+- **Chưa kiểm thử:** cron thật trên Vercel với dữ liệu thật; giao diện trên điện thoại thật (lịch tháng dạng danh sách, form chọn người nhận).
+
+### Việc PO
+1. Xem docs/23 và xác nhận các mục "giả định" (lịch rảnh, giáo án gửi duyệt, hồ sơ giới thiệu, thái độ học tập) có đúng ý không.
+2. Review, commit, push.
+
 
 ## 2026-10-22 (tối) — Khảo sát sản phẩm tương tự + 7 tính năng bổ sung (DECISION-D32)
 
