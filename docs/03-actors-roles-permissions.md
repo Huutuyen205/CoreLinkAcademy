@@ -105,6 +105,9 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | Ảnh câu tự luận | HS (tải/xóa trước khi nộp, câu ESSAY của bài mình), GV lớp, PH của HS | như bài nộp | câu không phải ESSAY, đã nộp, HS/PH khác | 404 / `ALREADY_SUBMITTED` | — | E2E 2026-10-22 |
 | Bật/tắt thông báo đẩy | mọi người đã đăng nhập | chỉ thiết bị/đăng ký của mình | — | — | — | E2E 2026-10-22 |
 | `report.view` | ADMIN, STAFF | — | vai trò khác | 404 (route xuất Excel) | — | E2E |
+| Trợ lý hỏi đáp (chatbot) | — | X (mọi dữ liệu quản lý) | X (như Admin trừ nhật ký) | X own (lớp, buổi, bài của mình) | X self | X own (con đã liên kết) |
+| Soạn bài với AI | — | — | — | X own (buổi mình dạy; lưu bài tập nháp chỉ khi là GV phụ trách lớp) | — | — |
+| AI gợi ý chấm, chấm phiếu giấy | — | — | — | X own (bài của lớp mình phụ trách) | — | — |
 | Đổi mật khẩu | Mọi người đã đăng nhập (kể cả `mustChangePassword`) | chính mình | — | — | — (thu hồi phiên khác) | TC-012 |
 
 ## 5. Điều cấm (không ngoại lệ)
@@ -114,6 +117,7 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 - Admin không tự khóa hoặc tự đổi vai trò của chính mình (tránh mất quyền quản trị cuối cùng).
 - Không tin tham số ẩn từ client (`studentIds`, `answerIds`, `classId`): service luôn đối chiếu với DB (vd. chỉ upsert điểm danh cho HS thuộc lớp; `answerId` phải thuộc bài nộp đang chấm).
 - Tài khoản `DISABLED` không có phiên hợp lệ (bị thu hồi khi khóa, và `getCurrentActor` bỏ qua user không ACTIVE).
+- **AI** (docs/23): không bao giờ ghi điểm, giao bài, công bố kết quả hay đọc CSDL trực tiếp; chatbot chỉ gọi hàm có sẵn kiểm tra phạm vi; không gửi dữ liệu cá nhân học sinh cho nhà cung cấp AI (trừ bài làm không kèm tên khi giáo viên chủ động bấm gợi ý chấm).
 
 ## 6. Hành vi khi bị từ chối (DECISION-D11, D14)
 

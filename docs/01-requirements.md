@@ -2,7 +2,7 @@
 
 | Mục | Giá trị |
 |---|---|
-| Phiên bản | 3.2 (2026-10-21) — thêm FR-036..FR-052 theo danh sách chức năng 4 actor của PO (DECISION-D26) |
+| Phiên bản | 3.6 (2026-10-23) — thêm FR-053..FR-055 trợ lý AI (DECISION-D33); trước đó 3.2 thêm FR-036..FR-052 (DECISION-D26) |
 | Trạng thái | Baselined. **Đây là nguồn chuẩn phạm vi** (AGENTS.md). Đặc tả chi tiết từng FR: [02-srs.md](02-srs.md) |
 | Owner | Chủ dự án (phê duyệt) · Trợ lý (BA soạn) |
 
@@ -117,6 +117,9 @@ Nguồn: 4 file PO gửi ngày 2026-10-21 (Admin.md, Giáo viên.md, Phụ huynh
 | FR-050 | Nhắn tin (kiểu Zalo) | Bố cục 2 cột (danh sách + nội dung); nhóm lớp: thành viên tự suy ra từ lớp, xem danh sách thành viên và nhắn riêng từng người; nhắn 1-1: trung tâm ↔ mọi người, còn lại phải cùng lớp, HS ↔ PH chỉ khi là PH của em (DECISION-D30); gửi ảnh (chụp/chọn/dán) và tệp ≤ 5 tệp, ≤ 4 MB/lần, ảnh tự thu nhỏ; tin chỉ có tệp được phép; tệp tin nhắn chỉ người trong cuộc trò chuyện tải được (Admin cũng không mở tệp tin riêng của người khác); tìm nhanh theo tên/lớp/nội dung; số tin chưa đọc; người nhận có thông báo đẩy; không realtime, tự làm mới 4 giây (DECISION-D27) | P2 | Admin §12B, GV §10B, PH §7B |
 | FR-051 | Tài khoản cá nhân | Xem thông tin; tự cập nhật email/SĐT/địa chỉ; đổi email/SĐT phải nhập mật khẩu hiện tại, ghi audit `user.contact_change`; **tự đổi/gỡ ảnh đại diện (JPG/PNG/WEBP, chụp hoặc chọn, thu nhỏ ≤ 512px); ảnh hiện ở menu, tin nhắn; ai đã đăng nhập cũng xem được (DECISION-D30)** | P1 | PH §8, GV §11B |
 | FR-052 | Báo cáo – thống kê | Số HS/GV/lớp, lead; chuyên cần, kết quả học tập, hoàn thành bài tập theo lớp; lọc thời gian/lớp/môn; **xuất file Excel `.xlsx` (từng bảng hoặc tất cả, mỗi bảng một sheet); cột tỷ lệ % là công thức Excel (chuyên cần, vắng, nộp bài, nộp muộn, điểm TB có trọng số), có dòng Tổng; Excel tính lại khi mở (DECISION-D30)** | P2 | Admin §13A |
+| FR-053 | Trợ lý hỏi đáp (chatbot) | Nút nổi ở mọi trang nội bộ. Trả lời bằng **dữ liệu thật** theo vai trò: PH/HS (có đi học/đã đến lớp chưa, điểm đã công bố, học đến đâu, bài chưa nộp, lịch, chuyên cần, giáo viên, đơn nghỉ, nhận xét, thông báo), GV (số lớp, bài giảng hôm nay, buổi chưa điểm danh, bài chờ chấm, vắng liên tiếp, đơn chờ duyệt), quản lý (số lớp hôm nay, lớp của giáo viên nào, sĩ số, phòng trống, lead, đơn chờ duyệt, buổi chưa điểm danh). Nút câu hỏi gợi ý; luật từ khóa không cần AI; AI (nếu cấu hình) chỉ chọn ý định; phụ huynh nhiều con được hỏi lại; "chưa điểm danh" không bị nói là vắng; không lộ điểm/đáp án chưa công bố; sai phạm vi → "không tìm thấy"; giới hạn lượt; có chế độ mẫu (DECISION-D33) | P2 | Yêu cầu PO 2026-10-23 |
+| FR-054 | Soạn bài với AI | Giáo viên chọn buổi dạy → AI soạn **giáo án, slide, tóm tắt giáo trình, đề trắc nghiệm, bài tập, đề tự luận (Toán, Tiếng Anh)** theo dữ liệu buổi (khóa, khung chương trình, nhật ký, tài liệu); đầu ra JSON kiểm tra bằng Zod rồi đổ vào khuôn mẫu Word/PowerPoint; đề/bài tập lưu thành **bài tập nháp có đáp án** hoặc tệp Word đề + trang đáp án; bản mẫu có nhãn; giáo viên duyệt trước khi giao; chỉ GV phụ trách lớp tạo bài tập (DECISION-D33) | P2 | Yêu cầu PO 2026-10-23 |
+| FR-055 | AI hỗ trợ chấm bài | **Gợi ý điểm tự luận** (chữ gõ, ảnh viết tay) kèm nhận xét và độ tin cậy; **chấm phiếu trắc nghiệm giấy**: ảnh → AI đọc → GV đối chiếu/sửa → lưu (điểm do `autoGrade`). AI không ghi điểm/công bố; kết quả vẫn ẩn với HS/PH tới khi công bố (BR-046); ghi audit (DECISION-D33) | P2 | Yêu cầu PO 2026-10-23 |
 
 ## 3. Yêu cầu phi chức năng
 
@@ -144,6 +147,7 @@ Xem [06-business-rules-and-states.md](06-business-rules-and-states.md).
 | Ngày | Phiên bản | Thay đổi | Lý do |
 |---|---|---|---|
 | 2026-10-21 | 3.0 | Baseline 35 FR | Discovery |
+| 2026-10-23 | 3.6 | Thêm FR-053 chatbot, FR-054 soạn bài với AI, FR-055 AI hỗ trợ chấm bài | PO yêu cầu "thực hiện đi", làm cả các phase (DECISION-D33) |
 | 2026-10-22 | 3.5 | FR-006 Kanban lead; FR-022 xuất .ics; FR-034 biểu đồ tiến độ + tìm nhanh; FR-039 nhật ký buổi học; FR-048 nhắc lịch tự động — theo khảo sát sản phẩm tương tự (docs/22) | PO yêu cầu (DECISION-D32) |
 | 2026-10-22 | 3.4 | FR-013 khóa dây chuyền HS↔PH; FR-015 UI môn/cấp, slug tự tạo; FR-017 hủy/xóa lớp; FR-042 liên kết là phụ; lọc tự động, nút thao tác ở mọi danh sách quản lý, cài ứng dụng (PWA) | PO yêu cầu (DECISION-D31) |
 | 2026-10-22 | 3.3 | FR-013 cột thao tác; FR-014 ô gõ tìm phụ huynh; FR-031 ảnh bài tự luận; FR-048 thông báo đẩy; FR-050 chat kiểu Zalo + tệp; FR-051 ảnh đại diện; FR-052 xuất .xlsx có công thức % | PO yêu cầu (DECISION-D30) |

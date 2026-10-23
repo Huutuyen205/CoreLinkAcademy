@@ -140,6 +140,11 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                 <ButtonLink href={`/giao-vien/bai-tap/${a.id}/bai-nop`} variant="secondary" className="w-full">
                   Bài nộp ({a._count.submissions})
                 </ButtonLink>
+                {a.questions.length > 0 && a.questions.every((q) => q.type === "MCQ") && (
+                  <ButtonLink href={`/giao-vien/bai-tap/${a.id}/phieu-giay`} variant="secondary" className="w-full">
+                    Chấm phiếu giấy (AI đọc)
+                  </ButtonLink>
+                )}
                 {a.ungradedCount > 0 && (
                   <Alert tone="warning">
                     Còn {a.ungradedCount} bài chưa chấm. {a.resultsPublishedAt ? "Các bài này" : "Nếu công bố bây giờ, các bài này"} hiện &ldquo;Đang chờ chấm&rdquo; với học sinh cho tới khi bạn chấm xong.

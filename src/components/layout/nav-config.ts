@@ -33,6 +33,7 @@ export const teacherNav: NavItem[] = [
   { href: "/giao-vien/lich", label: "Lịch dạy" },
   { href: "/giao-vien/lop", label: "Lớp của tôi" },
   { href: "/giao-vien/de-xuat", label: "Đề xuất & đơn nghỉ" },
+  { href: "/giao-vien/soan-bai", label: "Soạn bài với AI" },
   { href: "/tai-lieu", label: "Tài liệu & giáo án" },
   { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },

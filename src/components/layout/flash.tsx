@@ -6,6 +6,7 @@ const MESSAGES: Record<string, string> = {
   "tao-lop": "Đã mở lớp và sinh lịch học.",
   "xoa-lop": "Đã xóa lớp.",
   "tao-bai": "Đã tạo bài tập. Thêm câu hỏi rồi giao cho lớp.",
+  "tao-bai-ai": "Đã tạo bài tập NHÁP từ nội dung AI. Hãy kiểm tra từng câu và đáp án, sửa nếu cần rồi mới giao cho lớp.",
   luu: "Đã lưu.",
   "xoa-khoa": "Đã xóa khóa học.",
   "tao-lead": "Đã tạo lead.",

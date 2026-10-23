@@ -83,6 +83,7 @@ Khả năng (L) / Tác động (I): T = thấp, TB = trung bình, C = cao. Trạ
 | Tên, khối học sinh (lead) | Xếp lớp | Có — không hỏi ngày sinh, trường, địa chỉ | Như trên | Staff, Admin | Như trên |
 | Tài khoản HS/PH | Học và theo dõi | Có | Hợp đồng học (ngoài hệ thống) | Theo docs/03 | Đến khi nghỉ học + TBD |
 | Điểm, chuyên cần, nhận xét | Theo dõi học tập | Có | Như trên | HS, PH (con), GV (lớp mình), Staff, Admin | TBD |
+| Câu hỏi chatbot; nội dung buổi học; bài làm tự luận/ảnh phiếu (khi GV bấm AI) | Trả lời hỏi đáp, soạn bài, gợi ý chấm | Có — chatbot chỉ gửi chữ câu hỏi; soạn bài chỉ gửi dữ liệu giảng dạy (không dữ liệu HS); chấm bài gửi một câu + bài làm **không kèm tên** | Hợp đồng học + GV chủ động bấm; **cần PO xác nhận và thông báo phụ huynh trước khi bật AI thật** (Q10) | Nhà cung cấp AI theo `AI_PROVIDER` (mặc định không gọi ai: chế độ mẫu) | Theo chính sách nhà cung cấp; gói miễn phí có thể dùng để huấn luyện — **kiểm tra điều khoản** |
 | Audit | Truy vết thao tác | Không chứa mật khẩu/token | Lợi ích hợp pháp | Admin | TBD (QUESTION-Q11) |
 
 - **Trẻ em:** dữ liệu học sinh vị thành niên do phụ huynh/học viện cung cấp; HS nhỏ có thể không có email/SĐT (DECISION-D12).
@@ -98,5 +99,7 @@ Khả năng (L) / Tác động (I): T = thấp, TB = trung bình, C = cao. Trạ
 | IP rate limit phụ thuộc proxy | Chưa có hosting | Chủ dự án | Khi chọn hosting (RISK-009) |
 | Không có 2FA cho Admin | Quy mô nhỏ; P2-13 | Chủ dự án | Pha 2 |
 | Chưa có chính sách lưu trữ/xóa | Cần quyết định nghiệp vụ/pháp lý | Chủ dự án | Trước production (Q03, Q10, Q11) |
+| Gửi bài làm HS cho nhà cung cấp AI ngoài | Chỉ khi GV bấm; không kèm tên; có thể tắt bằng cách không đặt `AI_API_KEY` | Chủ dự án | Trước khi bật AI thật (Q10) — docs/23 §3 |
+| AI sai (đáp án đề, điểm gợi ý) | Mọi đầu ra là nháp/gợi ý, GV xác nhận; điểm không bao giờ tự ghi/công bố | GV + chủ dự án | Sau 1–2 tháng dùng, đo tỷ lệ sửa (P2-51) |
 
 Phê duyệt: **chưa** — chủ dự án xem xét trước release (docs/18).

@@ -1,5 +1,27 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-23 — Trợ lý AI: chatbot, soạn bài, hỗ trợ chấm bài (DECISION-D33)
+
+PO yêu cầu "thực hiện đi" + "cả các phase luôn" sau khi nghe đề xuất. Tài liệu thiết kế và hướng dẫn nối AI: **docs/23-ai-tro-ly.md**.
+
+- **Lớp AI dùng chung** (`src/server/ai/`): đổi nhà cung cấp bằng env (`AI_PROVIDER` = `mock`/`gemini`/`openai`[Groq, OpenRouter…]/`anthropic`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`, `AI_JSON_MODE`). **Thiếu khóa → chế độ mẫu (mock)**: không gọi mạng, chạy đủ mọi luồng, có nhãn "Bản mẫu". Mọi đầu ra AI qua Zod, thử lại 1 lần, giới hạn lượt/người/ngày (dùng lại `rate_limit_buckets`), audit chỉ ghi siêu dữ liệu (không ghi nội dung).
+- **Chatbot (FR-053)**: nút nổi ở mọi trang nội bộ; 28 ý định theo vai trò (PH/HS, GV, quản lý, chung) + nút gợi ý; luật từ khóa không cần AI, AI chỉ chọn ý định khi luật yếu; dữ liệu lấy bằng service có sẵn (đúng phạm vi D11/D14). Xử lý: phụ huynh nhiều con (hỏi lại), chưa điểm danh ≠ vắng, buổi hủy/dạy thay, điểm chưa công bố không lộ, ngày tương đối giờ VN, sai phạm vi → "không tìm thấy".
+- **Soạn bài (FR-054)** `/giao-vien/soan-bai`: giáo án, slide `.pptx`, tóm tắt giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh (có đáp án mẫu + thang điểm) → khuôn Word/PowerPoint hoặc **bài tập NHÁP** có đáp án (tổng 10 điểm, bước 0,25); tệp riêng tư của giáo viên (không chia sẻ HS/PH).
+- **Hỗ trợ chấm (FR-055)**: gợi ý điểm tự luận (chữ gõ + ảnh viết tay) trong trang chấm bài, chỉ điền khi GV bấm "Áp dụng" rồi "Lưu điểm"; **chấm phiếu trắc nghiệm giấy** `/giao-vien/bai-tap/<id>/phieu-giay` (AI đọc → GV sửa → lưu; điểm do `autoGrade`).
+- **Không đổi schema, không migration.** Thêm thư viện `docx`, `pptxgenjs` (cập nhật `package.json` + `pnpm-lock.yaml`, chỉ thêm dòng); `next.config.ts` thêm 2 gói vào `serverExternalPackages`.
+- **Tài liệu**: docs/23 (mới), 01 (v3.6, FR-053..055), 03, 05 (FEAT-045..047, P2-05 cập nhật, P2-48..56), 12, 13, 14, 17 (D33), `.env.example`.
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ (0 lỗi, 0 cảnh báo) · `pnpm test` ✓ **26 file / 207 test** (mới +83: cấu hình, JSON, chia điểm, 18 dữ liệu mẫu qua schema, 6 khuôn Word/PowerPoint, khớp 20 câu hỏi mẫu theo vai trò, adapter Gemini/OpenAI/Claude bằng `fetch` giả) · `pnpm build` ✓.
+- **Integration trên PostgreSQL thật (54/54, trong đó 46 mới)** — DB tạm riêng, múi giờ UTC: chatbot từng vai trò + phạm vi, điểm chưa công bố không lộ, "chưa điểm danh ≠ vắng", AI nhận diện ý định qua `fetch` giả (không gửi tên/dữ liệu học sinh), hết lượt AI vẫn dùng được luật, soạn bài → bài tập nháp/tệp riêng tư (HS/PH tải → bị chặn), audit không chứa nội dung, gợi ý chấm không ghi điểm, phiếu giấy (HEIC bị từ chối, GV khác bị chặn, nộp lần 2 bị chặn, điểm ẩn tới khi công bố).
+- **HTTP trên server bản build + Server Action thật (21 + 13 + 8 đạt)**: chatbot 4 vai trò, PH khác xem con người khác → "không tìm thấy"; sinh 6 loại nội dung, lưu bài tập nháp + `.pptx` (tải 200 cho GV/Admin, 404 cho HS/PH/GV khác); đọc/lưu phiếu giấy với ảnh thật. (Các dòng "FAIL" còn lại khi chạy tay là lỗi kịch bản thử — thiếu mã bài nộp tự luận / đường dẫn có hậu tố `;push` — đã kiểm lại đúng bằng cách khác.)
+- **Chưa kiểm thử**: **gọi nhà cung cấp AI thật** (không có khóa API; adapter chỉ kiểm bằng `fetch` giả — tên model mặc định có thể đã đổi, đặt `AI_MODEL`); chất lượng đề/đáp án và độ chính xác đọc chữ viết tay; giao diện trên trình duyệt thật (kích thước nút nổi trên điện thoại, chụp ảnh phiếu bằng camera) — PO thử trên máy; thời gian chạy thật trên Vercel (`maxDuration = 60`).
+
+### Việc PO
+1. **Chạy `pnpm install`** (lockfile đã thêm `docx`, `pptxgenjs`). Máy dev hiện chưa có `pnpm` và `node_modules` được cài bằng npm — tệp `package-lock.json` chưa theo dõi là do `npm`, không phải của phiên này.
+2. Bật AI thật (tùy chọn): lấy khóa miễn phí (vd. Google AI Studio) → đặt `AI_PROVIDER`, `AI_API_KEY` trên Vercel → redeploy (docs/23 §3). **Trước đó xác nhận chính sách dữ liệu (Q10):** gợi ý chấm/đọc phiếu gửi bài làm không kèm tên tới nhà cung cấp; gói miễn phí có thể dùng để huấn luyện.
+3. Review, commit, push.
+
 ## 2026-10-22 (tối) — Khảo sát sản phẩm tương tự + 7 tính năng bổ sung (DECISION-D32)
 
 - **Khảo sát:** docs/22 — Easy Edu, MONA eLMS, MISA/Zoho CRM giáo dục, Teachworks, TutorBird, Wise, ClassDojo, Kinderpedia; bảng đối chiếu, logic từng tính năng, nguồn.

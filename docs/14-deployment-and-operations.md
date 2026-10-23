@@ -30,6 +30,11 @@ Yêu cầu máy: Node ≥ 22 (máy dev có 24), pnpm 9.15.9 (`packageManager`), 
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Khóa công khai Web Push (trình duyệt dùng để đăng ký) | Không — trống thì tắt thông báo đẩy | Mọi | Sinh bằng `npx web-push generate-vapid-keys`; **phải đặt lúc build** (biến `NEXT_PUBLIC_*` được nhúng vào JS) | Nút "Bật thông báo đẩy" hiện ở `/thong-bao` |
 | `VAPID_PRIVATE_KEY` | Khóa bí mật ký thông báo đẩy | Cùng cặp với khóa công khai | Server | Vercel env (không commit). Đổi cặp khóa → mọi thiết bị phải bật lại | "Gửi thử" ở `/thong-bao` |
 | `VAPID_SUBJECT` | Liên hệ gửi kèm (mailto:) cho dịch vụ push | Không | Server | `.env` | — |
+| `AI_PROVIDER` | Nhà cung cấp AI: `mock` (mặc định) · `gemini` · `openai` (tương thích OpenAI: Groq, OpenRouter…) · `anthropic` | Không — thiếu hoặc thiếu khóa thì dùng chế độ mẫu | Server | Vercel env; docs/23 §3 | `/giao-vien/soan-bai` không còn khung "chế độ mẫu" |
+| `AI_API_KEY` | Khóa API của nhà cung cấp | Có khi dùng AI thật | Server | Vercel env, không commit; thu hồi/tạo lại ở trang nhà cung cấp | Soạn thử một đề |
+| `AI_MODEL` | Tên model (bỏ trống → mặc định theo nhà cung cấp) | Không | Server | `.env` | Lỗi "không tìm thấy model" trong log `[ai]` → đặt lại |
+| `AI_BASE_URL` | Địa chỉ API tương thích OpenAI (chỉ `AI_PROVIDER=openai`) | Không (mặc định OpenAI) | Server | `.env` | — |
+| `AI_JSON_MODE` | `off` nếu model không hỗ trợ ép JSON | Không (mặc định bật) | Server | `.env` | — |
 
 Mẫu: `.env.example`. `.env` có trong `.gitignore`. File `.env` hiện tại còn biến của v2 (Redis, S3, JWT, AI…) không dùng — nên dọn theo `.env.example` (không ảnh hưởng chạy).
 

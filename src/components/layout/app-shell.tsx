@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
+import { Assistant } from "@/components/ai/assistant";
 import { Avatar } from "@/components/ui/avatar";
 import { canGlobalSearch } from "@/server/search/service";
 import { Brand, BridgeArc } from "./brand";
@@ -169,6 +170,7 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
       </main>
 
       {bottomNav && bottomNav.length > 0 && <BottomNav items={bottomNav} rootHref={rootHref} />}
+      <Assistant actor={actor} hasBottomNav={Boolean(bottomNav && bottomNav.length > 0)} />
     </div>
   );
 }

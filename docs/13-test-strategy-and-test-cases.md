@@ -170,3 +170,15 @@ Cột "Tự động": **U** = unit có sẵn · **I** = integration (code P3, ch
 **Đóng Pha 1 khi:** typecheck/lint/test/build xanh; integration test chạy xanh trên DB test; TC-UAT-01..15 đạt và ghi bằng chứng; không còn lỗi mức Cao mở.
 
 **Known gaps (2026-10-21):** chưa có DB đã migrate → mọi TC loại I, M, E chưa chạy (RISK-007); chưa có DB test (Q08); chưa có Playwright/axe (Pha 1.5); chưa đo NFR-009.
+
+## AI (DECISION-D33) — các bộ test đã có
+
+| Tệp | Loại | Nội dung |
+|---|---|---|
+| `src/server/ai/ai.test.ts` | Unit | cấu hình, `extractJson`, chia điểm, lọc câu lỗi, mọi dữ liệu mẫu (3 nhóm môn × 6 loại) qua đúng schema, prompt |
+| `src/server/ai/chat/chat.test.ts` | Unit | khớp 20 câu hỏi mẫu của PO theo vai trò, ngày tương đối, giờ VN, khớp tên con/mã lớp, "chưa điểm danh ≠ vắng" |
+| `src/server/ai/generate/render.test.ts` | Unit | mọi loại nội dung → tệp Word/PowerPoint hợp lệ ≤ 4 MB |
+| `src/server/ai/providers/providers.test.ts` | Unit | Gemini/OpenAI-tương thích/Claude bằng `fetch` giả; lỗi HTTP không lộ khóa; thử lại khi AI trả sai định dạng |
+| `src/server/ai/ai.int.test.ts` | Integration (DB thật) | chatbot theo từng vai trò + phạm vi (PH khác, GV khác, sai vai trò), điểm chưa công bố không lộ, soạn bài → bài tập nháp/tệp riêng tư, audit không chứa nội dung, gợi ý chấm không ghi điểm, phiếu giấy, đường AI nhận diện ý định qua `fetch` giả, hết lượt AI |
+
+Chạy integration: cần DB riêng `TEST_DATABASE_URL` đã `migrate deploy` và **múi giờ UTC** (`ALTER DATABASE … SET timezone='UTC'`; Supabase mặc định UTC — bộ giới hạn tốc độ so sánh `timestamp` không múi giờ nên lệch nếu server DB để múi giờ khác).

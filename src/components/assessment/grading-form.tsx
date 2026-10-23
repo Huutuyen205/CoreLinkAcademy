@@ -2,6 +2,7 @@
 
 import type { QuestionType } from "@prisma/client";
 import { useActionState } from "react";
+import { GradeAssist } from "@/components/ai/grade-assist";
 import { PhotoGrid, type PhotoItem } from "@/components/assessment/essay-photos";
 import { FormMessage } from "@/components/forms/config-form";
 import { TextareaField, TextField } from "@/components/ui/field";
@@ -49,6 +50,7 @@ export function GradingForm({ submissionId, items, comment, publishedWarning, ma
         </p>
       )}
       <input type="hidden" name="submissionId" value={submissionId} />
+      <GradeAssist submissionId={submissionId} essayCount={items.filter((it) => it.type === "ESSAY" && it.answerId && (it.responseText || it.photos.length > 0)).length} />
       <ol className="space-y-5">
         {items.map((it) => (
           <li key={it.order} className="rounded-block border border-line bg-surface p-4">
