@@ -15,7 +15,7 @@ export default async function StudentSchedulePage({ searchParams }: { searchPara
   const sessions = await listSessionsInRange(actor, from, to);
   return (
     <>
-      <PageHeader title="Lịch học" description="Giờ hiển thị theo giờ Việt Nam." />
+      <PageHeader title="Lịch học" description="Giờ hiển thị theo giờ Việt Nam." action={<a href="/lich/xuat" className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-primary/30 bg-surface px-3 text-sm font-semibold text-primary no-underline hover:bg-primary-soft">📅 Thêm vào lịch điện thoại</a>} />
       <WeekSchedule weekStart={weekStart} sessions={sessions} weekHref={(w) => `/hoc-sinh/lich?tuan=${w}`} sessionHref={(s) => `/hoc-sinh/buoi/${s.id}`} showTeacher />
     </>
   );

@@ -9,7 +9,7 @@ import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
 import { LEAD_SOURCE_LABELS } from "@/lib/labels";
-import { normalizePhone } from "@/lib/phone";
+import { normalizePhone, phoneFragment } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
 import { generateTempPassword, isRecordNotFound, nextStudentCode, withStudentCodeRetry } from "@/server/users/credentials";
 import { checkLeadTransition, CONVERTIBLE_STATUSES, overdueCutoff } from "./rules";
@@ -150,8 +150,7 @@ export type LeadListFilter ={ status?: LeadStatus; subjectId?: string; q?: strin
 export const LEAD_PAGE_SIZE = 20;
 
 /** FR-006. */
-export async function listLeads(actor: Actor, filter: LeadListFilter) {
-  assertCan(actor, "lead.manage");
+function leadWhere(filter: Omit<LeadListFilter, "page">): Prisma.LeadWhereInput {
   const where: Prisma.LeadWhereInput = {};
   if (filter.status) where.status = filter.status;
   if (filter.subjectId) where.subjectId = filter.subjectId;
@@ -164,9 +163,19 @@ export async function listLeads(actor: Actor, filter: LeadListFilter) {
     const phone = normalizePhone(q);
     where.OR = phone
       ? [{ phone }]
-      : [{ parentName: { contains: q, mode: "insensitive" as const } }, { studentName: { contains: q, mode: "insensitive" as const } }, { phone: { contains: q.replace(/\D/g, "") || q } }];
+      : [
+          { parentName: { contains: q, mode: "insensitive" as const } },
+          { studentName: { contains: q, mode: "insensitive" as const } },
+          // Chỉ tìm SĐT gần đúng khi từ khóa là số (trước đây "Lớp 9" khớp mọi SĐT có chữ số 9).
+          ...(phoneFragment(q) ? [{ phone: { contains: phoneFragment(q)! } }] : []),
+        ];
   }
+  return where;
+}
 
+export async function listLeads(actor: Actor, filter: LeadListFilter) {
+  assertCan(actor, "lead.manage");
+  const where = leadWhere(filter);
   const [total, rows] = await Promise.all([
     db.lead.count({ where }),
     db.lead.findMany({
@@ -178,6 +187,27 @@ export async function listLeads(actor: Actor, filter: LeadListFilter) {
     }),
   ]);
   return { total, rows };
+}
+
+export const BOARD_COLUMN_SIZE = 30;
+const BOARD_ORDER: LeadStatus[] = ["NEW", "CONTACTED", "TRIAL_SCHEDULED", "TRIAL_DONE", "ENROLLED", "LOST"];
+
+/** FEAT-B1 (DECISION-D32): bảng Kanban — mỗi trạng thái một cột, tối đa 30 lead mới nhất + tổng số của cột. */
+export async function listLeadBoard(actor: Actor, filter: { subjectId?: string; q?: string }) {
+  assertCan(actor, "lead.manage");
+  const base = leadWhere(filter);
+  const [counts, ...columns] = await Promise.all([
+    db.lead.groupBy({ by: ["status"], where: base, _count: { _all: true } }),
+    ...BOARD_ORDER.map((status) =>
+      db.lead.findMany({
+        where: { ...base, status },
+        orderBy: { createdAt: "desc" },
+        take: BOARD_COLUMN_SIZE,
+        select: { id: true, parentName: true, studentName: true, phone: true, gradeLevel: true, status: true, createdAt: true, updatedAt: true, subject: { select: { name: true } }, course: { select: { title: true } } },
+      }),
+    ),
+  ]);
+  return BOARD_ORDER.map((status, i) => ({ status, total: counts.find((c) => c.status === status)?._count._all ?? 0, leads: columns[i]! }));
 }
 
 export async function getLead(actor: Actor, id: string) {

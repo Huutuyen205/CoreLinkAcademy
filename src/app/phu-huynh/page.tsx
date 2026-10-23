@@ -6,6 +6,7 @@ import { ChildPicker } from "@/components/learner/child-picker";
 import { BannerLink, WelcomeBanner } from "@/components/layout/welcome-banner";
 import { EvaluationList } from "@/components/learner/evaluation-list";
 import { AttendanceSummary, ResultsList } from "@/components/learner/learner-progress";
+import { ProgressCharts } from "@/components/learner/progress-charts";
 import { Flash } from "@/components/layout/flash";
 import { WeekSchedule } from "@/components/schedule/week-schedule";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -158,6 +159,11 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
         </Card>
 
         {/* Lịch học tuần */}
+        <p className="-mb-3 flex justify-end">
+          <a href={`/lich/xuat?con=${child.id}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-primary/30 bg-surface px-3 text-sm font-semibold text-primary no-underline hover:bg-primary-soft">
+            📅 Thêm lịch học của con vào lịch điện thoại
+          </a>
+        </p>
         <WeekSchedule
           weekStart={weekStart}
           sessions={sessions}
@@ -166,7 +172,8 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
           showTeacher
         />
 
-        {/* Chuyên cần & Kết quả */}
+        {/* Tiến độ (biểu đồ) + Chuyên cần & Kết quả */}
+        <ProgressCharts results={results} attendance={attendance.records} />
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <AttendanceSummary data={attendance} />
           <ResultsList results={results} />

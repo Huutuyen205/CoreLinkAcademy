@@ -6,6 +6,7 @@ import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireActor, requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
+import { sendTomorrowReminders } from "./reminders";
 import { createAnnouncement, markAllNotificationsRead, markNotificationRead } from "./service";
 
 const AUDIENCES = ["ALL", "STAFF", "TEACHERS", "STUDENTS", "PARENTS", "CLASS"] as const;
@@ -45,4 +46,11 @@ export async function markAllReadAction(): Promise<void> {
   const actor = await requireActor();
   await markAllNotificationsRead(actor);
   revalidatePath("/", "layout");
+}
+
+/** FEAT-B4: quản lý gửi nhắc lịch ngày mai ngay (không chờ lịch tự động 19:00). Không gửi trùng. */
+export async function sendRemindersNowAction(): Promise<ActionState> {
+  await requireRole("ADMIN", "STAFF");
+  const r = await sendTomorrowReminders();
+  return { ok: true, message: r.sessions === 0 ? "Ngày mai không có buổi học nào." : `Đã nhắc ${r.recipients} người về ${r.sessions} buổi học ngày mai.` };
 }

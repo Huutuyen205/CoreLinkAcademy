@@ -3,6 +3,7 @@
 import { Link2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 import { ComboboxField } from "@/components/ui/combobox";
+import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/format";
 import { initialActionState, type ActionState } from "@/server/errors";
 
@@ -22,7 +23,9 @@ export function InlinePickForm({ action, hidden, name, label, placeholder, optio
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const [resetKey, setResetKey] = useState(0);
   useEffect(() => {
-    if (state.ok) setResetKey((k) => k + 1);
+    if (!state.ok) return;
+    setResetKey((k) => k + 1);
+    if (state.message) toast(state.message);
   }, [state]);
   const error = state.ok ? undefined : (state.fieldErrors?.[name] ?? state.message);
 
@@ -43,7 +46,6 @@ export function InlinePickForm({ action, hidden, name, label, placeholder, optio
         </button>
       </div>
       {error && <p className="text-sm text-danger">{error}</p>}
-      {state.ok && state.message && <p className="text-sm text-success">{state.message}</p>}
     </form>
   );
 }

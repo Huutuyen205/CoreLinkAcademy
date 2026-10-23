@@ -21,6 +21,8 @@ export async function getSessionForLearner(actor: Actor, sessionId: string, stud
       cancelReason: true,
       isMakeup: true,
       note: true,
+      lessonContent: true,
+      homework: true,
       classId: true,
       teacherId: true,
       room: { select: { name: true } },

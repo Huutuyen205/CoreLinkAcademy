@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
 import { EvaluationList } from "@/components/learner/evaluation-list";
 import { AttendanceSummary, ResultsList } from "@/components/learner/learner-progress";
+import { ProgressCharts } from "@/components/learner/progress-charts";
 import { ProfileForm } from "@/components/people/profile-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { setEnrollmentStatusAction } from "@/server/academic/actions";
@@ -123,6 +124,7 @@ export default async function StudentDetailPage({ params }: { params: Promise<{ 
               </ul>
             )}
           </Card>
+          <ProgressCharts results={results} attendance={attendance.records} />
           <AttendanceSummary data={attendance} />
           <ResultsList results={results} />
           <EvaluationList evaluations={evaluations} title={`Đánh giá định kỳ (${evaluations.length})`} />

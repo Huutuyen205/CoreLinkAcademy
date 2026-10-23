@@ -147,7 +147,7 @@ CoreLink Academy v3
 | P2-09 | Điểm danh QR/GPS | Đào tạo | Brief | Thiết bị |
 | P2-10 | Lịch nghỉ lễ tự bỏ qua khi sinh buổi | Đào tạo | UC-005 | — |
 | P2-11 | Chuyển lớp một bước (giữ lịch sử) | Đào tạo | UC-006 | — |
-| P2-12 | Xuất lịch iCal/Google Calendar | Đào tạo | UC-016 | — |
+| P2-12 | ~~Xuất lịch iCal~~ **Đã làm tải .ics (D32)**; còn lại: đường dẫn đăng ký lịch tự cập nhật (webcal) | Đào tạo | UC-016 | — |
 | P2-13 | Quên mật khẩu qua email/SMS, 2FA cho Admin | Nền tảng | UC-004 | P2-03 |
 | P2-14 | Đăng nhập bằng mã học sinh cho HS nhỏ tuổi | Nền tảng | QUESTION-Q07 | — |
 | P2-15 | Phân công lead cho tư vấn viên (`assignedToId`), chiến dịch, mã giới thiệu, phễu | Tuyển sinh | Schema, brief | — |
@@ -177,6 +177,9 @@ CoreLink Academy v3
 | P2-42 | Xoay/cắt ảnh bài làm trước khi gửi; GV ghi chú trực tiếp lên ảnh khi chấm | Bài tập | DECISION-D30 | — |
 | P2-43 | Tắt thông báo đẩy theo loại (chỉ tin nhắn / chỉ thông báo) và theo nhóm lớp | Giao tiếp | DECISION-D30 | — |
 | P2-44 | Đóng gói Android (TWA) đưa lên CH Play nếu cần có mặt trên cửa hàng (hiện cài PWA trực tiếp — DECISION-D31) | Kênh | DECISION-D31 | Tài khoản Google Play, ký ứng dụng |
+| P2-45 | Khảo sát hài lòng của phụ huynh/học sinh (đánh giá trung tâm, giáo viên theo kỳ) | Tương tác | docs/22 (Easy Edu) | — |
+| P2-46 | Phụ huynh tự đặt lịch học thử / học bù theo khung trống | Tuyển sinh | docs/22 (TutorBird) | P2-32 |
+| P2-47 | Biểu đồ xu hướng cho quản lý (lead theo tuần, chuyên cần toàn trung tâm theo tuần) | Báo cáo | docs/22 | — |
 | P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
 | P2-41 | HS tự ôn luyện (đề luyện tập, lịch sử, chấm tự động); lịch tháng; biểu đồ tiến độ/xu hướng điểm | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |

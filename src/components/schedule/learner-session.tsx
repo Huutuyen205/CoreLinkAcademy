@@ -77,6 +77,24 @@ export function LearnerSessionView({ s, backHref, backLabel, extra }: { s: Sessi
             </div>
           )}
         </Card>
+        {(s.lessonContent || s.homework) && (
+          <Card title="Nhật ký buổi học" className="lg:col-span-2">
+            <dl className="grid gap-4 md:grid-cols-2">
+              {s.lessonContent && (
+                <div className="rounded-control bg-paper p-3">
+                  <dt className="text-sm font-semibold text-primary">Nội dung đã học</dt>
+                  <dd className="mt-1 whitespace-pre-line">{s.lessonContent}</dd>
+                </div>
+              )}
+              {s.homework && (
+                <div className="rounded-control border border-warning/30 bg-warning-soft p-3">
+                  <dt className="text-sm font-semibold text-warning">Bài tập về nhà</dt>
+                  <dd className="mt-1 whitespace-pre-line">{s.homework}</dd>
+                </div>
+              )}
+            </dl>
+          </Card>
+        )}
         <Card title={`Tài liệu của lớp (${s.documents.length})`}>
           {s.documents.length === 0 ? (
             <p className="text-sm text-muted">Chưa có tài liệu.</p>

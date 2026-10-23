@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { EvaluationList } from "@/components/learner/evaluation-list";
 import { AttendanceSummary, ResultsList } from "@/components/learner/learner-progress";
+import { ProgressCharts } from "@/components/learner/progress-charts";
 import { PageHeader } from "@/components/ui/feedback";
 import { listPublishedResults } from "@/server/assessment/service";
 import { getStudentAttendance } from "@/server/attendance/service";
@@ -21,6 +22,9 @@ export default async function StudentResultsPage() {
     <>
       <PageHeader title="Kết quả học tập" />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="lg:col-span-2">
+          <ProgressCharts results={results} attendance={attendance.records} />
+        </div>
         <ResultsList results={results} linkToAssignment />
         <AttendanceSummary data={attendance} limit={30} />
         <div className="lg:col-span-2">

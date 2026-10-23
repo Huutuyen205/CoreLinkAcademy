@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, CalendarClock, ClipboardCheck, FileText, Megaphone, MessageSquareText } from "lucide-react";
+import { Bell, BookOpen, CalendarClock, ClipboardCheck, FileText, Megaphone, MessageSquareText } from "lucide-react";
 import { PushToggle } from "@/components/notifications/push-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { Pagination, parsePage } from "@/components/ui/data-table";
@@ -23,6 +23,8 @@ const ICONS: Record<string, typeof Bell> = {
   reminder: ClipboardCheck,
   results: ClipboardCheck,
   submission: ClipboardCheck,
+  lesson: BookOpen,
+  schedule_reminder: CalendarClock,
   evaluation: MessageSquareText,
   document: FileText,
 };

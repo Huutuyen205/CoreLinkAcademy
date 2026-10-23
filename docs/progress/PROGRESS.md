@@ -1,5 +1,28 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-22 (tối) — Khảo sát sản phẩm tương tự + 7 tính năng bổ sung (DECISION-D32)
+
+- **Khảo sát:** docs/22 — Easy Edu, MONA eLMS, MISA/Zoho CRM giáo dục, Teachworks, TutorBird, Wise, ClassDojo, Kinderpedia; bảng đối chiếu, logic từng tính năng, nguồn.
+- **B1 Kanban lead** `/quan-ly/lead?xem=bang`: 6 cột, kéo thả (máy tính) hoặc ô "Chuyển sang…" (điện thoại), LOST hỏi lý do, thả vào "Đã nhập học" mở form chuyển học viên.
+- **B2 Nhật ký buổi học**: cột mới `class_sessions.lessonContent/homework/lessonLoggedAt` (migration `20261025090000_lesson_log`, đã áp); GV ghi ở trang điểm danh; HS/PH xem ở chi tiết buổi; lần đầu báo HS + PH.
+- **B3 Biểu đồ tiến độ** (`lib/progress.ts`, SVG): Kết quả HS, cổng PH, hồ sơ HS (quản lý, GV).
+- **B4 Nhắc lịch ngày mai**: `vercel.json` cron `0 12 * * *` → `/api/cron/nhac-lich` (cần `CRON_SECRET`); nút "Nhắc lịch ngày mai" ở Lịch tổng; gộp một thông báo/người, không trùng.
+- **B5 Xuất `.ics`** `/lich/xuat` (`lib/ical.ts`): nút ở Lịch dạy, Lịch học, cổng PH.
+- **B6 Tìm nhanh Ctrl+K**: thanh tìm ở sidebar, nút kính lúp trên điện thoại; quản lý/GV theo phạm vi.
+- **B7 Toast**: thông báo nổi cho nút thao tác, liên kết phụ huynh, kéo thả lead.
+- **Sửa lỗi có sẵn:** tìm lead bằng chữ có lẫn số (vd. "Lớp 9") khớp mọi SĐT có chữ số đó → chỉ tìm SĐT gần đúng khi từ khóa là số (`phoneFragment`).
+- **Tài liệu:** docs/22 (mới), 01 (v3.5), 03, 05 (P2-12, P2-45..47), 14 (`CRON_SECRET`), 17 (D32).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` ✓ **124 test** (mới: `progress`, `ical`, `reminders`, `phoneFragment`) · `pnpm build` ✓.
+- **Thật trên DB + server bản build (27/27 đạt):** nhật ký (GV khác bị chặn, rỗng bị chặn, lần đầu báo HS+PH đúng link, sửa không báo lại); nhắc lịch (lớp tạm ngày 05/01/2031: báo GV+HS+PH, PH thấy tên con, chạy lại không trùng, cron sai/thiếu khóa → 404); tìm nhanh (quản lý thấy HS/lớp, GV chỉ thấy HS lớp mình, HS không dùng được); Kanban (đúng cột, đổi cột, chặn chuyển sai luật); 8 trang 200 có nội dung mới; `.ics` hợp lệ, PH khác → 404. Dữ liệu "[Kiểm thử]" đã xóa (gồm 1 thông báo hủy lớp còn sót ở GV demo từ lượt trước).
+- **Chưa kiểm thử:** cron thật trên Vercel (không chạy với dữ liệu thật để tránh gửi nhắc cho người dùng thật), kéo thả bằng chuột/cảm ứng, mở tệp `.ics` trên điện thoại.
+
+### Việc PO
+1. Vercel → Environment Variables: thêm `CRON_SECRET` (chuỗi ngẫu nhiên) rồi redeploy — cron nhắc lịch mới chạy.
+2. Review, commit, push.
+
+
 ## 2026-10-22 (chiều) — Giao diện quản lý, hủy/xóa lớp, khóa dây chuyền, cài ứng dụng (DECISION-D31)
 
 - **Trang bị kéo ngang:** cột nội dung `minmax(0,1fr)` + `min-w-0`; `html, body { overflow-x: clip }`; bảng quá rộng cuộn trong khung (`DataTable` `overflow-x-auto`).

@@ -14,6 +14,20 @@ export function normalizePhone(input: string): string | null {
   return VN_MOBILE.test(phone) ? phone : null;
 }
 
+/**
+ * Mảnh số để tìm SĐT gần đúng (vd. "0912 34" → "91234"). Chỉ khi từ khóa toàn là số/dấu phân cách và có ≥ 3 chữ số —
+ * tránh "Lớp 9" khớp mọi SĐT có chữ số 9. SĐT lưu dạng +84… nên bỏ số 0 / 84 đầu.
+ */
+export function phoneFragment(query: string): string | null {
+  const q = query.trim();
+  if (!/^[+\d\s.\-()]+$/.test(q)) return null;
+  let digits = q.replace(/\D/g, "");
+  if (digits.length < 3) return null;
+  if (digits.startsWith("84") && digits.length > 9) digits = digits.slice(2);
+  else if (digits.startsWith("0")) digits = digits.slice(1);
+  return digits || null;
+}
+
 /** `+84912345678` → `0912 345 678` để hiển thị. */
 export function formatPhone(phone: string): string {
   if (!phone.startsWith("+84")) return phone;

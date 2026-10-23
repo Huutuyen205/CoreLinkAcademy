@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AttendanceSummary, ResultsList } from "@/components/learner/learner-progress";
+import { ProgressCharts } from "@/components/learner/progress-charts";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { listPublishedResults } from "@/server/assessment/service";
 import { getStudentAttendance } from "@/server/attendance/service";
@@ -30,6 +31,7 @@ export default async function TeacherStudentPage({ params }: { params: Promise<{
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
+          <ProgressCharts results={results} attendance={attendance.records} />
           <AttendanceSummary data={attendance} />
           <ResultsList results={results} />
           <Card title="Đánh giá định kỳ của tôi">

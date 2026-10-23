@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPhone, normalizePhone } from "./phone";
+import { formatPhone, normalizePhone, phoneFragment } from "./phone";
 
 describe("normalizePhone", () => {
   it("TC-001 chuẩn hóa các dạng nhập phổ biến về +84", () => {
@@ -23,5 +23,15 @@ describe("normalizePhone", () => {
 describe("formatPhone", () => {
   it("hiển thị dạng nội địa", () => {
     expect(formatPhone("+84912345678")).toBe("0912 345 678");
+  });
+});
+
+describe("phoneFragment", () => {
+  it("chỉ nhận từ khóa toàn số, bỏ 0/84 đầu", () => {
+    expect(phoneFragment("0912 34")).toBe("91234");
+    expect(phoneFragment("84912345678")).toBe("912345678");
+    expect(phoneFragment("Lớp 9")).toBeNull();
+    expect(phoneFragment("kt9ab")).toBeNull();
+    expect(phoneFragment("09")).toBeNull();
   });
 });

@@ -58,6 +58,10 @@ C = tạo, R = xem, U = sửa, D = xóa/ẩn, X = thao tác đặc biệt. "own"
 | Ảnh đại diện (FR-051) | — | CRUD own, R mọi người | như Admin | như Admin | như Admin | như Admin |
 | Đăng ký thông báo đẩy | — | CRUD own (thiết bị) | như Admin | như Admin | như Admin | như Admin |
 | Báo cáo + xuất Excel (FR-052) | — | R | R | — | — | — |
+| Nhật ký buổi học (FEAT-B2) | — | CRU | CRU | CRU (lớp mình phụ trách hoặc buổi dạy thay) | R own | R (con) |
+| Tìm nhanh Ctrl+K (FEAT-B6) | — | HS, PH, GV, lớp, lead | HS, PH, GV, lớp, lead | Lớp mình + HS lớp mình | — | — |
+| Xuất lịch .ics (FEAT-B5) | — | — | — | own | own | con đã liên kết (`?con`) |
+| Nhắc lịch ngày mai (FEAT-B4) | — | X gửi ngay | X gửi ngay | R (nhận) | R (nhận) | R (nhận) |
 
 Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Pha 1 (ma trận cũ ghi R nhưng không có FR yêu cầu; chuyển thành Pha 2 — xem 05 §5).
 

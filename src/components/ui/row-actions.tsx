@@ -17,7 +17,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useActionState, useRef, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, type ReactNode } from "react";
+import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/format";
 import { initialActionState, type ActionState } from "@/server/errors";
 
@@ -80,10 +81,13 @@ type ButtonProps = {
   iconOnly?: boolean;
 };
 
-/** Nút một-chạm chạy Server Action (khóa, xóa, hủy…). Lỗi hiện ngay dưới nút. */
+/** Nút một-chạm chạy Server Action (khóa, xóa, hủy…). Kết quả hiện bằng toast; lỗi hiện thêm ngay dưới nút. */
 export function ActionButton({ action, hidden, children, icon, tone = "default", confirm, prompt, iconOnly }: ButtonProps) {
   const [state, formAction, pending] = useActionState(action, initialActionState);
   const promptRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (state.message) toast(state.message, state.ok ? "success" : "danger");
+  }, [state]);
   const Icon = icon ? ICONS[icon] : null;
   return (
     <form

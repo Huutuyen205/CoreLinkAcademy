@@ -5,7 +5,9 @@ import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { Avatar } from "@/components/ui/avatar";
+import { canGlobalSearch } from "@/server/search/service";
 import { Brand, BridgeArc } from "./brand";
+import { CommandSearch } from "./command-search";
 import { BottomNav, MobileMenu, SideNav, type NavItem } from "./nav-links";
 
 type Props = {
@@ -118,6 +120,11 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
           <Brand href={rootHref} tone="light" />
           <BellLink unread={unread} />
         </div>
+        {canGlobalSearch(actor.role) && (
+          <div className="relative -mt-2">
+            <CommandSearch variant="bar" placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />
+          </div>
+        )}
 
         <nav aria-label="Điều hướng nội bộ" className="relative flex-1 overflow-y-auto pr-1">
           <SideNav items={nav} rootHref={rootHref} />
@@ -132,7 +139,8 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
           summary={
             <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
               <Brand href={rootHref} tone="light" />
-              <span className="ml-auto mr-2">
+              <span className="ml-auto mr-2 flex items-center gap-1.5">
+                {canGlobalSearch(actor.role) && <CommandSearch placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />}
                 <BellLink unread={unread} />
               </span>
               <span className="inline-flex min-h-10 items-center rounded-xl border border-white/30 bg-white/8 px-3.5 text-sm font-medium">

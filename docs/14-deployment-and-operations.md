@@ -26,6 +26,7 @@ Yêu cầu máy: Node ≥ 22 (máy dev có 24), pnpm 9.15.9 (`packageManager`), 
 | `NODE_ENV` | `production` bật cookie `Secure` | — | Prod | Do `next start` | — |
 | `SLOW_QUERY_MS` | Ngưỡng log `[db] CHẬM` (ms) | Không (mặc định 300) | Mọi | `.env` | Xem stdout |
 | `DB_LOG_QUERIES` | `1` = in mọi query kèm thời gian | Không | Dev | `.env` | Xem stdout |
+| `CRON_SECRET` | Khóa cho Vercel Cron gọi `/api/cron/nhac-lich` (nhắc lịch học 19:00 hằng ngày, `vercel.json`) | Không — trống thì cron trả 404, vẫn gửi tay được ở Lịch tổng | Prod | Vercel env, chuỗi ngẫu nhiên ≥ 16 ký tự; Vercel tự gửi kèm `Authorization: Bearer` | Vercel → Cron Jobs → Run; hoặc bấm "Nhắc lịch ngày mai" |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | Khóa công khai Web Push (trình duyệt dùng để đăng ký) | Không — trống thì tắt thông báo đẩy | Mọi | Sinh bằng `npx web-push generate-vapid-keys`; **phải đặt lúc build** (biến `NEXT_PUBLIC_*` được nhúng vào JS) | Nút "Bật thông báo đẩy" hiện ở `/thong-bao` |
 | `VAPID_PRIVATE_KEY` | Khóa bí mật ký thông báo đẩy | Cùng cặp với khóa công khai | Server | Vercel env (không commit). Đổi cặp khóa → mọi thiết bị phải bật lại | "Gửi thử" ở `/thong-bao` |
 | `VAPID_SUBJECT` | Liên hệ gửi kèm (mailto:) cho dịch vụ push | Không | Server | `.env` | — |

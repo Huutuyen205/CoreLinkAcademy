@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Be_Vietnam_Pro, Lora } from "next/font/google";
 import { InstallCapture } from "@/components/pwa/install-capture";
+import { Toaster } from "@/components/ui/toast";
 import "./globals.css";
 
 const sans = Be_Vietnam_Pro({
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh antialiased">
         <InstallCapture />
         {children}
+        <Toaster />
       </body>
     </html>
   );

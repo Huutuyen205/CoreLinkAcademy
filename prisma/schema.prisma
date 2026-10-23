@@ -341,6 +341,10 @@ model ClassSession {
   cancelReason     String?           @db.VarChar(255)
   isMakeup         Boolean           @default(false) // buổi học bù do giáo vụ thêm
   note             String?           @db.VarChar(255)
+  // Nhật ký buổi học (FEAT-B2, DECISION-D32): GV ghi nội dung đã học + bài về nhà; HS/PH xem.
+  lessonContent    String?           @db.Text
+  homework         String?           @db.Text
+  lessonLoggedAt   DateTime? // lần ghi đầu tiên (gửi thông báo một lần)
   class            Class             @relation(fields: [classId], references: [id], onDelete: Cascade)
   teacher          User              @relation("SessionTeacher", fields: [teacherId], references: [id])
   room             Room?             @relation(fields: [roomId], references: [id])

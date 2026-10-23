@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { Alert, Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { Alert, Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import type { getSessionForAttendance } from "@/server/attendance/service";
 import { ATTENDANCE_STATUS, SESSION_STATUS } from "@/lib/labels";
-import { formatTime, formatVn } from "@/lib/time";
+import { formatDateTime, formatTime, formatVn } from "@/lib/time";
+import { ConfigForm } from "@/components/forms/config-form";
+import { saveLessonLogAction } from "@/server/attendance/actions";
 import { AttendanceForm } from "./attendance-form";
 
 type Data = Awaited<ReturnType<typeof getSessionForAttendance>>;
@@ -49,6 +51,27 @@ export function SessionAttendance({ data, backHref, backLabel }: { data: Data; b
             </li>
           ))}
         </ul>
+      )}
+
+      {session.status !== "CANCELLED" && (
+        <Card
+          title="Nhật ký buổi học"
+          className="mt-6"
+          action={session.lessonLoggedAt ? <span className="text-xs text-muted">Ghi lần đầu {formatDateTime(session.lessonLoggedAt)}</span> : undefined}
+        >
+          <p className="mb-3 text-sm text-muted">
+            Học sinh và phụ huynh xem được ở trang chi tiết buổi học. Lần lưu đầu tiên sẽ gửi thông báo cho cả lớp; sửa sau đó không gửi lại.
+          </p>
+          <ConfigForm
+            action={saveLessonLogAction}
+            hidden={{ sessionId: session.id }}
+            submitLabel={session.lessonLoggedAt ? "Cập nhật nhật ký" : "Lưu và gửi cho lớp"}
+            fields={[
+              { type: "textarea", name: "lessonContent", label: "Nội dung đã học", rows: 4, maxLength: 5000, defaultValue: session.lessonContent ?? "", hint: "Ví dụ: Ôn tập hệ phương trình bậc nhất hai ẩn, chữa bài 3–7 SGK." },
+              { type: "textarea", name: "homework", label: "Bài tập về nhà", rows: 3, maxLength: 5000, defaultValue: session.homework ?? "" },
+            ]}
+          />
+        </Card>
       )}
     </>
   );
