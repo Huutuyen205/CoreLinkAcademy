@@ -19,6 +19,11 @@ const MESSAGES: Record<string, string> = {
   "tu-choi-don": "Đã từ chối đơn xin nghỉ. Phụ huynh đã nhận thông báo.",
   "duyet-de-xuat": "Đã duyệt đề xuất và cập nhật lịch. Giáo viên và lớp đã nhận thông báo.",
   "tu-choi-de-xuat": "Đã từ chối đề xuất. Giáo viên đã nhận thông báo.",
+  "tra-bai": "Đã yêu cầu học sinh nộp lại. Học sinh và phụ huynh đã nhận thông báo.",
+  "xoa-bai-lam": "Đã xóa bài làm của học sinh.",
+  "tao-de": "Đã tạo đề luyện tập. Thêm câu hỏi rồi bật \"Mở cho học sinh\".",
+  "xoa-de": "Đã xóa đề luyện tập.",
+  "huy-buoi": "Đã hủy buổi học. Lớp đã nhận thông báo.",
 };
 
 export function Flash({ code }: { code?: string | string[] }) {

@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import { ChatSidebar } from "@/components/messaging/chat-sidebar";
 import { requireActor } from "@/server/auth/guard";
 import { ROLE_LABELS } from "@/server/auth/policy";
-import { listContacts, listConversations } from "@/server/messaging/service";
+import { isManager } from "@/server/auth/scope";
+import { listContacts, listConversations, teachersOfLearner } from "@/server/messaging/service";
 
 const CONTACT_HINT = {
   ADMIN: "Trung tâm nhắn được cho mọi giáo viên, học sinh, phụ huynh.",
@@ -15,7 +16,7 @@ const CONTACT_HINT = {
 // FR-050 (DECISION-D30): bố cục kiểu Zalo — cột trái danh sách cuộc trò chuyện, cột phải nội dung.
 export default async function MessagesLayout({ children }: { children: ReactNode }) {
   const actor = await requireActor();
-  const [{ conversations, unopenedClasses }, contacts] = await Promise.all([listConversations(actor), listContacts(actor)]);
+  const [{ conversations, unopenedClasses }, contacts, teachers] = await Promise.all([listConversations(actor), listContacts(actor), teachersOfLearner(actor)]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
@@ -24,6 +25,8 @@ export default async function MessagesLayout({ children }: { children: ReactNode
         unopenedClasses={unopenedClasses}
         contacts={contacts.map((u) => ({ value: u.id, label: `${u.fullName} · ${ROLE_LABELS[u.role]}` }))}
         contactHint={CONTACT_HINT[actor.role]}
+        teachers={teachers.map((t) => ({ id: t.id, fullName: t.fullName, classes: t.teachingClasses.map((c) => c.code).join(", ") }))}
+        showCenter={!isManager(actor)}
       />
       <div className="min-w-0">{children}</div>
     </div>

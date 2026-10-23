@@ -181,7 +181,7 @@ CoreLink Academy v3
 | P2-46 | Phụ huynh tự đặt lịch học thử / học bù theo khung trống | Tuyển sinh | docs/22 (TutorBird) | P2-32 |
 | P2-47 | Biểu đồ xu hướng cho quản lý (lead theo tuần, chuyên cần toàn trung tâm theo tuần) | Báo cáo | docs/22 | — |
 | P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
-| P2-41 | HS tự ôn luyện (đề luyện tập, lịch sử, chấm tự động); lịch tháng; biểu đồ tiến độ/xu hướng điểm | Học sinh | Bảng ưu tiên P2 | — |
+| P2-41 | ~~HS tự ôn luyện; lịch tháng~~ **Đã làm (FR-053, lịch tháng — D33)**; còn lại: ngân hàng câu hỏi dùng chung giữa đề, đề sinh ngẫu nhiên, câu có hình | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |
 
 ## 6. Coverage check

@@ -28,6 +28,19 @@ export async function createLeaveRequestAction(_prev: ActionState, formData: For
   redirect(`/phu-huynh/buoi/${parsed.data.sessionId}?con=${parsed.data.studentId}&thongbao=gui-don`);
 }
 
+/** PH §2: gửi đơn ngay ở trang Đơn xin nghỉ — ô `target` = "studentId|sessionId". */
+export async function createLeaveFromListAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("PARENT");
+  const fields = formFields(formData, ["target", "reason"]);
+  const parsed = parseForm(z.object({ target: z.string().regex(/^[a-z0-9]{1,40}\|[a-z0-9]{1,40}$/i, "Chọn buổi học."), reason }), fields);
+  if (!parsed.ok) return parsed.state;
+  const [studentId, sessionId] = parsed.data.target.split("|") as [string, string];
+  const result = await runAction(() => createLeaveRequest(actor, { studentId, sessionId, reason: parsed.data.reason }), fields);
+  if (!result.ok) return result.state;
+  revalidatePath("/phu-huynh", "layout");
+  redirect("/phu-huynh/don-nghi?thongbao=gui-don");
+}
+
 export async function cancelLeaveRequestAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("PARENT");
   const parsed = parseForm(z.object({ requestId: id }), formFields(formData, ["requestId"]));

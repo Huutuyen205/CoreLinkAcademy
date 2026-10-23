@@ -8,6 +8,7 @@ import { saveLessonLog } from "@/server/academic/lesson-log";
 import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
 import { saveAttendance, type AttendanceEntry } from "./service";
+import { ATTITUDE_VALUES } from "@/lib/labels";
 
 const STATUSES: AttendanceStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
 
@@ -27,7 +28,9 @@ export async function saveAttendanceAction(_prev: ActionState, formData: FormDat
     const status = String(formData.get(`status:${studentId}`) ?? "PRESENT") as AttendanceStatus;
     if (!STATUSES.includes(status)) return { ok: false, message: "Trạng thái điểm danh không hợp lệ." };
     const note = String(formData.get(`note:${studentId}`) ?? "").trim().slice(0, 255) || null;
-    entries.push({ studentId, status, note });
+    const rawAttitude = String(formData.get(`attitude:${studentId}`) ?? "");
+    const attitude = (ATTITUDE_VALUES as readonly string[]).includes(rawAttitude) ? rawAttitude : null;
+    entries.push({ studentId, status, note, attitude });
   }
 
   const result = await runAction(() => saveAttendance(actor, sessionId, entries, reasonRaw || null), { reason: reasonRaw });

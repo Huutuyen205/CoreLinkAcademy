@@ -6,11 +6,14 @@ import { DataTable } from "@/components/ui/data-table";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { listSessionsForManager } from "@/server/academic/operations";
 import { UserRowActions } from "@/components/people/user-row-actions";
-import { ActionLink } from "@/components/ui/row-actions";
+import { ConfigForm } from "@/components/forms/config-form";
+import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
+import { reviewIntroAction, setMemberStatusAction } from "@/server/people/actions";
+import { listAvailability } from "@/server/people/teacher";
 import { requireRole } from "@/server/auth/guard";
 import { orNotFound } from "@/server/page";
 import { getTeacherProfile } from "@/server/people/service";
-import { CLASS_STATUS, memberStatusLabel, USER_STATUS } from "@/lib/labels";
+import { CLASS_STATUS, memberStatusLabel, REQUEST_STATUS, USER_STATUS } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
 import { formatSchedule } from "@/lib/schedule";
 import { formatDate, parseWeekParam, vnWeekRange } from "@/lib/time";
@@ -23,7 +26,7 @@ export default async function TeacherDetailPage({ params, searchParams }: { para
   const { id } = await params;
   const weekStart = parseWeekParam((await searchParams).tuan);
   const { from, to } = vnWeekRange(weekStart);
-  const [t, sessions] = await Promise.all([orNotFound(getTeacherProfile(actor, id)), listSessionsForManager(actor, from, to, { teacherId: id })]);
+  const [t, sessions, slots] = await Promise.all([orNotFound(getTeacherProfile(actor, id)), listSessionsForManager(actor, from, to, { teacherId: id }), listAvailability(actor, id)]);
   const ms = memberStatusLabel("TEACHER", t.memberStatus);
 
   return (
@@ -46,6 +49,65 @@ export default async function TeacherDetailPage({ params, searchParams }: { para
         }
       />
       <div className="space-y-6">
+        {actor.role === "ADMIN" && (
+          <Card title="Trạng thái hoạt động">
+            <p className="mb-3 text-sm text-muted">Giáo viên tạm nghỉ / đã nghỉ vẫn giữ lịch sử lớp; khóa đăng nhập dùng nút &ldquo;Khóa&rdquo; ở đầu trang.</p>
+            <RowActions>
+              {(["ACTIVE", "ON_LEAVE", "INACTIVE"] as const).map((st) => (
+                <ActionButton
+                  key={st}
+                  action={setMemberStatusAction}
+                  hidden={{ userId: t.id, status: st }}
+                  icon={st === "ACTIVE" ? "restore" : "hide"}
+                  tone={t.memberStatus === st ? "primary" : "default"}
+                  confirm={t.memberStatus === st ? undefined : `Chuyển ${t.fullName} sang "${memberStatusLabel("TEACHER", st).label}"?`}
+                >
+                  {memberStatusLabel("TEACHER", st).label}
+                  {t.memberStatus === st ? " ✓" : ""}
+                </ActionButton>
+              ))}
+            </RowActions>
+          </Card>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card title="Hồ sơ giới thiệu" id="gioi-thieu" className="scroll-mt-24" action={t.introStatus && <Badge tone={REQUEST_STATUS[t.introStatus].tone}>{REQUEST_STATUS[t.introStatus].label}</Badge>}>
+            {t.introStatus === "PENDING" ? (
+              <>
+                <p className="mb-1 text-sm font-semibold">Bản chờ duyệt</p>
+                <p className="mb-4 whitespace-pre-line rounded-control bg-paper p-3 text-sm">{t.introDraft}</p>
+                <ConfigForm
+                  action={reviewIntroAction}
+                  hidden={{ teacherId: t.id }}
+                  submitLabel="Gửi quyết định"
+                  fields={[
+                    { type: "select", name: "decision", label: "Quyết định", required: true, options: [{ value: "approve", label: "Duyệt — hiển thị cho HS, PH" }, { value: "reject", label: "Từ chối — yêu cầu sửa" }] },
+                    { type: "text", name: "note", label: "Ghi chú cho giáo viên", maxLength: 500 },
+                  ]}
+                />
+              </>
+            ) : t.introPublished ? (
+              <p className="whitespace-pre-line text-sm">{t.introPublished}</p>
+            ) : (
+              <p className="text-sm text-muted">Giáo viên chưa gửi hồ sơ giới thiệu.</p>
+            )}
+          </Card>
+          <Card title={`Lịch rảnh đăng ký (${slots.length})`}>
+            {slots.length === 0 ? (
+              <p className="text-sm text-muted">Giáo viên chưa đăng ký lịch rảnh.</p>
+            ) : (
+              <ul className="divide-y divide-line text-sm">
+                {slots.map((s) => (
+                  <li key={s.id} className="py-1.5">
+                    <strong>{["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ nhật"][s.weekday]}</strong> {s.startTime}–{s.endTime}
+                    {s.note ? <span className="text-muted"> · {s.note}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+
         <Card title={`Lớp phụ trách (${t.teachingClasses.length})`}>
           {t.teachingClasses.length === 0 ? (
             <EmptyState message="Chưa phụ trách lớp nào." />

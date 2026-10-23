@@ -76,6 +76,21 @@ export default async function ClassEvaluationsPage({ params }: { params: Promise
                               <p className="mt-1 whitespace-pre-line">{ev.content}</p>
                               {ev.strengths && <p className="mt-1 text-sm">Điểm mạnh: {ev.strengths}</p>}
                               {ev.improvements && <p className="mt-1 text-sm">Cần cải thiện: {ev.improvements}</p>}
+                              <details className="mt-2">
+                                <summary className="cursor-pointer py-2 text-sm text-primary">Cập nhật đánh giá đã gửi</summary>
+                                <ConfigForm
+                                  className="mt-2"
+                                  action={saveEvaluationAction}
+                                  hidden={{ classId: klass.id, studentId: student.id, period: ev.period }}
+                                  submitLabel="Lưu và báo HS, PH"
+                                  confirm="Cập nhật đánh giá đã gửi? Học sinh và phụ huynh sẽ nhận thông báo."
+                                  fields={[
+                                    { type: "textarea", name: "content", label: "Nhận xét chung", required: true, maxLength: 5000, rows: 3, defaultValue: ev.content },
+                                    { type: "textarea", name: "strengths", label: "Điểm mạnh", maxLength: 2000, rows: 2, defaultValue: ev.strengths ?? "" },
+                                    { type: "textarea", name: "improvements", label: "Cần cải thiện", maxLength: 2000, rows: 2, defaultValue: ev.improvements ?? "" },
+                                  ]}
+                                />
+                              </details>
                             </>
                           ) : (
                             <div className="mt-2 space-y-3">
@@ -91,7 +106,7 @@ export default async function ClassEvaluationsPage({ params }: { params: Promise
                                 ]}
                               />
                               <div className="flex flex-wrap gap-2">
-                                <ConfigForm action={sendEvaluationAction} hidden={{ evaluationId: ev.id }} submitLabel="Gửi cho HS & PH" confirm="Gửi đánh giá? Sau khi gửi không sửa được." fields={[]} />
+                                <ConfigForm action={sendEvaluationAction} hidden={{ evaluationId: ev.id }} submitLabel="Gửi cho HS & PH" confirm="Gửi đánh giá cho học sinh và phụ huynh? (Sau khi gửi vẫn cập nhật được; HS/PH sẽ được báo.)" fields={[]} />
                                 <ConfigForm action={deleteEvaluationAction} hidden={{ evaluationId: ev.id }} submitLabel="Xóa nháp" submitVariant="secondary" confirm="Xóa bản nháp?" fields={[]} />
                               </div>
                             </div>

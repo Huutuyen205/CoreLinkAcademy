@@ -4,14 +4,16 @@ import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
 import { requireRole } from "@/server/auth/guard";
 import { deleteRoomAction, saveRoomAction, setCatalogActiveAction } from "@/server/catalog/actions";
-import { listRoomsAdmin } from "@/server/catalog/admin";
+import { listRoomsAdmin, roomUsage } from "@/server/catalog/admin";
+import { formatTime, formatVn, parseWeekParam, vnWeekRange } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Phòng học" };
 
 // FR-016 + Admin §8: thêm/sửa phòng, trạng thái (ngừng sử dụng không xếp được cho lớp/buổi mới), xem lịch sử dụng phòng.
 export default async function RoomsPage() {
   const actor = await requireRole("ADMIN");
-  const rooms = await listRoomsAdmin(actor);
+  const { from, to } = vnWeekRange(parseWeekParam(undefined));
+  const [rooms, usage] = await Promise.all([listRoomsAdmin(actor), roomUsage(actor, from, to)]);
   return (
     <>
       <PageHeader title="Phòng học" description="Phòng tạm ngừng sẽ không chọn được khi mở lớp, xếp học bù hoặc đổi phòng." />
@@ -38,6 +40,7 @@ export default async function RoomsPage() {
               </RowActions>
             }
           >
+            <RoomUsageLine u={usage.get(r.id)} />
             <ConfigForm
               action={saveRoomAction}
               hidden={{ id: r.id, statusField: "1" }}
@@ -68,5 +71,31 @@ export default async function RoomsPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+/** Tình trạng sử dụng phòng (Admin §8): đang có lớp không, buổi kế tiếp, mức dùng trong tuần. */
+function RoomUsageLine({ u }: { u?: { weekSessions: number; weekMinutes: number; current: { classCode: string; endsAt: Date } | null; next: { classCode: string; startsAt: Date } | null } }) {
+  return (
+    <div className="mb-4 grid gap-2 rounded-control bg-paper p-3 text-sm sm:grid-cols-3">
+      <p>
+        <span className="block text-xs text-muted">Bây giờ</span>
+        {u?.current ? (
+          <span className="font-semibold text-danger">
+            Đang học lớp {u.current.classCode} (đến {formatTime(u.current.endsAt)})
+          </span>
+        ) : (
+          <span className="font-semibold text-success">Trống</span>
+        )}
+      </p>
+      <p>
+        <span className="block text-xs text-muted">Buổi kế tiếp</span>
+        {u?.next ? `${u.next.classCode} · ${formatVn(u.next.startsAt, "EEE dd/MM HH:mm")}` : "Chưa có lịch"}
+      </p>
+      <p>
+        <span className="block text-xs text-muted">Tuần này</span>
+        {u ? `${u.weekSessions} buổi · ${Math.round((u.weekMinutes / 60) * 10) / 10} giờ` : "0 buổi"}
+      </p>
+    </div>
   );
 }

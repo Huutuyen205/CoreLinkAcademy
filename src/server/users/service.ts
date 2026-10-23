@@ -144,7 +144,7 @@ export async function listUsers(actor: Actor, filter: UserFilter) {
       orderBy: [{ role: "asc" }, { fullName: "asc" }],
       skip: (filter.page - 1) * USER_PAGE_SIZE,
       take: USER_PAGE_SIZE,
-      select: { id: true, fullName: true, email: true, phone: true, role: true, status: true, studentCode: true, lockedUntil: true },
+      select: { id: true, fullName: true, email: true, phone: true, role: true, status: true, studentCode: true, lockedUntil: true, mustChangePassword: true },
     }),
   ]);
   return { total, rows };

@@ -2,6 +2,7 @@
 // Nhóm lớp: thành viên suy ra từ lớp (không thêm/bớt tay). Nhắn 1-1 theo `directMessageRequirement` (rules.ts).
 // Tin nhắn có thể kèm ảnh/tệp (lưu như mọi tệp khác — DECISION-D24); người nhận được thông báo đẩy.
 import type { Prisma, Role } from "@prisma/client";
+import { writeAudit } from "@/server/audit/log";
 import { isManager } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -99,8 +100,8 @@ async function accessibleConversation(actor: Actor, conversationId: string) {
       id: true,
       kind: true,
       classId: true,
-      class: { select: { code: true, course: { select: { title: true } } } },
-      members: { select: { userId: true, user: { select: { id: true, fullName: true, role: true, avatarFileId: true } } } },
+      class: { select: { code: true, teacherId: true, course: { select: { title: true } } } },
+      members: { select: { userId: true, mutedAt: true, user: { select: { id: true, fullName: true, role: true, avatarFileId: true } } } },
     },
   });
   if (!c) throw new ForbiddenError();
@@ -111,8 +112,8 @@ async function accessibleConversation(actor: Actor, conversationId: string) {
 
 /** Tệp đính kèm tin nhắn: chỉ người xem được cuộc trò chuyện chứa tin đó. */
 export async function canReadMessage(actor: Actor, messageId: string): Promise<boolean> {
-  const m = await db.message.findUnique({ where: { id: messageId }, select: { conversationId: true } });
-  if (!m) return false;
+  const m = await db.message.findUnique({ where: { id: messageId }, select: { conversationId: true, deletedAt: true } });
+  if (!m || m.deletedAt) return false;
   try {
     await accessibleConversation(actor, m.conversationId);
     return true;
@@ -175,7 +176,10 @@ export async function getConversation(actor: Actor, conversationId: string) {
         id: true,
         body: true,
         createdAt: true,
+        deletedAt: true,
+        deletedById: true,
         sender: { select: { id: true, fullName: true, role: true, avatarFileId: true } },
+        assignment: { select: { id: true, title: true } },
         files: { select: fileMeta, orderBy: { createdAt: "asc" } },
       },
     }),
@@ -188,21 +192,161 @@ export async function getConversation(actor: Actor, conversationId: string) {
     }),
   ]);
   const other = c.kind === "DIRECT" ? c.members.find((m) => m.userId !== actor.id)?.user : null;
+  const muted = new Set(c.members.filter((m) => m.mutedAt).map((m) => m.userId));
   return {
     id: c.id,
     kind: c.kind,
+    classId: c.classId,
+    canModerate: canModerate(actor, c),
+    iAmMuted: muted.has(actor.id),
+    mutedIds: [...muted],
     title: c.kind === "CLASS" ? `Nhóm lớp ${c.class!.code}` : (other?.fullName ?? "Trò chuyện"),
     subtitle: c.kind === "CLASS" ? c.class!.course.title : null,
     other: other ?? null,
     members,
-    messages: messages.reverse(),
+    messages: messages.reverse().map((m) => (m.deletedAt ? { ...m, body: "", files: [], assignment: null } : m)),
   };
+}
+
+/** Quản lý: mọi nhóm lớp; GV phụ trách: nhóm lớp mình. Nhắn 1-1 không ai kiểm duyệt (chỉ người gửi tự thu hồi). */
+function canModerate(actor: Actor, c: { kind: string; class: { teacherId: string } | null }): boolean {
+  if (c.kind !== "CLASS") return false;
+  return isManager(actor) || (actor.role === "TEACHER" && c.class?.teacherId === actor.id);
+}
+
+/**
+ * Thu hồi / gỡ tin (Admin §12B "xử lý trường hợp bất thường trong nhóm lớp"):
+ * người gửi tự thu hồi tin của mình; quản lý / GV phụ trách gỡ tin bất kỳ trong nhóm lớp. Tệp đính kèm bị xóa; nội dung cũ lưu vào nhật ký.
+ */
+export async function removeMessage(actor: Actor, messageId: string): Promise<string> {
+  const m = await db.message.findUnique({ where: { id: messageId }, select: { id: true, body: true, senderId: true, conversationId: true, deletedAt: true } });
+  if (!m) throw new ForbiddenError();
+  const c = await accessibleConversation(actor, m.conversationId);
+  const own = m.senderId === actor.id;
+  if (!own && !canModerate(actor, c)) throw new ForbiddenError();
+  if (m.deletedAt) return m.conversationId;
+  await db.$transaction(async (tx) => {
+    await tx.storedFile.deleteMany({ where: { messageId } });
+    await tx.message.update({ where: { id: messageId }, data: { deletedAt: new Date(), deletedById: actor.id, body: "" } });
+    if (!own) {
+      await writeAudit(
+        { actorId: actor.id, action: "message.remove", entity: "Message", entityId: messageId, detail: { conversationId: m.conversationId, senderId: m.senderId, body: m.body.slice(0, 2000) } },
+        tx,
+      );
+    }
+  });
+  return m.conversationId;
+}
+
+/** Tạm chặn / bỏ chặn một thành viên gửi tin trong nhóm lớp (vẫn đọc được). Quản lý hoặc GV phụ trách. */
+export async function setMemberMuted(actor: Actor, conversationId: string, userId: string, muted: boolean): Promise<void> {
+  const c = await accessibleConversation(actor, conversationId);
+  if (!canModerate(actor, c)) throw new ForbiddenError();
+  if (userId === actor.id) throw new DomainError("SELF", "Không thể tự chặn chính mình.");
+  const members = await classMembers(actor, c.classId!);
+  const target = members.find((m) => m.id === userId);
+  if (!target) throw new ForbiddenError();
+  if (target.role === "TEACHER" && !isManager(actor)) throw new DomainError("TEACHER", "Chỉ trung tâm mới chặn được giáo viên.");
+  await db.$transaction(async (tx) => {
+    await tx.conversationMember.upsert({
+      where: { conversationId_userId: { conversationId, userId } },
+      update: { mutedAt: muted ? new Date() : null },
+      create: { conversationId, userId, mutedAt: muted ? new Date() : null },
+    });
+    await writeAudit({ actorId: actor.id, action: muted ? "chat.mute" : "chat.unmute", entity: "Conversation", entityId: conversationId, detail: { userId } }, tx);
+  });
+}
+
+/**
+ * Tìm tin nhắn (HS §6 "theo giáo viên, từ khóa"; GV/Admin §B): trong mọi cuộc trò chuyện mình xem được.
+ * `withUserId`: chỉ tin trong cuộc 1-1 với người đó hoặc do người đó gửi.
+ */
+export async function searchMessages(actor: Actor, rawQuery: string, withUserId?: string) {
+  const q = rawQuery.trim().slice(0, 80);
+  if (q.length < 2 && !withUserId) return [];
+  const visible: Prisma.ConversationWhereInput = {
+    OR: [{ kind: "DIRECT", members: { some: { userId: actor.id } } }, { kind: "CLASS", class: classMembershipWhere(actor) }],
+  };
+  const rows = await db.message.findMany({
+    where: {
+      deletedAt: null,
+      conversation: visible,
+      ...(q.length >= 2 ? { body: { contains: q, mode: "insensitive" as const } } : {}),
+      ...(withUserId ? { OR: [{ senderId: withUserId }, { conversation: { kind: "DIRECT", members: { some: { userId: withUserId } } } }] } : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      body: true,
+      createdAt: true,
+      conversationId: true,
+      sender: { select: { id: true, fullName: true } },
+      conversation: { select: { kind: true, class: { select: { code: true } }, members: { select: { userId: true, user: { select: { fullName: true } } } } } },
+    },
+  });
+  return rows.map((m) => ({
+    id: m.id,
+    conversationId: m.conversationId,
+    body: m.body,
+    createdAt: m.createdAt,
+    senderName: m.sender.id === actor.id ? "Bạn" : m.sender.fullName,
+    where:
+      m.conversation.kind === "CLASS"
+        ? `Nhóm lớp ${m.conversation.class?.code ?? ""}`
+        : (m.conversation.members.find((x) => x.userId !== actor.id)?.user.fullName ?? "Trò chuyện"),
+  }));
+}
+
+/** Người lọc được trong ô "Tìm tin nhắn theo người": giáo viên/trung tâm mình từng trò chuyện 1-1. */
+export async function messagePartners(actor: Actor) {
+  return db.user.findMany({
+    where: { id: { not: actor.id }, conversationMemberships: { some: { conversation: { kind: "DIRECT", members: { some: { userId: actor.id } } } } } },
+    orderBy: { fullName: "asc" },
+    take: 200,
+    select: { id: true, fullName: true, role: true },
+  });
+}
+
+/**
+ * "Hỏi bài" (HS §6): từ trang bài tập, HS nhắn riêng GV phụ trách lớp; tin tự gắn thẻ bài tập.
+ * Trả id cuộc trò chuyện.
+ */
+export async function askAboutAssignment(actor: Actor, assignmentId: string, body: string, files: PreparedFile[] = []): Promise<string> {
+  if (actor.role !== "STUDENT") throw new ForbiddenError();
+  const a = await db.assignment.findUnique({
+    where: { id: assignmentId },
+    select: { id: true, status: true, class: { select: { teacherId: true, enrollments: { where: { studentId: actor.id }, select: { status: true } } } } },
+  });
+  if (!a || a.status === "DRAFT" || a.class.enrollments.length === 0) throw new ForbiddenError();
+  const conversationId = await startDirectConversation(actor, a.class.teacherId);
+  await sendMessage(actor, conversationId, body, files, assignmentId);
+  return conversationId;
+}
+
+/** "Nhắn trung tâm" (PH §7B): mở trò chuyện với giáo vụ (ưu tiên) hoặc quản trị đang hoạt động. */
+export async function startCenterConversation(actor: Actor): Promise<string> {
+  const staff = await db.user.findFirst({ where: { role: "STAFF", status: "ACTIVE", id: { not: actor.id } }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  const center = staff ?? (await db.user.findFirst({ where: { role: "ADMIN", status: "ACTIVE", id: { not: actor.id } }, orderBy: { createdAt: "asc" }, select: { id: true } }));
+  if (!center) throw new DomainError("NO_CENTER", "Trung tâm chưa có tài khoản giáo vụ để nhận tin.");
+  return startDirectConversation(actor, center.id);
+}
+
+/** Giáo viên đang dạy các lớp của con / của em (nút nhắn nhanh ở cổng PH/HS). */
+export async function teachersOfLearner(actor: Actor) {
+  if (actor.role !== "PARENT" && actor.role !== "STUDENT") return [];
+  const running: Prisma.ClassWhereInput = { ...classMembershipWhere(actor), status: { in: ["OPEN", "IN_PROGRESS"] } };
+  return db.user.findMany({
+    where: { role: "TEACHER", status: "ACTIVE", teachingClasses: { some: running } },
+    orderBy: { fullName: "asc" },
+    select: { id: true, fullName: true, avatarFileId: true, teachingClasses: { where: running, select: { code: true } } },
+  });
 }
 
 const MAX_MESSAGE_FILES = 5;
 
 /** Gửi tin: chữ và/hoặc ảnh/tệp (tối đa 5 tệp, 4 MB mỗi lần). Người nhận có thông báo đẩy. */
-export async function sendMessage(actor: Actor, conversationId: string, body: string, files: PreparedFile[] = []): Promise<void> {
+export async function sendMessage(actor: Actor, conversationId: string, body: string, files: PreparedFile[] = [], assignmentId: string | null = null): Promise<void> {
   if (!body && files.length === 0) throw new DomainError("EMPTY", "Nhập tin nhắn hoặc chọn ảnh/tệp.", { body: "Nhập tin nhắn." });
   if (files.length > MAX_MESSAGE_FILES) throw new DomainError("TOO_MANY_FILES", `Mỗi tin nhắn tối đa ${MAX_MESSAGE_FILES} tệp.`);
   const c = await accessibleConversation(actor, conversationId);
@@ -213,11 +357,14 @@ export async function sendMessage(actor: Actor, conversationId: string, body: st
     if (!other || !(await canDirectMessage(actor, other))) throw new DomainError("NOT_ALLOWED", "Bạn không còn nhắn tin được với người này.");
     recipients = [other.id];
   } else {
+    if (c.members.some((m) => m.userId === actor.id && m.mutedAt)) {
+      throw new DomainError("MUTED", "Bạn đang bị tạm chặn gửi tin trong nhóm lớp này. Liên hệ giáo viên hoặc trung tâm.");
+    }
     recipients = await classAudienceIds(db, c.classId!);
   }
   const now = new Date();
   await db.$transaction(async (tx) => {
-    const m = await tx.message.create({ data: { conversationId, senderId: actor.id, body }, select: { id: true } });
+    const m = await tx.message.create({ data: { conversationId, senderId: actor.id, body, assignmentId }, select: { id: true } });
     await storeFiles(tx, files, { messageId: m.id }, actor.id);
     await tx.conversation.update({ where: { id: conversationId }, data: { lastMessageAt: now } });
     await tx.conversationMember.upsert({
@@ -225,7 +372,7 @@ export async function sendMessage(actor: Actor, conversationId: string, body: st
       update: { lastReadAt: now },
       create: { conversationId, userId: actor.id, lastReadAt: now },
     });
-  });
+  }, { timeout: 15_000 }); // DB ở xa: 4 lệnh ghi có lúc vượt 5 giây mặc định (P2028)
   const preview = body || (files.every((f) => f.mimeType.startsWith("image/")) ? `[${files.length} ảnh]` : `[Tệp] ${files.map((f) => f.fileName).join(", ")}`);
   queuePush(
     recipients.filter((id) => id !== actor.id),
@@ -264,7 +411,7 @@ export async function listConversations(actor: Actor) {
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: { body: true, createdAt: true, senderId: true, sender: { select: { fullName: true } }, _count: { select: { files: true } } },
+          select: { body: true, createdAt: true, deletedAt: true, senderId: true, sender: { select: { fullName: true } }, _count: { select: { files: true } } },
         },
       },
     }),
@@ -282,7 +429,12 @@ export async function listConversations(actor: Actor) {
       otherRole: other?.role ?? null,
       avatarFileId: other?.avatarFileId ?? null,
       last: last
-        ? { body: last.body || (last._count.files > 0 ? `[${last._count.files} tệp/ảnh]` : ""), createdAt: last.createdAt, mine: last.senderId === actor.id, senderName: last.sender.fullName }
+        ? {
+            body: last.deletedAt ? "Tin nhắn đã bị thu hồi" : last.body || (last._count.files > 0 ? `[${last._count.files} tệp/ảnh]` : ""),
+            createdAt: last.createdAt,
+            mine: last.senderId === actor.id,
+            senderName: last.sender.fullName,
+          }
         : null,
       unread: unreadBy.get(c.id) ?? 0,
     };

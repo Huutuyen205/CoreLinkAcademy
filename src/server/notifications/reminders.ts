@@ -97,3 +97,57 @@ export async function sendTomorrowReminders(now = new Date()): Promise<{ day: st
   }, { timeout: 20_000 });
   return { day, sessions: sessions.length, recipients };
 }
+
+/**
+ * Nhắc bài tập (HS §7): chạy cùng cron 19:00.
+ * - "due_soon": bài đang giao, hạn trong 24 giờ tới, HS chưa nộp → báo HS.
+ * - "overdue": bài đã quá hạn trong 48 giờ qua, HS chưa nộp → báo HS + PH.
+ * Mỗi (người, bài, loại) chỉ báo một lần (so `kind` + `link`).
+ */
+export async function sendAssignmentReminders(now = new Date()): Promise<{ dueSoon: number; overdue: number }> {
+  const soon = new Date(now.getTime() + 24 * 3600_000);
+  const past = new Date(now.getTime() - 48 * 3600_000);
+  const assignments = await db.assignment.findMany({
+    where: { status: "PUBLISHED", dueAt: { gt: past, lte: soon }, class: { status: { in: ["OPEN", "IN_PROGRESS"] } } },
+    select: {
+      id: true,
+      title: true,
+      dueAt: true,
+      class: {
+        select: {
+          code: true,
+          enrollments: {
+            where: { status: "ACTIVE", student: { status: "ACTIVE" } },
+            select: { studentId: true, student: { select: { parentLinks: { where: { parent: { status: "ACTIVE" } }, select: { parentId: true } } } } },
+          },
+        },
+      },
+      submissions: { where: { status: { not: "IN_PROGRESS" } }, select: { studentId: true } },
+    },
+  });
+  let dueSoon = 0;
+  let overdue = 0;
+  await db.$transaction(async (tx) => {
+    for (const a of assignments) {
+      const done = new Set(a.submissions.map((s) => s.studentId));
+      const pending = a.class.enrollments.filter((e) => !done.has(e.studentId));
+      if (pending.length === 0) continue;
+      const link = `/hoc-sinh/bai-tap/${a.id}`;
+      const isOverdue = a.dueAt <= now;
+      const kind = isOverdue ? "overdue" : "due_soon";
+      const already = new Set(
+        (await tx.notification.findMany({ where: { kind, link: { in: [link, `/phu-huynh/bai-tap#${a.id}`] } }, select: { userId: true } })).map((n) => n.userId),
+      );
+      const students = pending.map((p) => p.studentId).filter((id) => !already.has(id));
+      const due = formatVn(a.dueAt, "HH:mm dd/MM");
+      if (isOverdue) {
+        overdue += await notifyUsers(tx, students, { kind, title: `Quá hạn chưa nộp: ${a.title}`, body: `Lớp ${a.class.code} · hạn ${due}. Em chưa nộp bài này.`, link });
+        const parents = pending.flatMap((p) => p.student.parentLinks.map((l) => l.parentId)).filter((id) => !already.has(id));
+        overdue += await notifyUsers(tx, parents, { kind, title: `Con chưa nộp bài quá hạn: ${a.title}`, body: `Lớp ${a.class.code} · hạn ${due}.`, link: `/phu-huynh/bai-tap#${a.id}` });
+      } else {
+        dueSoon += await notifyUsers(tx, students, { kind, title: `Sắp đến hạn nộp: ${a.title}`, body: `Lớp ${a.class.code} · hạn ${due}. Em chưa nộp bài.`, link });
+      }
+    }
+  }, { timeout: 30_000 });
+  return { dueSoon, overdue };
+}

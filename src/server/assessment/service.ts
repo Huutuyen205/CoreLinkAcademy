@@ -47,7 +47,25 @@ async function ownedAssignment(actor: Actor, assignmentId: string) {
   return a;
 }
 
-export type AssignmentInput = { title: string; instructions: string; dueAt: Date; allowLate: boolean; acceptsFiles: boolean; manualMaxScore: number | null };
+export type AssignmentInput = {
+  title: string;
+  instructions: string;
+  dueAt: Date;
+  allowLate: boolean;
+  acceptsFiles: boolean;
+  manualMaxScore: number | null;
+  isTest: boolean;
+  solution: string | null;
+};
+
+/** Học sinh đang học (tài khoản mở) của lớp + phụ huynh của các em — người nhận thông báo bài tập. */
+async function learnersOf(tx: Prisma.TransactionClient, classId: string, onlyStudentIds?: string[]) {
+  const rows = await tx.enrollment.findMany({
+    where: { classId, status: "ACTIVE", student: { status: "ACTIVE" }, ...(onlyStudentIds ? { studentId: { in: onlyStudentIds } } : {}) },
+    select: { studentId: true, student: { select: { parentLinks: { where: { parent: { status: "ACTIVE" } }, select: { parentId: true } } } } },
+  });
+  return { students: rows.map((r) => r.studentId), parents: rows.flatMap((r) => r.student.parentLinks.map((l) => l.parentId)) };
+}
 
 /** API-016 — FR-027, FR-040: kèm tệp đề bài (tùy chọn). */
 export async function createAssignment(actor: Actor, classId: string, input: AssignmentInput, files: PreparedFile[] = []): Promise<string> {
@@ -170,7 +188,27 @@ export async function setAssignmentStatus(actor: Actor, assignmentId: string, to
     DUE_IN_PAST: "Hạn nộp đã qua. Hãy sửa hạn nộp trước khi giao bài.",
   } as const;
   if (error) throw new DomainError(error, messages[error]);
-  await db.assignment.update({ where: { id: assignmentId }, data: { status: to } });
+  await db.$transaction(async (tx) => {
+    await tx.assignment.update({ where: { id: assignmentId }, data: { status: to } });
+    // Giao lần đầu (nháp → giao): báo HS + PH "bài tập mới" hoặc "lịch kiểm tra". Mở lại bài đã đóng thì không báo.
+    if (a.status === "DRAFT" && to === "PUBLISHED") {
+      const { students, parents } = await learnersOf(tx, a.classId);
+      const due = formatDateTime(a.dueAt);
+      const kind = a.isTest ? "test" : "assignment";
+      await notifyUsers(tx, students, {
+        kind,
+        title: a.isTest ? `Lịch kiểm tra: ${a.title}` : `Bài tập mới: ${a.title}`,
+        body: `Lớp ${a.class.code} · ${a.isTest ? "làm và nộp trước" : "hạn nộp"} ${due}.`,
+        link: `/hoc-sinh/bai-tap/${assignmentId}`,
+      });
+      await notifyUsers(tx, parents, {
+        kind,
+        title: a.isTest ? `Con có bài kiểm tra: ${a.title}` : `Con có bài tập mới: ${a.title}`,
+        body: `Lớp ${a.class.code} · hạn ${due}.`,
+        link: "/phu-huynh/bai-tap",
+      });
+    }
+  });
 }
 
 /** API-020 — FR-032. */
@@ -186,8 +224,8 @@ export async function publishResults(actor: Actor, assignmentId: string): Promis
     await tx.assignment.update({ where: { id: assignmentId }, data: { resultsPublishedAt: new Date() } });
     await notifyUsers(tx, graded.map((g) => g.studentId), {
       kind: "results",
-      title: `Đã có kết quả: ${a.title}`,
-      body: `Lớp ${a.class.code}. Xem điểm và nhận xét của giáo viên.`,
+      title: `Bài đã được chấm: ${a.title}`,
+      body: `Lớp ${a.class.code}. Xem điểm, nhận xét${a.solution ? " và bài chữa" : ""} của giáo viên.`,
       link: `/hoc-sinh/bai-tap/${assignmentId}`,
     });
     await notifyUsers(tx, graded.flatMap((g) => g.student.parentLinks.map((l) => l.parentId)), {
@@ -196,6 +234,113 @@ export async function publishResults(actor: Actor, assignmentId: string): Promis
       body: `Lớp ${a.class.code}.`,
       link: "/phu-huynh/bai-tap",
     });
+    // Bài chữa / đáp án: báo mọi HS đang học (cả em chưa nộp hoặc chưa được chấm vẫn xem được bài chữa).
+    const hasKey = a.solution || (await tx.question.count({ where: { assignmentId, type: { in: ["MCQ", "SHORT"] } } })) > 0;
+    if (hasKey) {
+      const gradedIds = new Set(graded.map((g) => g.studentId));
+      const { students } = await learnersOf(tx, a.classId);
+      await notifyUsers(tx, students.filter((s) => !gradedIds.has(s)), {
+        kind: "solution",
+        title: `Đã có ${a.solution ? "bài chữa" : "đáp án"}: ${a.title}`,
+        body: `Lớp ${a.class.code}.`,
+        link: `/hoc-sinh/bai-tap/${assignmentId}`,
+      });
+    }
+  });
+}
+
+/**
+ * GV §8 "Yêu cầu nộp lại": bài nộp trở về "đang làm" (giữ câu trả lời và tệp), xóa điểm.
+ * HS được nộp lại kể cả khi đã quá hạn (`returnedAt`). Báo HS + PH.
+ */
+export async function returnSubmission(actor: Actor, submissionId: string, note: string | null): Promise<string> {
+  const s = await db.submission.findUnique({
+    where: { id: submissionId },
+    select: { id: true, status: true, studentId: true, assignment: { select: { id: true, title: true, status: true, classId: true, class: { select: { code: true, teacherId: true } } } } },
+  });
+  if (!s || actor.role !== "TEACHER" || s.assignment.class.teacherId !== actor.id) throw new ForbiddenError();
+  if (s.status === "IN_PROGRESS") throw new DomainError("NOT_SUBMITTED", "Học sinh chưa nộp bài nên không cần yêu cầu nộp lại.");
+  if (s.assignment.status !== "PUBLISHED") throw new DomainError("CLOSED", "Bài đã đóng. Mở lại bài trước khi yêu cầu nộp lại.");
+  await db.$transaction(async (tx) => {
+    await tx.submission.update({
+      where: { id: submissionId },
+      data: { status: "IN_PROGRESS", submittedAt: null, isLate: false, score: null, gradedAt: null, gradedById: null, returnedAt: new Date(), returnNote: note },
+    });
+    await tx.answer.updateMany({ where: { submissionId }, data: { autoPoints: null, teacherPoints: null } });
+    const { students, parents } = await learnersOf(tx, s.assignment.classId, [s.studentId]);
+    await notifyUsers(tx, students, {
+      kind: "resubmit",
+      title: `Giáo viên yêu cầu nộp lại: ${s.assignment.title}`,
+      body: `Lớp ${s.assignment.class.code}.${note ? ` Lời nhắn: ${note}` : ""}`,
+      link: `/hoc-sinh/bai-tap/${s.assignment.id}`,
+    });
+    await notifyUsers(tx, parents, { kind: "resubmit", title: `Con cần nộp lại bài: ${s.assignment.title}`, body: `Lớp ${s.assignment.class.code}.`, link: "/phu-huynh/bai-tap" });
+    await writeAudit({ actorId: actor.id, action: "submission.return", entity: "Submission", entityId: submissionId, detail: { note } }, tx);
+  });
+  return s.assignment.id;
+}
+
+/** GV §8 "Xóa bài làm": xóa hẳn bài nộp (câu trả lời, ảnh, tệp) — HS làm lại từ đầu nếu bài còn mở. Ghi audit. */
+export async function deleteSubmission(actor: Actor, submissionId: string): Promise<string> {
+  const s = await db.submission.findUnique({
+    where: { id: submissionId },
+    select: { id: true, studentId: true, score: true, status: true, assignment: { select: { id: true, class: { select: { teacherId: true } } } } },
+  });
+  if (!s || actor.role !== "TEACHER" || s.assignment.class.teacherId !== actor.id) throw new ForbiddenError();
+  await db.$transaction(async (tx) => {
+    await tx.submission.delete({ where: { id: submissionId } });
+    await writeAudit({ actorId: actor.id, action: "submission.delete", entity: "Submission", entityId: submissionId, detail: { studentId: s.studentId, status: s.status, score: s.score } }, tx);
+  });
+  return s.assignment.id;
+}
+
+/**
+ * GV §8 "Tải lên / cập nhật bài làm": GV chụp bài làm trên giấy của HS và nộp thay.
+ * Chưa có bài nộp → tạo bài "đã nộp" (chờ chấm); đã có → thêm tệp. Tính nộp muộn theo hạn.
+ */
+export async function uploadSubmissionForStudent(actor: Actor, assignmentId: string, studentId: string, files: PreparedFile[]): Promise<string> {
+  const a = await ownedAssignment(actor, assignmentId);
+  if (a.status === "DRAFT") throw new DomainError("NOT_PUBLISHED", "Bài chưa giao.");
+  if (files.length === 0) throw new DomainError("NO_FILE", "Chọn ảnh hoặc tệp bài làm.", { files: "Chọn tệp." });
+  const enrolled = await db.enrollment.findUnique({ where: { classId_studentId: { classId: a.classId, studentId } }, select: { status: true } });
+  if (!enrolled) throw new ForbiddenError();
+  const now = new Date();
+  return db.$transaction(async (tx) => {
+    const existing = await tx.submission.findUnique({ where: { assignmentId_studentId: { assignmentId, studentId } }, select: { id: true, status: true } });
+    const sub = existing
+      ? existing.status === "IN_PROGRESS"
+        ? await tx.submission.update({ where: { id: existing.id }, data: { status: "SUBMITTED", submittedAt: now, isLate: now > a.dueAt }, select: { id: true } })
+        : existing
+      : await tx.submission.create({ data: { assignmentId, studentId, status: "SUBMITTED", submittedAt: now, isLate: now > a.dueAt }, select: { id: true } });
+    const count = await tx.storedFile.count({ where: { submissionId: sub.id, questionId: null } });
+    if (count + files.length > MAX_SUBMISSION_FILES) throw new DomainError("TOO_MANY_FILES", `Mỗi bài nộp tối đa ${MAX_SUBMISSION_FILES} tệp.`);
+    await storeFiles(tx, files, { submissionId: sub.id }, actor.id);
+    return sub.id;
+  });
+}
+
+/** GV §7 "Xem danh sách / tìm kiếm bài tập": mọi bài của các lớp mình phụ trách, lọc theo tên, lớp, trạng thái. */
+export async function listTeacherAssignments(actor: Actor, filter: { q?: string; classId?: string; status?: AssignmentStatus }) {
+  if (actor.role !== "TEACHER") throw new ForbiddenError();
+  return db.assignment.findMany({
+    where: {
+      class: { teacherId: actor.id },
+      ...(filter.classId ? { classId: filter.classId } : {}),
+      ...(filter.status ? { status: filter.status } : {}),
+      ...(filter.q ? { title: { contains: filter.q, mode: "insensitive" as const } } : {}),
+    },
+    orderBy: { dueAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      title: true,
+      status: true,
+      isTest: true,
+      dueAt: true,
+      resultsPublishedAt: true,
+      class: { select: { id: true, code: true } },
+      _count: { select: { questions: true, submissions: { where: { status: { not: "IN_PROGRESS" } } } } },
+    },
   });
 }
 
@@ -242,7 +387,7 @@ export async function listSubmissions(actor: Actor, assignmentId: string) {
     }),
     db.submission.findMany({
       where: { assignmentId },
-      select: { id: true, studentId: true, status: true, submittedAt: true, isLate: true, score: true, _count: { select: { files: true } } },
+      select: { id: true, studentId: true, status: true, submittedAt: true, isLate: true, score: true, returnedAt: true, _count: { select: { files: true } } },
     }),
   ]);
   const byStudent = new Map(submissions.map((s) => [s.studentId, s]));
@@ -325,6 +470,13 @@ export async function gradeSubmission(
         },
         tx,
       );
+      // Kết quả đã công bố → HS/PH thấy ngay: báo "đã được chấm" (lần đầu) hoặc "điểm được cập nhật" (chấm lại).
+      const regrade = submission.status === "GRADED";
+      const a = submission.assignment;
+      const { students, parents } = await learnersOf(tx, a.classId, [submission.studentId]);
+      const title = regrade ? `Điểm được cập nhật: ${a.title}` : `Bài đã được chấm: ${a.title}`;
+      await notifyUsers(tx, students, { kind: regrade ? "grade_update" : "results", title, body: `Lớp ${a.class.code} · ${score} điểm.`, link: `/hoc-sinh/bai-tap/${a.id}` });
+      await notifyUsers(tx, parents, { kind: regrade ? "grade_update" : "results", title: `${regrade ? "Điểm của con được cập nhật" : "Bài của con đã được chấm"}: ${a.title}`, body: `Lớp ${a.class.code}.`, link: "/phu-huynh/bai-tap" });
     }
   });
   return submission.assignmentId;
@@ -390,14 +542,16 @@ async function assignmentsForStudent(studentId: string) {
       dueAt: true,
       allowLate: true,
       acceptsFiles: true,
+      isTest: true,
+      solution: true,
       manualMaxScore: true,
       resultsPublishedAt: true,
       questions: { select: { points: true } },
       class: { select: { code: true, course: { select: { title: true } }, enrollments: { where: { studentId }, select: { status: true } } } },
-      submissions: { where: { studentId }, select: { status: true, score: true, isLate: true, submittedAt: true, teacherComment: true } },
+      submissions: { where: { studentId }, select: { status: true, score: true, isLate: true, submittedAt: true, teacherComment: true, returnedAt: true } },
     },
   });
-  return rows.map(({ submissions, resultsPublishedAt, class: c, questions, manualMaxScore, ...a }) => {
+  return rows.map(({ submissions, resultsPublishedAt, class: c, questions, manualMaxScore, solution, ...a }) => {
     const sub = submissions[0] ?? null;
     const visible = submissionResultVisible({ resultsPublishedAt }, sub?.status ?? null);
     return {
@@ -408,12 +562,15 @@ async function assignmentsForStudent(studentId: string) {
       submissionStatus: sub?.status ?? null,
       submittedAt: sub?.submittedAt ?? null,
       isLate: sub?.isLate ?? false,
+      returned: Boolean(sub?.returnedAt) && sub?.status === "IN_PROGRESS",
       resultsPublished: visible,
       awaitingGrade: resultsVisible({ resultsPublishedAt }) && sub?.status === "SUBMITTED",
       maxScore: assignmentMaxScore({ questions, manualMaxScore }),
       // BR-046, BR-047: điểm/nhận xét chỉ trả khi đã công bố và bài đã chấm.
       score: visible ? (sub?.score ?? null) : null,
       teacherComment: visible ? (sub?.teacherComment ?? null) : null,
+      // Bài chữa: sau khi công bố kết quả.
+      solution: resultsVisible({ resultsPublishedAt }) ? solution : null,
     };
   });
 }
@@ -450,7 +607,8 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
   const withAnswers = { answers: true, files: { select: { ...fileMeta, questionId: true }, orderBy: { createdAt: "asc" as const } } } as const;
   let submission = await db.submission.findUnique({ where: { assignmentId_studentId: { assignmentId, studentId: actor.id } }, include: withAnswers });
   const now = new Date();
-  const pastDueBlocked = now > a.dueAt && !a.allowLate;
+  // Bài GV yêu cầu nộp lại (`returnedAt`) vẫn nộp được sau hạn.
+  const pastDueBlocked = now > a.dueAt && !a.allowLate && !submission?.returnedAt;
   const canWork = enrollment.status === "ACTIVE" && a.status === "PUBLISHED" && (!submission || submission.status === "IN_PROGRESS") && !pastDueBlocked;
   if (!submission && canWork) {
     submission = await db.submission
@@ -470,8 +628,11 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
       dueAt: a.dueAt,
       allowLate: a.allowLate,
       acceptsFiles: a.acceptsFiles,
+      isTest: a.isTest,
       maxScore: assignmentMaxScore(a),
       status: a.status,
+      // Bài chữa hiện khi kết quả đã công bố (cả HS chưa nộp).
+      solution: resultsVisible(a) ? a.solution : null,
       classCode: a.class.code,
       courseTitle: a.class.course.title,
       files: a.files,
@@ -483,6 +644,7 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
           isLate: submission.isLate,
           score: visible ? submission.score : null,
           teacherComment: visible ? submission.teacherComment : null,
+          returnNote: submission.status === "IN_PROGRESS" && submission.returnedAt ? (submission.returnNote ?? "") : null,
           files: submission.files.filter((f) => !f.questionId),
         }
       : null,
@@ -542,7 +704,7 @@ function cleanResponses(questions: { id: string; type: QuestionType; options: Pr
 /** API-018: lưu nháp. */
 export async function saveDraftAnswers(actor: Actor, assignmentId: string, raw: Record<string, string>): Promise<void> {
   const { assignment, submission } = await workableSubmission(actor, assignmentId);
-  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate, now: new Date() });
+  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate || Boolean(submission.returnedAt), now: new Date() });
   if (check.error === "ALREADY_SUBMITTED") throw new DomainError(check.error, "Bạn đã nộp bài này.");
   if (check.error === "PAST_DUE") throw new DomainError(check.error, "Đã quá hạn nộp.");
   await db.$transaction(async (tx) => {
@@ -562,7 +724,7 @@ const MAX_ESSAY_PHOTOS = 6;
 /** Bài đang mở, chưa nộp, chưa quá hạn (hoặc nhận nộp muộn) và có tệp được chọn. */
 async function fileTarget(actor: Actor, assignmentId: string, files: PreparedFile[]) {
   const { assignment, submission } = await workableSubmission(actor, assignmentId);
-  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate, now: new Date() });
+  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate || Boolean(submission.returnedAt), now: new Date() });
   if (check.error === "ALREADY_SUBMITTED") throw new DomainError(check.error, "Bạn đã nộp bài này nên không thêm tệp được.");
   if (check.error === "PAST_DUE") throw new DomainError(check.error, "Đã quá hạn nộp.");
   if (files.length === 0) throw new DomainError("NO_FILE", "Chọn ảnh hoặc tệp bài làm.", { files: "Chọn tệp." });
@@ -607,7 +769,7 @@ export async function deleteSubmissionFile(actor: Actor, assignmentId: string, f
 export async function submitAssignment(actor: Actor, assignmentId: string, raw: Record<string, string>): Promise<{ graded: boolean; isLate: boolean }> {
   const { assignment, submission } = await workableSubmission(actor, assignmentId);
   const now = new Date();
-  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate, now });
+  const check = checkSubmit({ submissionStatus: submission.status, dueAt: assignment.dueAt, allowLate: assignment.allowLate || Boolean(submission.returnedAt), now });
   if (check.error !== null) {
     throw new DomainError(check.error, check.error === "PAST_DUE" ? "Đã quá hạn nộp và bài không nhận nộp muộn." : "Bạn đã nộp bài này.");
   }
@@ -673,7 +835,16 @@ export async function listPublishedResults(actor: Actor, studentId: string) {
       isLate: true,
       teacherComment: true,
       assignment: {
-        select: { id: true, title: true, dueAt: true, resultsPublishedAt: true, manualMaxScore: true, class: { select: { code: true } }, questions: { select: { points: true } } },
+        select: {
+          id: true,
+          title: true,
+          dueAt: true,
+          isTest: true,
+          resultsPublishedAt: true,
+          manualMaxScore: true,
+          class: { select: { id: true, code: true, course: { select: { subject: { select: { name: true } } } } } },
+          questions: { select: { points: true } },
+        },
       },
     },
   });
@@ -682,6 +853,9 @@ export async function listPublishedResults(actor: Actor, studentId: string) {
     assignmentId: s.assignment.id,
     title: s.assignment.title,
     classCode: s.assignment.class.code,
+    classId: s.assignment.class.id,
+    subjectName: s.assignment.class.course.subject.name,
+    isTest: s.assignment.isTest,
     publishedAt: s.assignment.resultsPublishedAt!,
     score: s.score,
     maxScore: assignmentMaxScore(s.assignment),

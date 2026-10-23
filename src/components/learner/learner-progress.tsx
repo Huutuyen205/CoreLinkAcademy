@@ -3,7 +3,7 @@ import { Badge, Card, EmptyState } from "@/components/ui/feedback";
 import type { listPublishedResults } from "@/server/assessment/service";
 import type { getStudentAttendance } from "@/server/attendance/service";
 import { formatRate } from "@/server/attendance/rules";
-import { ATTENDANCE_STATUS } from "@/lib/labels";
+import { ATTENDANCE_STATUS, ATTITUDE } from "@/lib/labels";
 import { formatDate, formatDateTime } from "@/lib/time";
 
 type Attendance = Awaited<ReturnType<typeof getStudentAttendance>>;
@@ -26,6 +26,15 @@ export function AttendanceSummary({ data, limit = 10 }: { data: Attendance; limi
               ))}
             </ul>
           )}
+          {/* HS §3 / PH §3: số buổi có mặt, vắng, đi muộn (bỏ buổi đã hủy). */}
+          <dl className="mb-3 grid grid-cols-2 gap-2 text-center text-sm sm:grid-cols-4">
+            {(["PRESENT", "LATE", "ABSENT", "EXCUSED"] as const).map((st) => (
+              <div key={st} className="rounded-control border border-line px-2 py-1.5">
+                <dt className="text-xs text-muted">{ATTENDANCE_STATUS[st].label}</dt>
+                <dd className="text-lg font-semibold">{data.records.filter((r) => !r.sessionCancelled && r.status === st).length}</dd>
+              </div>
+            ))}
+          </dl>
           <p className="mb-2 text-sm text-muted">Tỷ lệ = (có mặt + muộn) / số buổi đã điểm danh.</p>
           <ul className="divide-y divide-line">
             {data.records.slice(0, limit).map((r) => (
@@ -34,7 +43,10 @@ export function AttendanceSummary({ data, limit = 10 }: { data: Attendance; limi
                   {formatDate(r.session.startsAt)} · {r.session.class.code}
                   {r.note && <span className="block text-sm text-muted">{r.note}</span>}
                 </span>
-                <Badge tone={ATTENDANCE_STATUS[r.status].tone}>{ATTENDANCE_STATUS[r.status].label}</Badge>
+                <span className="flex flex-wrap gap-1">
+                  {r.attitude && ATTITUDE[r.attitude] && <Badge tone={ATTITUDE[r.attitude]!.tone}>{ATTITUDE[r.attitude]!.label}</Badge>}
+                  <Badge tone={ATTENDANCE_STATUS[r.status].tone}>{ATTENDANCE_STATUS[r.status].label}</Badge>
+                </span>
               </li>
             ))}
           </ul>

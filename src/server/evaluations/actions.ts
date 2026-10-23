@@ -28,7 +28,7 @@ export async function saveEvaluationAction(_prev: ActionState, formData: FormDat
   const result = await runAction(() => saveEvaluation(actor, parsed.data), fields);
   if (!result.ok) return result.state;
   revalidatePath(`/giao-vien/lop/${parsed.data.classId}/danh-gia`);
-  return { ok: true, message: "Đã lưu nháp đánh giá. Bấm \"Gửi\" để học sinh và phụ huynh xem được." };
+  return { ok: true, message: "Đã lưu đánh giá. Bản nháp: bấm \"Gửi\" để học sinh, phụ huynh xem; bản đã gửi: học sinh, phụ huynh đã được báo cập nhật." };
 }
 
 export async function sendEvaluationAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

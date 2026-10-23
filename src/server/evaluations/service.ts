@@ -1,5 +1,7 @@
 // Đánh giá định kỳ (Giáo viên §9, Phụ huynh §5 — FR-049). Nháp chỉ giáo viên viết thấy; bản đã gửi hiện cho HS/PH/quản lý.
 import type { Prisma } from "@prisma/client";
+import { writeAudit } from "@/server/audit/log";
+import { assertCan } from "@/server/auth/policy";
 import { assertCanViewStudent, assertTeacherOwnsClass } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -22,7 +24,10 @@ export async function listClassEvaluations(actor: Actor, classId: string) {
   return enrollments.map((e) => ({ student: e.student, evaluations: evaluations.filter((ev) => ev.studentId === e.student.id) }));
 }
 
-/** Tạo hoặc sửa bản nháp (duy nhất theo lớp + học sinh + kỳ). Bản đã gửi không sửa được. */
+/**
+ * Tạo hoặc sửa đánh giá (duy nhất theo lớp + học sinh + kỳ).
+ * GV §9 "Cập nhật đánh giá định kỳ": sửa được cả bản đã gửi — HS/PH nhận thông báo "đã cập nhật", ghi nhật ký.
+ */
 export async function saveEvaluation(actor: Actor, input: EvaluationInput): Promise<void> {
   await assertTeacherOwnsClass(actor, input.classId);
   const enrolled = await db.enrollment.findUnique({ where: { classId_studentId: { classId: input.classId, studentId: input.studentId } }, select: { id: true } });
@@ -31,8 +36,21 @@ export async function saveEvaluation(actor: Actor, input: EvaluationInput): Prom
     where: { classId_studentId_period: { classId: input.classId, studentId: input.studentId, period: input.period } },
     select: { id: true, status: true },
   });
-  if (existing?.status === "SENT") throw new DomainError("ALREADY_SENT", "Đánh giá kỳ này đã gửi nên không sửa được.", { period: "Kỳ này đã gửi." });
   const data = { content: input.content, strengths: input.strengths, improvements: input.improvements };
+  if (existing?.status === "SENT") {
+    const [klass, parents] = await Promise.all([
+      db.class.findUniqueOrThrow({ where: { id: input.classId }, select: { code: true } }),
+      db.guardianship.findMany({ where: { studentId: input.studentId }, select: { parentId: true } }),
+    ]);
+    await db.$transaction(async (tx) => {
+      await tx.evaluation.update({ where: { id: existing.id }, data });
+      await writeAudit({ actorId: actor.id, action: "evaluation.update_after_send", entity: "Evaluation", entityId: existing.id, detail: { period: input.period } }, tx);
+      const title = `Đánh giá ${input.period} được cập nhật — lớp ${klass.code}`;
+      await notifyUsers(tx, [input.studentId], { kind: "evaluation", title, body: "Giáo viên vừa cập nhật đánh giá định kỳ.", link: "/hoc-sinh/ket-qua" });
+      await notifyUsers(tx, parents.map((p) => p.parentId), { kind: "evaluation", title, body: "Giáo viên vừa cập nhật đánh giá định kỳ của con.", link: "/phu-huynh" });
+    });
+    return;
+  }
   if (existing) await db.evaluation.update({ where: { id: existing.id }, data });
   else await db.evaluation.create({ data: { ...input, teacherId: actor.id } });
 }
@@ -117,4 +135,31 @@ export async function classLearningSummary(actor: Actor, classId: string) {
       { attendanceRate: r.marked ? Math.round((r.attended / r.marked) * 100) : null, marked: r.marked, averagePct: r.graded ? Math.round(r.scorePctSum / r.graded) : null, graded: r.graded },
     ]),
   );
+}
+
+/** Admin §11 "Xem đánh giá, nhận xét của giáo viên": mọi đánh giá đã gửi, lọc theo lớp / tên học sinh / kỳ. */
+export async function listEvaluationsForManager(actor: Actor, filter: { classId?: string; q?: string; period?: string }) {
+  assertCan(actor, "report.view");
+  return db.evaluation.findMany({
+    where: {
+      status: "SENT",
+      ...(filter.classId ? { classId: filter.classId } : {}),
+      ...(filter.period ? { period: { contains: filter.period, mode: "insensitive" as const } } : {}),
+      ...(filter.q ? { student: { OR: [{ fullName: { contains: filter.q, mode: "insensitive" as const } }, { studentCode: { contains: filter.q, mode: "insensitive" as const } }] } } : {}),
+    },
+    orderBy: { sentAt: "desc" },
+    take: 200,
+    select: {
+      id: true,
+      period: true,
+      content: true,
+      strengths: true,
+      improvements: true,
+      sentAt: true,
+      updatedAt: true,
+      class: { select: { id: true, code: true } },
+      student: { select: { id: true, fullName: true, studentCode: true } },
+      teacher: { select: { fullName: true } },
+    },
+  });
 }

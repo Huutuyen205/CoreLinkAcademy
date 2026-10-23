@@ -1,5 +1,29 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-23 — Checklist chức năng v4 của PO (DECISION-D33)
+
+Đối chiếu từng mục chưa tích, kết quả ghi ở **docs/23-checklist-v4.md** (có sẵn ở đâu / bổ sung / sửa). Migration chỉ thêm `20261027090000_checklist_v4` (đã áp).
+
+- **Bài tập:** đánh dấu bài kiểm tra; bài chữa (xem sau công bố); GV yêu cầu nộp lại / xóa bài làm / tải bài làm thay HS; trang "Bài tập" của GV (tìm, lọc); HS lọc Chưa nộp / Đã nộp / Nộp muộn / Đã chấm.
+- **Thông báo bài tập:** bài mới / lịch kiểm tra khi giao; cron 19:00 thêm "sắp đến hạn" và "quá hạn chưa nộp" (cả PH); nộp lại, đã chấm, điểm cập nhật, bài chữa — không trùng.
+- **Tự ôn luyện (FR-053)** `/on-luyen`: soạn đề (chuyên đề, dạng bài, mức độ, lời giải), HS lọc, làm, chấm ngay, xem đáp án + lời giải, lịch sử.
+- **Tin nhắn:** tìm trong nội dung (`/tin-nhan/tim`, theo người); "Hỏi bài" gắn thẻ bài tập; thu hồi tin; quản lý/GV phụ trách gỡ tin và tạm chặn gửi trong nhóm lớp; nút "Nhắn GV …", "Nhắn trung tâm".
+- **Thông báo:** gửi từng người; trang trạng thái gửi (đã đọc/chưa đọc, thông báo đẩy); trang chi tiết; hộp thư lọc theo loại.
+- **Admin:** trang Chuyên cần và Đánh giá của GV; quản lý buổi ngay trang buổi (đổi GV, **đổi phòng**, dời, hủy); tình trạng sử dụng phòng; liên kết môn từ form cấp học; đổi nhanh trạng thái GV; kích hoạt / liên kết hồ sơ ở trang tài khoản; giáo án chờ duyệt.
+- **GV (giả định):** lịch rảnh, hồ sơ giới thiệu gửi duyệt, giáo án gửi duyệt, thái độ học tập khi điểm danh; tìm lớp, tìm học sinh; sửa đánh giá đã gửi.
+- **HS / PH:** lịch tháng; tài liệu tìm/lọc theo môn, lớp; số buổi có mặt/muộn/vắng/có phép; kết quả tổng hợp lọc môn/lớp/kỳ; tiến độ khóa + tỷ lệ nộp bài; PH gửi đơn xin nghỉ ngay ở trang Đơn xin nghỉ; bài chữa ở trang bài tập của con; menu "Tài khoản".
+- **Sửa nhỏ:** transaction gửi tin nhắn tăng timeout 15 giây (DB ở xa từng vượt 5 giây → P2028).
+
+### Kiểm thử
+- `pnpm typecheck` ✓ · `pnpm lint` ✓ · `pnpm test` ✓ **128 test** (mới: gom kết quả theo môn/lớp/kỳ, thái độ trong ghi điểm danh theo lô) · `pnpm build` ✓.
+- **Thật trên DB + server bản build: 100/100 đạt** — giao bài kiểm tra báo HS/HS2/PH; nhắc sắp đến hạn đúng 2 HS, chạy lại không trùng; quá hạn chỉ HS chưa nộp; công bố → "đã chấm" + "bài chữa" cho HS chưa nộp; nộp lại (xóa điểm, báo HS+PH, nộp lại được); chấm lại → "điểm được cập nhật"; GV khác không xóa được bài làm; đề luyện không lộ đáp án trước khi nộp, chấm đúng "hà  nội" ≈ "Hà Nội", HS khác/PH bị chặn; tìm tin không lộ tin riêng, tin đã gỡ không hiện; chặn gửi / bỏ chặn; GV không chặn được GV; thông báo từng người đúng 2 người, trạng thái 1/2 đã đọc; trùng phòng bị chặn; thái độ lưu đúng; sửa đánh giá đã gửi báo lần 2; giáo án từ chối → gửi lại → duyệt; hồ sơ giới thiệu duyệt thành bản công khai; lịch rảnh trùng bị chặn; PH gửi đơn từ danh sách; 37 trang trả 200 với nội dung mới, PH mở `/on-luyen` → 404. Dữ liệu "[Kiểm thử]" đã xóa, hồ sơ GV demo khôi phục; kiểm tra lại không còn sót.
+- **Chưa kiểm thử:** cron thật trên Vercel với dữ liệu thật; giao diện trên điện thoại thật (lịch tháng dạng danh sách, form chọn người nhận).
+
+### Việc PO
+1. Xem docs/23 và xác nhận các mục "giả định" (lịch rảnh, giáo án gửi duyệt, hồ sơ giới thiệu, thái độ học tập) có đúng ý không.
+2. Review, commit, push.
+
+
 ## 2026-10-22 (tối) — Khảo sát sản phẩm tương tự + 7 tính năng bổ sung (DECISION-D32)
 
 - **Khảo sát:** docs/22 — Easy Edu, MONA eLMS, MISA/Zoho CRM giáo dục, Teachworks, TutorBird, Wise, ClassDojo, Kinderpedia; bảng đối chiếu, logic từng tính năng, nguồn.

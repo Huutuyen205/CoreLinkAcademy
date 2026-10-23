@@ -7,7 +7,7 @@ import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
 import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
 
-export type AttendanceEntry = { studentId: string; status: AttendanceStatus; note: string | null };
+export type AttendanceEntry = { studentId: string; status: AttendanceStatus; note: string | null; attitude?: string | null };
 
 async function loadSession(actor: Actor, sessionId: string) {
   const session = await db.classSession.findUnique({
@@ -79,12 +79,12 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
     for (const g of updateGroups) {
       await tx.attendance.updateMany({
         where: { sessionId, studentId: { in: g.studentIds } },
-        data: { status: g.status, note: g.note, markedById: actor.id, markedAt: now },
+        data: { status: g.status, note: g.note, attitude: g.attitude, markedById: actor.id, markedAt: now },
       });
     }
     if (toCreate.length > 0) {
       const created = await tx.attendance.createMany({
-        data: toCreate.map((e) => ({ sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now })),
+        data: toCreate.map((e) => ({ sessionId, studentId: e.studentId, status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now })),
         skipDuplicates: true,
       });
       // Hiếm: người khác vừa điểm danh cùng buổi → một số dòng đã tồn tại và bị bỏ qua; ghi đè như upsert cũ.
@@ -92,8 +92,8 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
         for (const e of toCreate) {
           await tx.attendance.upsert({
             where: { sessionId_studentId: { sessionId, studentId: e.studentId } },
-            update: { status: e.status, note: e.note, markedById: actor.id, markedAt: now },
-            create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now },
+            update: { status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now },
+            create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now },
           });
         }
       }
@@ -170,6 +170,7 @@ export async function getStudentAttendance(actor: Actor, studentId: string) {
       id: true,
       status: true,
       note: true,
+      attitude: true,
       session: { select: { startsAt: true, status: true, index: true, class: { select: { id: true, code: true, course: { select: { title: true } } } } } },
     },
   });

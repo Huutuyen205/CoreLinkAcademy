@@ -6,6 +6,7 @@ import { FileList } from "@/components/files/file-list";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { deleteSubmissionFileAction, uploadSubmissionFilesAction } from "@/server/assessment/actions";
+import { askAboutAssignmentAction } from "@/server/messaging/actions";
 import { openAssignmentForStudent } from "@/server/assessment/service";
 import { requireRole } from "@/server/auth/guard";
 import { ACCEPT_ATTRIBUTE, ACCEPT_LABEL } from "@/server/files/rules";
@@ -33,12 +34,18 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
         action={
           submission && (
             <span className="flex flex-wrap gap-2">
+              {a.isTest && <Badge tone="warning">Bài kiểm tra</Badge>}
               <Badge tone={SUBMISSION_STATUS[submission.status].tone}>{submission.status === "GRADED" && !resultsPublished ? "Đã nộp" : SUBMISSION_STATUS[submission.status].label}</Badge>
               {submission.isLate && <Badge tone="warning">Nộp muộn</Badge>}
             </span>
           )
         }
       />
+      {submission?.returnNote !== null && submission?.returnNote !== undefined && (
+        <Alert tone="warning" title="Giáo viên yêu cầu nộp lại" className="mb-6">
+          {submission.returnNote ? <p className="whitespace-pre-line">Lời nhắn: {submission.returnNote}</p> : <p>Sửa bài rồi bấm &ldquo;Nộp bài&rdquo; lại.</p>}
+        </Alert>
+      )}
       {a.instructions && <p className="mb-6 whitespace-pre-line">{a.instructions}</p>}
       {a.files.length > 0 && (
         <Card title="Tệp đề bài / tài liệu" className="mb-6">
@@ -113,6 +120,27 @@ export default async function StudentAssignmentPage({ params }: { params: Promis
           </ol>
         </>
       )}
+
+      {a.solution && (
+        <Card title="Bài chữa / lời giải của giáo viên" className="mt-6">
+          <p className="whitespace-pre-line">{a.solution}</p>
+        </Card>
+      )}
+
+      <details className="mt-6 rounded-block border border-line bg-surface p-4">
+        <summary className="cursor-pointer font-semibold text-primary">Hỏi giáo viên về bài này</summary>
+        <p className="mt-2 text-sm text-muted">Câu hỏi gửi riêng cho giáo viên phụ trách lớp, tự gắn thẻ bài &ldquo;{a.title}&rdquo;. Có thể kèm ảnh bài làm.</p>
+        <ConfigForm
+          className="mt-3 space-y-3"
+          action={askAboutAssignmentAction}
+          hidden={{ assignmentId: a.id }}
+          submitLabel="Gửi câu hỏi"
+          fields={[
+            { type: "textarea", name: "body", label: "Câu hỏi", required: true, maxLength: 2000, rows: 3 },
+            { type: "file", name: "files", label: "Ảnh / tệp kèm theo (tùy chọn)", accept: "image/*,.pdf", multiple: true },
+          ]}
+        />
+      </details>
     </>
   );
 }

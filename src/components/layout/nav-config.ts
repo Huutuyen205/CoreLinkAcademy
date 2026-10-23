@@ -8,11 +8,14 @@ export function managementNav(role: Role): NavItem[] {
     { href: "/quan-ly/lop", label: "Lớp học" },
     { href: "/quan-ly/lich", label: "Lịch tổng" },
     { href: "/quan-ly/de-xuat", label: "Đề xuất & đơn nghỉ" },
+    { href: "/quan-ly/chuyen-can", label: "Chuyên cần" },
+    { href: "/quan-ly/danh-gia", label: "Đánh giá của GV" },
     { href: "/quan-ly/bao-cao", label: "Báo cáo" },
     { href: "/quan-ly/hoc-vien", label: "Học viên", section: "Con người" },
     { href: "/quan-ly/giao-vien", label: "Giáo viên" },
     { href: "/quan-ly/phu-huynh", label: "Phụ huynh" },
-    { href: "/tai-lieu", label: "Giáo trình & tài liệu", section: "Tài liệu & tương tác" },
+    { href: "/tai-lieu", label: "Giáo trình, tài liệu, giáo án", section: "Tài liệu & tương tác" },
+    { href: "/on-luyen", label: "Đề luyện tập" },
     { href: "/thong-bao", label: "Thông báo" },
     { href: "/tin-nhan", label: "Tin nhắn" },
   ];
@@ -32,10 +35,13 @@ export const teacherNav: NavItem[] = [
   { href: "/giao-vien", label: "Tổng quan" },
   { href: "/giao-vien/lich", label: "Lịch dạy" },
   { href: "/giao-vien/lop", label: "Lớp của tôi" },
+  { href: "/giao-vien/bai-tap", label: "Bài tập" },
   { href: "/giao-vien/de-xuat", label: "Đề xuất & đơn nghỉ" },
   { href: "/tai-lieu", label: "Tài liệu & giáo án" },
+  { href: "/on-luyen", label: "Đề luyện tập" },
   { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },
+  { href: "/giao-vien/ho-so", label: "Hồ sơ & lịch rảnh" },
 ];
 export const teacherBottomNav: NavItem[] = [
   { href: "/giao-vien", label: "Tổng quan" },
@@ -49,6 +55,7 @@ export const studentNav: NavItem[] = [
   { href: "/hoc-sinh/lich", label: "Lịch học" },
   { href: "/hoc-sinh/bai-tap", label: "Bài tập" },
   { href: "/hoc-sinh/ket-qua", label: "Kết quả" },
+  { href: "/on-luyen", label: "Tự ôn luyện" },
   { href: "/tai-lieu", label: "Tài liệu" },
   { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },
@@ -62,6 +69,7 @@ export const parentNav: NavItem[] = [
   { href: "/tai-lieu", label: "Tài liệu" },
   { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },
+  { href: "/tai-khoan", label: "Tài khoản" },
 ];
 export const parentBottomNav: NavItem[] = [
   { href: "/phu-huynh", label: "Con" },

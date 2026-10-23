@@ -121,6 +121,13 @@ enum AnnouncementAudience {
   STUDENTS
   PARENTS
   CLASS
+  USERS // chọn từng người nhận (checklist v4)
+}
+
+enum PracticeDifficulty {
+  EASY
+  MEDIUM
+  HARD
 }
 
 enum EvaluationStatus {
@@ -134,58 +141,67 @@ enum ConversationKind {
 }
 
 model User {
-  id                 String       @id @default(cuid())
-  email              String?      @unique @db.VarChar(191)
-  phone              String?      @unique @db.VarChar(20)
-  fullName           String       @db.VarChar(120)
-  passwordHash       String       @db.VarChar(255)
+  id                 String         @id @default(cuid())
+  email              String?        @unique @db.VarChar(191)
+  phone              String?        @unique @db.VarChar(20)
+  fullName           String         @db.VarChar(120)
+  passwordHash       String         @db.VarChar(255)
   role               Role
-  status             UserStatus   @default(ACTIVE)
-  mustChangePassword Boolean      @default(false)
-  failedLoginCount   Int          @default(0)
+  status             UserStatus     @default(ACTIVE)
+  mustChangePassword Boolean        @default(false)
+  failedLoginCount   Int            @default(0)
   lockedUntil        DateTime?
-  studentCode        String?      @unique @db.VarChar(16)
-  gradeLevel         Int?         @db.SmallInt
-  memberStatus       MemberStatus @default(ACTIVE)
-  dateOfBirth        DateTime?    @db.Date
-  address            String?      @db.VarChar(255)
-  expertise          String?      @db.VarChar(200) // GV: chuyên môn / môn dạy
-  profileNote        String?      @db.Text // ghi chú hồ sơ (năng lực đầu vào, mục tiêu…) — chỉ quản lý sửa
-  avatarFileId       String?      @unique // ảnh đại diện (FR-051) — mọi người đã đăng nhập xem được
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  studentCode        String?        @unique @db.VarChar(16)
+  gradeLevel         Int?           @db.SmallInt
+  memberStatus       MemberStatus   @default(ACTIVE)
+  dateOfBirth        DateTime?      @db.Date
+  address            String?        @db.VarChar(255)
+  expertise          String?        @db.VarChar(200) // GV: chuyên môn / môn dạy
+  profileNote        String?        @db.Text // ghi chú hồ sơ (năng lực đầu vào, mục tiêu…) — chỉ quản lý sửa
+  avatarFileId       String?        @unique // ảnh đại diện (FR-051) — mọi người đã đăng nhập xem được
+  // Hồ sơ giới thiệu GV (GV §11A, giả định): GV soạn bản nháp → gửi duyệt → quản lý duyệt thì thay bản công khai.
+  introDraft         String?        @db.Text
+  introPublished     String?        @db.Text
+  introStatus        RequestStatus?
+  introNote          String?        @db.VarChar(500)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
 
   sessions                Session[]
-  childLinks              Guardianship[]       @relation("ParentLinks")
-  parentLinks             Guardianship[]       @relation("StudentLinks")
-  teachingClasses         Class[]              @relation("ClassTeacher")
-  teachingSessions        ClassSession[]       @relation("SessionTeacher")
+  childLinks              Guardianship[]        @relation("ParentLinks")
+  parentLinks             Guardianship[]        @relation("StudentLinks")
+  teachingClasses         Class[]               @relation("ClassTeacher")
+  teachingSessions        ClassSession[]        @relation("SessionTeacher")
   enrollments             Enrollment[]
-  attendances             Attendance[]         @relation("AttendanceStudent")
-  attendanceMarks         Attendance[]         @relation("AttendanceMarker")
-  assignedLeads           Lead[]               @relation("LeadAssignee")
-  convertedLeads          Lead[]               @relation("LeadConvertedStudent")
+  attendances             Attendance[]          @relation("AttendanceStudent")
+  attendanceMarks         Attendance[]          @relation("AttendanceMarker")
+  assignedLeads           Lead[]                @relation("LeadAssignee")
+  convertedLeads          Lead[]                @relation("LeadConvertedStudent")
   leadActivities          LeadActivity[]
   createdAssignments      Assignment[]
-  submissions             Submission[]         @relation("SubmissionStudent")
-  gradedSubmissions       Submission[]         @relation("SubmissionGrader")
+  submissions             Submission[]          @relation("SubmissionStudent")
+  gradedSubmissions       Submission[]          @relation("SubmissionGrader")
   auditLogs               AuditLog[]
   uploadedFiles           StoredFile[]
-  scheduleRequests        ScheduleRequest[]    @relation("ScheduleRequestTeacher")
-  handledScheduleRequests ScheduleRequest[]    @relation("ScheduleRequestHandler")
-  leaveRequests           LeaveRequest[]       @relation("LeaveStudent")
-  requestedLeaves         LeaveRequest[]       @relation("LeaveRequester")
-  handledLeaves           LeaveRequest[]       @relation("LeaveHandler")
+  scheduleRequests        ScheduleRequest[]     @relation("ScheduleRequestTeacher")
+  handledScheduleRequests ScheduleRequest[]     @relation("ScheduleRequestHandler")
+  leaveRequests           LeaveRequest[]        @relation("LeaveStudent")
+  requestedLeaves         LeaveRequest[]        @relation("LeaveRequester")
+  handledLeaves           LeaveRequest[]        @relation("LeaveHandler")
   documents               Document[]
   documentShares          DocumentShare[]
   announcements           Announcement[]
   notifications           Notification[]
-  evaluationsReceived     Evaluation[]         @relation("EvaluationStudent")
-  evaluationsWritten      Evaluation[]         @relation("EvaluationTeacher")
+  evaluationsReceived     Evaluation[]          @relation("EvaluationStudent")
+  evaluationsWritten      Evaluation[]          @relation("EvaluationTeacher")
   conversationMemberships ConversationMember[]
   messages                Message[]
-  avatarFile              StoredFile?          @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
+  avatarFile              StoredFile?           @relation("UserAvatar", fields: [avatarFileId], references: [id], onDelete: SetNull)
   pushSubscriptions       PushSubscription[]
+  availabilities          TeacherAvailability[]
+  practiceSets            PracticeSet[]
+  practiceAttempts        PracticeAttempt[]
+  reviewedDocuments       Document[]            @relation("DocumentReviewer")
 
   @@index([role, fullName]) // listUsers/listLearners: lọc vai trò + sắp xếp theo tên
   @@map("users")
@@ -217,31 +233,33 @@ model Guardianship {
 }
 
 model Subject {
-  id          String         @id @default(cuid())
-  name        String         @db.VarChar(80)
-  slug        String         @unique @db.VarChar(80)
-  description String         @db.Text
-  sortOrder   Int            @default(0)
-  isActive    Boolean        @default(true) // ngừng sử dụng: ẩn khỏi form công khai và form tạo khóa mới
-  courses     Course[]
-  leads       Lead[]
-  levels      SubjectLevel[]
-  documents   Document[]
+  id           String         @id @default(cuid())
+  name         String         @db.VarChar(80)
+  slug         String         @unique @db.VarChar(80)
+  description  String         @db.Text
+  sortOrder    Int            @default(0)
+  isActive     Boolean        @default(true) // ngừng sử dụng: ẩn khỏi form công khai và form tạo khóa mới
+  courses      Course[]
+  leads        Lead[]
+  levels       SubjectLevel[]
+  documents    Document[]
+  practiceSets PracticeSet[]
 
   @@map("subjects")
 }
 
 /// Cấp học (Tiền tiểu học, Tiểu học, THCS, THPT…) — khoảng khối lớp và các môn dạy ở cấp đó.
 model EducationLevel {
-  id          String         @id @default(cuid())
-  name        String         @unique @db.VarChar(60)
-  gradeFrom   Int            @db.SmallInt // 0 = tiền tiểu học
-  gradeTo     Int            @db.SmallInt
-  description String?        @db.VarChar(300)
-  sortOrder   Int            @default(0)
-  isActive    Boolean        @default(true)
-  subjects    SubjectLevel[]
-  documents   Document[]
+  id           String         @id @default(cuid())
+  name         String         @unique @db.VarChar(60)
+  gradeFrom    Int            @db.SmallInt // 0 = tiền tiểu học
+  gradeTo      Int            @db.SmallInt
+  description  String?        @db.VarChar(300)
+  sortOrder    Int            @default(0)
+  isActive     Boolean        @default(true)
+  subjects     SubjectLevel[]
+  documents    Document[]
+  practiceSets PracticeSet[]
 
   @@map("education_levels")
 }
@@ -381,6 +399,7 @@ model Attendance {
   studentId  String
   status     AttendanceStatus
   note       String?          @db.VarChar(255)
+  attitude   String?          @db.VarChar(20) // GOOD | NORMAL | NEEDS_WORK — thái độ học tập (GV §6, giả định)
   markedById String
   markedAt   DateTime         @default(now())
   session    ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -448,6 +467,8 @@ model Assignment {
   // Nhận bài nộp dạng file/ảnh. Bài không có câu hỏi → GV chấm một điểm tổng trong [0, manualMaxScore].
   acceptsFiles       Boolean          @default(false)
   manualMaxScore     Float?
+  isTest             Boolean          @default(false) // bài kiểm tra / mock test: thông báo "lịch kiểm tra" khi giao
+  solution           String?          @db.Text // bài chữa / lời giải — HS, PH xem sau khi công bố kết quả
   status             AssignmentStatus @default(DRAFT)
   resultsPublishedAt DateTime?
   createdAt          DateTime         @default(now())
@@ -457,6 +478,7 @@ model Assignment {
   questions          Question[]
   submissions        Submission[]
   files              StoredFile[]
+  messages           Message[]
 
   @@index([classId, status])
   @@map("assignments")
@@ -492,6 +514,8 @@ model Submission {
   teacherComment String?          @db.Text
   gradedAt       DateTime?
   gradedById     String?
+  returnedAt     DateTime? // GV yêu cầu nộp lại: bài trở về "đang làm", HS sửa và nộp lại
+  returnNote     String?          @db.VarChar(500)
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   student        User             @relation("SubmissionStudent", fields: [studentId], references: [id])
   gradedBy       User?            @relation("SubmissionGrader", fields: [gradedById], references: [id])
@@ -636,12 +660,18 @@ model Document {
   visibleToStudents Boolean         @default(true)
   visibleToParents  Boolean         @default(false)
   isActive          Boolean         @default(true) // ngừng sử dụng: ẩn khỏi HS/PH/GV, quản lý vẫn thấy
+  // Giáo án gửi duyệt (GV §4, giả định): null = chưa gửi; PENDING → quản lý APPROVED/REJECTED.
+  reviewStatus      RequestStatus?
+  reviewNote        String?         @db.VarChar(500)
+  reviewedById      String?
+  reviewedAt        DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   subject           Subject?        @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   level             EducationLevel? @relation(fields: [levelId], references: [id], onDelete: SetNull)
   session           ClassSession?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   owner             User            @relation(fields: [ownerId], references: [id])
+  reviewedBy        User?           @relation("DocumentReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   files             StoredFile[]
   shares            DocumentShare[]
 
@@ -749,6 +779,7 @@ model ConversationMember {
   conversationId String
   userId         String
   lastReadAt     DateTime?
+  mutedAt        DateTime? // nhóm lớp: quản lý/GV tạm chặn gửi tin (xử lý trường hợp bất thường)
   joinedAt       DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -763,9 +794,13 @@ model Message {
   conversationId String
   senderId       String
   body           String       @db.Text
+  assignmentId   String? // "Hỏi bài": tin gắn thẻ bài tập
+  deletedAt      DateTime? // thu hồi (người gửi) hoặc gỡ (quản lý/GV nhóm lớp)
+  deletedById    String?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender         User         @relation(fields: [senderId], references: [id])
+  assignment     Assignment?  @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
   files          StoredFile[] // ảnh/tệp đính kèm (body có thể rỗng khi chỉ gửi tệp)
 
   @@index([conversationId, createdAt])
@@ -785,6 +820,81 @@ model PushSubscription {
 
   @@index([userId])
   @@map("push_subscriptions")
+}
+
+/// Lịch rảnh giáo viên tự đăng ký (GV §2, giả định) — giáo vụ xem khi xếp lớp/dạy thay.
+model TeacherAvailability {
+  id        String   @id @default(cuid())
+  teacherId String
+  weekday   Int      @db.SmallInt // 1 = Thứ Hai … 7 = Chủ nhật
+  startTime String   @db.Char(5)
+  endTime   String   @db.Char(5)
+  note      String?  @db.VarChar(200)
+  createdAt DateTime @default(now())
+  teacher   User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@index([teacherId, weekday])
+  @@map("teacher_availabilities")
+}
+
+/// Đề luyện tập (HS §5 Tự ôn luyện): câu trắc nghiệm / trả lời ngắn chấm tự động, kèm lời giải. GV/quản lý soạn.
+model PracticeSet {
+  id          String             @id @default(cuid())
+  title       String             @db.VarChar(200)
+  description String?            @db.Text
+  topic       String             @db.VarChar(100) // chuyên đề
+  format      String             @db.VarChar(60) // dạng bài (vd. Trắc nghiệm, Đọc hiểu, Tính toán)
+  difficulty  PracticeDifficulty @default(MEDIUM)
+  subjectId   String?
+  levelId     String?
+  isActive    Boolean            @default(false) // false = nháp; true = HS thấy và làm được
+  createdById String
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  subject     Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  level       EducationLevel?    @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  createdBy   User               @relation(fields: [createdById], references: [id])
+  questions   PracticeQuestion[]
+  attempts    PracticeAttempt[]
+
+  @@index([isActive, subjectId])
+  @@map("practice_sets")
+}
+
+model PracticeQuestion {
+  id              String       @id @default(cuid())
+  setId           String
+  order           Int          @db.SmallInt
+  type            QuestionType // chỉ MCQ | SHORT (chấm tự động)
+  prompt          String       @db.Text
+  options         Json?
+  correctOption   Int?         @db.SmallInt
+  acceptedAnswers Json?
+  explanation     String?      @db.Text // lời giải hiện sau khi nộp
+  points          Float        @default(1)
+  set             PracticeSet  @relation(fields: [setId], references: [id], onDelete: Cascade)
+
+  @@index([setId, order])
+  @@map("practice_questions")
+}
+
+/// Một lần làm đề luyện: nộp một lần, chấm ngay. Làm lại = lượt mới (lịch sử luyện tập).
+model PracticeAttempt {
+  id           String      @id @default(cuid())
+  setId        String
+  studentId    String
+  answers      Json // { [questionId]: string }
+  score        Float
+  maxScore     Float
+  correctCount Int         @db.SmallInt
+  total        Int         @db.SmallInt
+  submittedAt  DateTime    @default(now())
+  set          PracticeSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  student      User        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, submittedAt])
+  @@index([setId])
+  @@map("practice_attempts")
 }
 
 model RateLimitBucket {

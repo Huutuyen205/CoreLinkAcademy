@@ -40,7 +40,7 @@ export function SessionAttendance({ data, backHref, backLabel }: { data: Data; b
         <AttendanceForm
           sessionId={session.id}
           needsReason={needsReason}
-          rows={roster.map((r) => ({ id: r.id, fullName: r.fullName, studentCode: r.studentCode, status: r.record?.status ?? null, note: r.record?.note ?? null }))}
+          rows={roster.map((r) => ({ id: r.id, fullName: r.fullName, studentCode: r.studentCode, status: r.record?.status ?? null, note: r.record?.note ?? null, attitude: r.record?.attitude ?? null }))}
         />
       ) : (
         <ul className="divide-y divide-line rounded-block border border-line bg-surface">

@@ -2,13 +2,16 @@ import type { Role } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
+import { InlinePickForm } from "@/components/forms/inline-pick-form";
+import { ActionLink } from "@/components/ui/row-actions";
+import { linkableStudents } from "@/server/people/service";
 import { ResetPasswordForm } from "@/components/forms/reset-password-form";
 import { Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
 import { ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
 import { orNotFound } from "@/server/page";
-import { setUserStatusAction, updateUserAction, unlinkGuardianAction } from "@/server/users/actions";
-import { getUser } from "@/server/users/service";
+import { linkGuardianAction, setUserStatusAction, updateUserAction, unlinkGuardianAction } from "@/server/users/actions";
+import { getUser, listParents } from "@/server/users/service";
 import { GRADE_OPTIONS, USER_STATUS } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
@@ -19,6 +22,13 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
   const actor = await requireRole("ADMIN");
   const user = await orNotFound(getUser(actor, (await params).id));
   const isSelf = user.id === actor.id;
+  // "Liên kết tài khoản với hồ sơ người dùng": tài khoản và hồ sơ là một bản ghi; trang hồ sơ theo vai trò + liên kết PH–HS.
+  const profileHref = { TEACHER: `/quan-ly/giao-vien/${user.id}`, STUDENT: `/quan-ly/hoc-vien/${user.id}`, PARENT: `/quan-ly/phu-huynh/${user.id}` }[user.role as string];
+  const [parents, students] = await Promise.all([
+    user.role === "STUDENT" ? listParents(actor) : Promise.resolve([]),
+    user.role === "PARENT" ? linkableStudents(actor, user.id) : Promise.resolve([]),
+  ]);
+  const notActivated = user.mustChangePassword;
 
   return (
     <>
@@ -29,9 +39,14 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
         title={user.fullName}
         description={`${ROLE_LABELS[user.role]}${user.studentCode ? ` · ${user.studentCode}` : ""} · tạo ${formatDateTime(user.createdAt)}`}
         action={
-          <span className="flex flex-wrap gap-2">
+          <span className="flex flex-wrap items-center gap-2">
             <Badge tone={USER_STATUS[user.status].tone}>{USER_STATUS[user.status].label}</Badge>
-            {user.mustChangePassword && <Badge tone="warning">Chưa đổi mật khẩu tạm</Badge>}
+            {notActivated && <Badge tone="warning">Chưa kích hoạt (chưa đổi mật khẩu tạm)</Badge>}
+            {profileHref && (
+              <ActionLink href={profileHref} icon="profile" tone="primary">
+                Hồ sơ {ROLE_LABELS[user.role].toLowerCase()}
+              </ActionLink>
+            )}
           </span>
         }
       />
@@ -63,6 +78,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
           {user.role === "STUDENT" && (
             <Card title="Phụ huynh đã liên kết">
+              {parents.length > 0 && (
+                <InlinePickForm
+                  className="mb-4"
+                  action={linkGuardianAction}
+                  hidden={{ studentId: user.id }}
+                  name="parentId"
+                  label="Liên kết tài khoản phụ huynh"
+                  placeholder="Gõ tên hoặc SĐT phụ huynh…"
+                  options={parents.filter((p) => !user.parentLinks.some((l) => l.parent.id === p.id)).map((p) => ({ value: p.id, label: `${p.fullName}${p.phone ? ` · ${formatPhone(p.phone)}` : ""}` }))}
+                />
+              )}
               {user.parentLinks.length === 0 ? (
                 <p className="text-muted">Chưa liên kết phụ huynh. Liên kết trong mục <Link href={`/quan-ly/hoc-vien?q=${user.studentCode ?? ""}`}>Học viên</Link>.</p>
               ) : (
@@ -82,6 +108,17 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
           )}
           {user.role === "PARENT" && (
             <Card title="Con đã liên kết">
+              {students.length > 0 && (
+                <InlinePickForm
+                  className="mb-4"
+                  action={linkGuardianAction}
+                  hidden={{ parentId: user.id }}
+                  name="studentId"
+                  label="Liên kết tài khoản học sinh"
+                  placeholder="Gõ tên hoặc mã học sinh…"
+                  options={students.map((s) => ({ value: s.id, label: `${s.fullName}${s.studentCode ? ` (${s.studentCode})` : ""}` }))}
+                />
+              )}
               {user.childLinks.length === 0 ? (
                 <p className="text-muted">Chưa liên kết học sinh nào.</p>
               ) : (
@@ -116,7 +153,16 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
             </dl>
           </Card>
           {!isSelf && (
-            <Card title="Khóa tài khoản">
+            <Card title="Kích hoạt / khóa tài khoản">
+              <ul className="mb-3 space-y-1 text-sm text-muted">
+                <li>
+                  <strong className="text-ink">Kích hoạt:</strong>{" "}
+                  {notActivated ? "chưa — người dùng cần đăng nhập bằng mật khẩu tạm và đổi mật khẩu. Quên mật khẩu tạm? Bấm \"Đặt lại mật khẩu\" để cấp mật khẩu kích hoạt mới." : "đã kích hoạt (đã đổi mật khẩu tạm)."}
+                </li>
+                <li>
+                  <strong className="text-ink">Đăng nhập:</strong> {user.status === "ACTIVE" ? "đang mở." : "đang khóa — bấm \"Kích hoạt lại\" để mở."}
+                </li>
+              </ul>
               {user.status === "ACTIVE" ? (
                 <ConfigForm
                   action={setUserStatusAction}
@@ -127,7 +173,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   fields={[]}
                 />
               ) : (
-                <ConfigForm action={setUserStatusAction} hidden={{ userId: user.id, status: "ACTIVE" }} submitLabel="Mở khóa" fields={[]} />
+                <ConfigForm action={setUserStatusAction} hidden={{ userId: user.id, status: "ACTIVE" }} submitLabel="Kích hoạt lại (mở khóa)" fields={[]} />
               )}
             </Card>
           )}

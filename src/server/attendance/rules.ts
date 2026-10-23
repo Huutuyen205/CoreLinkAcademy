@@ -40,7 +40,8 @@ export function formatRate(rate: number | null): string {
   return rate === null ? "Chưa có dữ liệu" : `${Math.round(rate * 100)}%`;
 }
 
-export type AttendanceWrite = { studentId: string; status: AttendanceStatus; note: string | null };
+/** `attitude`: thái độ học tập GOOD | NORMAL | NEEDS_WORK (GV §6, giả định) — không bắt buộc. */
+export type AttendanceWrite = { studentId: string; status: AttendanceStatus; note: string | null; attitude?: string | null };
 
 /**
  * Kế hoạch ghi điểm danh theo lô: bản ghi mới → `toCreate`; bản ghi đã có → `updateGroups` gộp theo (trạng thái, ghi chú)
@@ -50,14 +51,14 @@ export function planAttendanceWrites(entries: AttendanceWrite[], existingStudent
   const existing = new Set(existingStudentIds);
   const latest = new Map(entries.map((e) => [e.studentId, e]));
   const toCreate: AttendanceWrite[] = [];
-  const groups = new Map<string, { status: AttendanceStatus; note: string | null; studentIds: string[] }>();
+  const groups = new Map<string, { status: AttendanceStatus; note: string | null; attitude: string | null; studentIds: string[] }>();
   for (const e of latest.values()) {
     if (!existing.has(e.studentId)) {
       toCreate.push(e);
       continue;
     }
-    const key = JSON.stringify([e.status, e.note]);
-    const group = groups.get(key) ?? { status: e.status, note: e.note, studentIds: [] };
+    const key = JSON.stringify([e.status, e.note, e.attitude ?? null]);
+    const group = groups.get(key) ?? { status: e.status, note: e.note, attitude: e.attitude ?? null, studentIds: [] };
     group.studentIds.push(e.studentId);
     groups.set(key, group);
   }
