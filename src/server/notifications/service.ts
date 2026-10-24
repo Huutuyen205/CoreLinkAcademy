@@ -57,7 +57,7 @@ export async function classAudienceIds(
 }
 
 const AUDIENCE_ROLES: Partial<Record<AnnouncementAudience, Role[]>> = {
-  STAFF: ["ADMIN", "STAFF"],
+  STAFF: ["ADMIN"], // "Quản trị viên" (giáo vụ đã bỏ — DECISION-D35)
   TEACHERS: ["TEACHER"],
   STUDENTS: ["STUDENT"],
   PARENTS: ["PARENT"],
@@ -65,7 +65,7 @@ const AUDIENCE_ROLES: Partial<Record<AnnouncementAudience, Role[]>> = {
 
 /** Ai được gửi tới đối tượng nào: quản lý gửi mọi đối tượng; giáo viên chỉ gửi cho lớp mình dạy. */
 export function canAnnounce(role: Role, audience: AnnouncementAudience): boolean {
-  if (role === "ADMIN" || role === "STAFF") return true;
+  if (role === "ADMIN") return true;
   return role === "TEACHER" && audience === "CLASS";
 }
 

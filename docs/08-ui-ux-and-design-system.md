@@ -11,7 +11,7 @@
 | Người dùng | Bối cảnh | Việc chính (job) | Ưu tiên thiết kế |
 |---|---|---|---|
 | Phụ huynh tiềm năng, 30–50 tuổi | Điện thoại, giờ nghỉ trưa/tối, 4G | "Tìm khóa cho con và để lại số điện thoại" | Chữ lớn, ít bước, 1 CTA rõ |
-| Giáo vụ | Máy tính cả ngày, nhiều tab | "Xử lý danh sách lead, mở lớp, xếp học sinh" | Mật độ thông tin vừa, bảng, lọc nhanh, thông báo lỗi cụ thể |
+| Quản trị viên | Máy tính cả ngày, nhiều tab | "Xử lý danh sách lead, mở lớp, xếp học sinh, quản trị vận hành" | Mật độ thông tin vừa, bảng, lọc nhanh, thông báo lỗi cụ thể |
 | Giáo viên | Điện thoại khi đứng lớp; máy tính khi soạn/chấm | "Điểm danh 30 giây", "chấm bài buổi tối" | Nút lớn ≥ 44px, thao tác một tay, mặc định thông minh |
 | Học sinh (lớp 1–12) | Điện thoại/máy tính bảng | "Biết hôm nay học gì, làm bài, xem điểm" | Ngôn ngữ đơn giản, xác nhận trước khi nộp |
 | Phụ huynh có con đang học | Điện thoại | "Con có đi học không, điểm thế nào" | Một màn hình, đọc nhanh, không thuật ngữ nội bộ |
@@ -183,7 +183,7 @@ Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới n�
 ## 7. States and copy (UX writing)
 
 ### 7.1 Nguyên tắc
-- Câu ngắn, chủ động, nói **điều xảy ra + việc tiếp theo**: "Đã hết thời gian điểm danh của giáo viên. Liên hệ giáo vụ để sửa."
+- Câu ngắn, chủ động, nói **điều xảy ra + việc tiếp theo**: "Đã hết thời gian điểm danh của giáo viên. Liên hệ trung tâm để sửa."
 - Không đổ lỗi người dùng, không mã lỗi kỹ thuật, không "Error 500".
 - Thông báo lỗi đăng nhập không tiết lộ tài khoản có tồn tại.
 - Số điện thoại hiển thị dạng `0912 345 678`; ngày `dd/MM/yyyy`; giờ `HH:mm`; tiền `3.600.000 ₫`; điểm dùng dấu phẩy khi nhập được chấp nhận ("7,5").
@@ -194,7 +194,7 @@ Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới n�
 |---|---|---|
 | Form chung lỗi validate | Vui lòng kiểm tra lại các ô được đánh dấu. | danger |
 | Rate limit form học thử | Bạn đã gửi quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau 10 phút. | danger |
-| Cảm ơn | Cảm ơn quý phụ huynh — Học viện đã nhận thông tin đăng ký học thử. Giáo vụ sẽ gọi lại trong giờ làm việc để tư vấn và hẹn lịch. | trang |
+| Cảm ơn | Cảm ơn quý phụ huynh — Học viện đã nhận thông tin đăng ký học thử. Trung tâm sẽ gọi lại trong thời gian sớm nhất để tư vấn và hẹn lịch. | trang |
 | Đăng nhập sai | Thông tin đăng nhập không đúng. | danger |
 | Khóa tạm | Bạn đã nhập sai 5 lần. Tài khoản tạm khóa 15 phút. | danger |
 | Rate limit đăng nhập | Quá nhiều lần đăng nhập từ thiết bị này. Vui lòng thử lại sau 10 phút. | danger |
@@ -203,8 +203,8 @@ Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới n�
 | Cập nhật đồng thời | Lead vừa được người khác cập nhật. Vui lòng tải lại trang. | danger |
 | Trùng lịch | Trùng lịch N buổi. Vui lòng đổi giờ, giáo viên hoặc phòng. + danh sách | danger |
 | Ghi danh dừng giữa chừng | Đã ghi danh k học sinh. Dừng lại: <lý do> | danger |
-| Ngoài khung (GV) | Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ giáo vụ nếu cần sửa. | info |
-| Ngoài khung (Staff) | Ngoài khung điểm danh của giáo viên: cần nhập lý do, thay đổi được ghi vào nhật ký. | warning |
+| Ngoài khung (GV) | Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ trung tâm nếu cần sửa. | info |
+| Ngoài khung (Admin) | Ngoài khung điểm danh của giáo viên: cần nhập lý do, thay đổi được ghi vào nhật ký. | warning |
 | Giao bài | Sau khi giao sẽ không sửa được câu hỏi. Tiếp tục? | confirm |
 | Công bố | Học sinh và phụ huynh sẽ thấy điểm, đáp án và nhận xét. Tiếp tục? · Còn N bài chưa chấm… | confirm / warning |
 | Nộp bài | Nộp bài? Sau khi nộp sẽ không sửa được. | confirm |
@@ -213,7 +213,7 @@ Bàn phím: thứ tự tab theo thứ tự đọc; skip link "Bỏ qua tới n�
 | Sửa điểm sau công bố | Kết quả đã công bố. Mọi thay đổi điểm sẽ được ghi vào nhật ký. | warning |
 | 404 / sai phạm vi | Không tìm thấy trang — Trang không tồn tại hoặc bạn không có quyền xem nội dung này. | trang |
 | Lỗi hệ thống | Đã có lỗi xảy ra — Hệ thống tạm thời không xử lý được yêu cầu. Vui lòng thử lại sau ít phút. + Thử lại | trang |
-| PH chưa liên kết con | Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ giáo vụ của học viện. | empty |
+| PH chưa liên kết con | Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con. | empty |
 
 Danh sách đầy đủ mã lỗi → thông điệp: [11 §3](11-api-specification.md#3-error-catalogue).
 

@@ -71,6 +71,8 @@ async function attemptLogin(formData: FormData): Promise<ActionState> {
   }
 
   if (user.status !== "ACTIVE") return { ok: false, message: "Tài khoản đã bị khóa. Vui lòng liên hệ học viện." };
+  // DECISION-D35: vai trò giáo vụ đã bỏ — tài khoản giáo vụ cũ không đăng nhập được.
+  if (user.role === "STAFF") return { ok: false, message: "Vai trò giáo vụ đã ngừng sử dụng. Vui lòng liên hệ quản trị viên." };
 
   // Song song: đặt lại bộ đếm sai (chỉ khi cần), tạo phiên, dọn bucket rate limit cũ.
   await Promise.all([

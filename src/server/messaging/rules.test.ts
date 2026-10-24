@@ -8,7 +8,7 @@ describe("directMessageRequirement", () => {
     expect(directMessageRequirement(p("a", "TEACHER"), p("a", "TEACHER"))).toBe("never");
   });
   it("trung tâm nhắn được mọi người và ngược lại", () => {
-    expect(directMessageRequirement(p("a", "STAFF"), p("b", "STUDENT"))).toBe("always");
+    expect(directMessageRequirement(p("a", "ADMIN"), p("b", "STUDENT"))).toBe("always");
     expect(directMessageRequirement(p("b", "PARENT"), p("a", "ADMIN"))).toBe("always");
   });
   it("HS ↔ PH chỉ khi là phụ huynh của em", () => {

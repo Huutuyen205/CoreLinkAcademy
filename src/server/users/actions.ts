@@ -10,7 +10,7 @@ import { parseStudentImport } from "./import";
 import { createUser, importStudents, linkGuardian, resetPassword, setUserStatus, unlinkGuardian, updateUser } from "./service";
 
 const id = z.string().min(1).max(40);
-const ROLES = ["ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] as const;
+const ROLES = ["ADMIN", "TEACHER", "STUDENT", "PARENT"] as const; // giáo vụ đã bỏ (DECISION-D35)
 
 const userSchema = z
   .object({
@@ -50,7 +50,7 @@ export type CreateUserState = ActionState & { credential?: { fullName: string; l
 
 /** API-008: Admin tạo mọi vai trò; Staff chỉ tạo học sinh/phụ huynh. */
 export async function createUserAction(_prev: CreateUserState, formData: FormData): Promise<CreateUserState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, USER_FIELDS);
   const parsed = parseForm(userSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -103,7 +103,7 @@ export async function resetPasswordAction(_prev: ResetState, formData: FormData)
 
 /** API-009 — FR-014. */
 export async function linkGuardianAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["parentId", "studentId"]);
   const parsed = parseForm(z.object({ parentId: z.string().min(1, "Chọn phụ huynh.").max(40), studentId: id }), fields);
   if (!parsed.ok) return parsed.state;
@@ -116,7 +116,7 @@ export async function linkGuardianAction(_prev: ActionState, formData: FormData)
 }
 
 export async function unlinkGuardianAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ parentId: id, studentId: id }), formFields(formData, ["parentId", "studentId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => unlinkGuardian(actor, parsed.data.parentId, parsed.data.studentId));
@@ -131,7 +131,7 @@ export type ImportState = ActionState & { credentials?: { fullName: string; stud
 
 /** Admin §2 — FR-036: nhập danh sách học sinh hàng loạt. */
 export async function importStudentsAction(_prev: ImportState, formData: FormData): Promise<ImportState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const text = String(formData.get("data") ?? "").slice(0, 50_000);
   const { rows, errors } = parseStudentImport(text);
   if (errors.length > 0) return { ok: false, message: "Dữ liệu chưa hợp lệ. Chưa nhập dòng nào.", details: errors.slice(0, 30), values: { data: text } };

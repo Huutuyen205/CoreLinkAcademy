@@ -22,7 +22,7 @@ export const metadata: Metadata = { title: "Hồ sơ giáo viên" };
 
 // Admin §3 — FR-036: chi tiết hồ sơ, lớp phụ trách, lịch giảng dạy theo tuần.
 export default async function TeacherDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tuan?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { id } = await params;
   const weekStart = parseWeekParam((await searchParams).tuan);
   const { from, to } = vnWeekRange(weekStart);

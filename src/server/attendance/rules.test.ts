@@ -18,9 +18,10 @@ describe("quyền ghi điểm danh", () => {
     expect(checkAttendanceEdit({ role: "TEACHER", sessionStatus: "SCHEDULED", inWindow: false, reason: "x" })).toEqual({ error: "OUTSIDE_WINDOW" });
   });
 
-  it("TC-020 Staff ngoài khung thiếu lý do → từ chối; có lý do → override", () => {
-    expect(checkAttendanceEdit({ role: "STAFF", sessionStatus: "COMPLETED", inWindow: false, reason: "  " })).toEqual({ error: "REASON_REQUIRED" });
-    expect(checkAttendanceEdit({ role: "STAFF", sessionStatus: "COMPLETED", inWindow: false, reason: "Bổ sung" })).toEqual({ error: null, override: true });
+  it("TC-020 Admin ngoài khung thiếu lý do → từ chối; có lý do → override; giáo vụ (đã bỏ) không sửa được", () => {
+    expect(checkAttendanceEdit({ role: "ADMIN", sessionStatus: "COMPLETED", inWindow: false, reason: "  " })).toEqual({ error: "REASON_REQUIRED" });
+    expect(checkAttendanceEdit({ role: "ADMIN", sessionStatus: "COMPLETED", inWindow: false, reason: "Bổ sung" })).toEqual({ error: null, override: true });
+    expect(checkAttendanceEdit({ role: "STAFF", sessionStatus: "COMPLETED", inWindow: true, reason: "x" })).toEqual({ error: "FORBIDDEN" });
     expect(checkAttendanceEdit({ role: "ADMIN", sessionStatus: "SCHEDULED", inWindow: true })).toEqual({ error: null, override: false });
   });
 

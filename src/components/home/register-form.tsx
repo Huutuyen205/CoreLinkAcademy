@@ -31,7 +31,7 @@ export function RegisterForm() {
               Đăng ký học thử miễn phí
             </h2>
             <p className="mt-3 text-on-brand-muted">
-              Để lại thông tin, giáo vụ sẽ liên hệ tư vấn, kiểm tra đầu vào và hẹn lịch học thử phù hợp với con.
+              Để lại thông tin, trung tâm sẽ liên hệ tư vấn, kiểm tra đầu vào và hẹn lịch học thử phù hợp với con.
             </p>
           </div>
           <ul className="space-y-3 text-sm">
@@ -74,7 +74,7 @@ export function RegisterForm() {
                 </motion.span>
                 <h3 className="mt-5 text-2xl text-ink">Cảm ơn quý phụ huynh!</h3>
                 <p className="mt-2 max-w-sm text-muted">
-                  CoreLink Academy đã nhận được đăng ký. Giáo vụ sẽ gọi lại để tư vấn và hẹn lịch học thử trong thời gian sớm nhất.
+                  CoreLink Academy đã nhận được đăng ký. Trung tâm sẽ gọi lại để tư vấn và hẹn lịch học thử trong thời gian sớm nhất.
                 </p>
               </motion.div>
             ) : (

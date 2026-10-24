@@ -128,7 +128,7 @@ export const DOCUMENT_KIND: Record<DocumentKind, string> = {
 
 export const AUDIENCE_LABELS: Record<AnnouncementAudience, string> = {
   ALL: "Tất cả người dùng",
-  STAFF: "Quản trị & giáo vụ",
+  STAFF: "Quản trị viên",
   TEACHERS: "Toàn bộ giáo viên",
   STUDENTS: "Toàn bộ học sinh",
   PARENTS: "Toàn bộ phụ huynh",

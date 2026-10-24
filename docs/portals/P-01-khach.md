@@ -58,7 +58,7 @@ Chung mọi vai trò — xem [P-02 §2](P-02-quan-ly.md#2-đăng-nhập-và-đ�
 1. Phụ huynh tìm khóa Toán lớp 9 → `/khoa-hoc?mon=toan&khoi=9`.
 2. Xem "Toán 9 — Ôn thi vào lớp 10": lộ trình, còn chỗ.
 3. "Đăng ký học thử khóa này" → form điền sẵn → gửi → cảm ơn.
-4. Giáo vụ gọi lại → [P-02](P-02-quan-ly.md) xử lý lead.
+4. Trung tâm gọi lại → [P-02](P-02-quan-ly.md) xử lý lead.
 
 ## 4. Tình huống biên
 | Tình huống | Hành vi |

@@ -3,8 +3,8 @@ import type { Role } from "@prisma/client";
 import type { IntentDef } from "./types";
 
 const LEARNER: Role[] = ["PARENT", "STUDENT"];
-const MANAGER: Role[] = ["ADMIN", "STAFF"];
-const ALL: Role[] = ["ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"];
+const MANAGER: Role[] = ["ADMIN"];
+const ALL: Role[] = ["ADMIN", "TEACHER", "STUDENT", "PARENT"];
 
 export const INTENTS: IntentDef[] = [
   /* ───────── Học sinh & phụ huynh ───────── */

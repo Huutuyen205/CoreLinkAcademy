@@ -39,7 +39,7 @@ Thẻ lớp: mã, trạng thái, khóa, lịch, số HS, phòng.
 ### SCREEN-028 Điểm danh `/giao-vien/buoi/[id]`
 - Header: "Điểm danh lớp X — buổi n", ngày, giờ, phòng, khóa, trạng thái.
 - Trong khung (30' trước → 24h sau): danh sách đánh số; 4 nút lớn Có mặt (mặc định) / Muộn / Vắng / Có phép; ghi chú; "Lưu điểm danh" dính đáy.
-- Ngoài khung: chỉ xem + "Bạn chỉ xem được; liên hệ giáo vụ nếu cần sửa."
+- Ngoài khung: chỉ xem + "Bạn chỉ xem được; liên hệ trung tâm nếu cần sửa."
 - Buổi hủy: Alert lý do, không form.
 
 ### SCREEN-029 Tạo bài `/giao-vien/bai-tap/moi?lop=`

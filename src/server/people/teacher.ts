@@ -1,5 +1,5 @@
 // Giáo viên tự quản lý (checklist v4, DECISION-D33 — các mục "giả định" của GV):
-// - Đăng ký lịch rảnh (GV §2): khung giờ theo thứ trong tuần; giáo vụ xem khi xếp lớp / dạy thay.
+// - Đăng ký lịch rảnh (GV §2): khung giờ theo thứ trong tuần; quản trị viên xem khi xếp lớp / dạy thay.
 // - Hồ sơ giới thiệu (GV §11A): GV soạn bản nháp → gửi duyệt → quản lý duyệt thì thành bản công khai (hiện cho HS/PH của lớp).
 // Kèm: đổi nhanh trạng thái hoạt động của hồ sơ (Admin §3 "Cập nhật trạng thái hoạt động của giáo viên").
 import type { MemberStatus } from "@prisma/client";
@@ -66,7 +66,7 @@ export async function saveMyIntro(actor: Actor, text: string, submit: boolean): 
   await db.$transaction(async (tx) => {
     await tx.user.update({ where: { id: actor.id }, data: { introDraft: text || null, ...(submit ? { introStatus: "PENDING", introNote: null } : {}) } });
     if (submit) {
-      const managers = await tx.user.findMany({ where: { role: { in: ["ADMIN", "STAFF"] }, status: "ACTIVE" }, select: { id: true } });
+      const managers = await tx.user.findMany({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true } });
       await notifyUsers(tx, managers.map((m) => m.id), {
         kind: "review",
         title: `Hồ sơ giới thiệu chờ duyệt: ${actor.fullName}`,

@@ -84,7 +84,7 @@ type CreateLeadState = ActionState & { existingLeadId?: string };               
 | STUDENT_DISABLED | Tài khoản học sinh đang bị khóa, không ghi danh được. | — | Không | Mở khóa trước | API-013 |
 | NOT_FOUND | Không tìm thấy lớp. | — | Không | Tải lại | API-004, 013 |
 | SESSION_CANCELLED | Buổi học đã bị hủy, không điểm danh được. | — | Không | — | API-015 |
-| OUTSIDE_WINDOW | Đã hết thời gian điểm danh của giáo viên. Liên hệ giáo vụ để sửa. | — | Không | Liên hệ giáo vụ | API-015 |
+| OUTSIDE_WINDOW | Đã hết thời gian điểm danh của giáo viên. Liên hệ trung tâm để sửa. | — | Không | Liên hệ trung tâm | API-015 |
 | REASON_REQUIRED | Sửa điểm danh ngoài khung thời gian cần nhập lý do. | reason | Có | Nhập lý do | API-015 |
 | EMPTY | Không có học sinh nào để điểm danh. | — | Không | — | API-015 |
 | NOT_DRAFT | Chỉ sửa/xóa câu hỏi khi bài còn ở trạng thái nháp. | — | Không | — | API-016 |

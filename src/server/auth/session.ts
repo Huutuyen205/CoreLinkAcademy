@@ -53,7 +53,8 @@ export const getCurrentActor = cache(async (): Promise<Actor | null> => {
       user: { select: { id: true, role: true, fullName: true, status: true, mustChangePassword: true, avatarFileId: true } },
     },
   });
-  if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") return null;
+  // Vai trò giáo vụ đã bỏ (DECISION-D35): phiên cũ của tài khoản giáo vụ không còn hiệu lực.
+  if (!session || session.expiresAt <= new Date() || session.user.status !== "ACTIVE" || session.user.role === "STAFF") return null;
 
   const { id, role, fullName, mustChangePassword, avatarFileId } = session.user;
   return { id, role, fullName, mustChangePassword, avatarFileId };

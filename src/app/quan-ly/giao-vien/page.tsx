@@ -19,7 +19,7 @@ const STATUSES: MemberStatus[] = ["ACTIVE", "ON_LEAVE", "INACTIVE"];
 
 // Admin §3 — FR-036: danh sách, tìm kiếm/lọc giáo viên; Admin thêm giáo viên.
 export default async function TeachersPage({ searchParams }: { searchParams: Promise<{ q?: string; trangthai?: string; page?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;
   const status = STATUSES.includes(sp.trangthai as MemberStatus) ? (sp.trangthai as MemberStatus) : undefined;

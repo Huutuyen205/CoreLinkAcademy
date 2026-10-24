@@ -16,7 +16,7 @@ type SP = { tuan?: string; gv?: string; phong?: string; lop?: string };
 
 // Admin §7, §8 — FR-038: xem lịch theo lớp / giáo viên / phòng; kiểm tra tình trạng sử dụng phòng.
 export default async function ManagerSchedulePage({ searchParams }: { searchParams: Promise<SP> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const options = await scheduleFilterOptions(actor);
   const pick = (v: string | undefined, list: { id: string }[]) => (typeof v === "string" && list.some((x) => x.id === v) ? v : undefined);

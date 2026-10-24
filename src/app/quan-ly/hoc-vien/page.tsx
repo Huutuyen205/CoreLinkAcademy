@@ -28,7 +28,7 @@ type SP = { q?: string; page?: string; trangthai?: string; loc?: string };
 
 // FR-014 (+ Staff tạo tài khoản học sinh/phụ huynh, ASSUMPTION-A04). Mỗi học sinh một thẻ: lớp, phụ huynh, thao tác.
 export default async function LearnersPage({ searchParams }: { searchParams: Promise<SP> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;
   const status = sp.trangthai && sp.trangthai in USER_STATUS ? (sp.trangthai as UserStatus) : undefined;

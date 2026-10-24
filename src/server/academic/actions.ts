@@ -45,7 +45,7 @@ const classSchema = z
 
 /** API-011 — FR-017, FR-018. */
 export async function createClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["courseId", "code", "teacherId", "roomId", "startDate", "startTime", "endTime", "totalSessions", "capacity"]);
   const weekdays = [...new Set(formData.getAll("weekdays").map(String))].slice(0, 7);
   const values = { ...fields, weekdays: weekdays.join(",") };
@@ -62,7 +62,7 @@ const CLASS_STATUSES = ["OPEN", "IN_PROGRESS", "COMPLETED", "CANCELLED"] as cons
 
 /** API-012. */
 export async function setClassStatusAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ classId: id, status: z.enum(CLASS_STATUSES, { errorMap: () => ({ message: "Chọn trạng thái." }) }) }), formFields(formData, ["classId", "status"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setClassStatus(actor, parsed.data.classId, parsed.data.status));
@@ -74,7 +74,7 @@ export async function setClassStatusAction(_prev: ActionState, formData: FormDat
 
 /** Hủy lớp (kèm lý do tùy chọn): các buổi chưa học bị hủy, thành viên lớp nhận thông báo. */
 export async function cancelClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ classId: id, reason: z.string().trim().max(200) }), formFields(formData, ["classId", "reason"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setClassStatus(actor, parsed.data.classId, "CANCELLED", parsed.data.reason || null));
@@ -85,7 +85,7 @@ export async function cancelClassAction(_prev: ActionState, formData: FormData):
 }
 
 export async function deleteClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ classId: id }), formFields(formData, ["classId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deleteClass(actor, parsed.data.classId));
@@ -97,7 +97,7 @@ export async function deleteClassAction(_prev: ActionState, formData: FormData):
 
 /** API-013 — FR-019. Ghi danh nhiều học sinh một lần; dừng ở học sinh đầu tiên lỗi. */
 export async function enrollStudentsAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const classId = formFields(formData, ["classId"]).classId!;
   const studentIds = formIds(formData, "studentIds", 50);
   if (!id.safeParse(classId).success) return { ok: false, message: "Lớp không hợp lệ." };
@@ -120,7 +120,7 @@ const ENROLLMENT_STATUSES = ["ACTIVE", "PAUSED", "DROPPED", "COMPLETED"] as cons
 
 /** API-013 — FR-020. */
 export async function setEnrollmentStatusAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ enrollmentId: id, status: z.enum(ENROLLMENT_STATUSES) }), formFields(formData, ["enrollmentId", "status"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setEnrollmentStatus(actor, parsed.data.enrollmentId, parsed.data.status));
@@ -134,7 +134,7 @@ const reason = z.string().trim().min(3, "Nhập lý do.").max(255, "Tối đa 25
 
 /** API-014 — FR-021. */
 export async function cancelSessionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["sessionId", "reason"]);
   const parsed = parseForm(z.object({ sessionId: id, reason }), fields);
   if (!parsed.ok) return parsed.state;
@@ -150,7 +150,7 @@ const rescheduleSchema = z
 
 /** API-014 — FR-021: dời buổi, kiểm tra trùng lịch. */
 export async function rescheduleSessionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["sessionId", "date", "startTime", "endTime", "reason"]);
   const parsed = parseForm(rescheduleSchema, fields);
   if (!parsed.ok) return parsed.state;

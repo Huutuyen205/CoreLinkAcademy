@@ -15,7 +15,7 @@ const MESSAGES: Record<string, string> = {
   "dong-bai": "Đã đóng bài. Học sinh không nộp thêm được.",
   "cong-bo": "Đã công bố kết quả. Học sinh và phụ huynh đã xem được điểm và nhận được thông báo.",
   "xoa-tai-lieu": "Đã xóa tài liệu.",
-  "gui-don": "Đã gửi đơn xin nghỉ. Giáo viên/giáo vụ sẽ phản hồi qua thông báo.",
+  "gui-don": "Đã gửi đơn xin nghỉ. Giáo viên/trung tâm sẽ phản hồi qua thông báo.",
   "duyet-don": "Đã duyệt đơn xin nghỉ. Buổi học được ghi \"Có phép\" và phụ huynh đã nhận thông báo.",
   "tu-choi-don": "Đã từ chối đơn xin nghỉ. Phụ huynh đã nhận thông báo.",
   "duyet-de-xuat": "Đã duyệt đề xuất và cập nhật lịch. Giáo viên và lớp đã nhận thông báo.",

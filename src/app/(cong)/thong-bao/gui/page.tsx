@@ -16,7 +16,7 @@ const AUDIENCES = Object.keys(AUDIENCE_LABELS) as AnnouncementAudience[];
 
 // FR-048 — Admin §12A, Giáo viên §10A: soạn và gửi thông báo (nhóm / lớp / từng người); danh sách đã gửi + trạng thái gửi.
 export default async function SendAnnouncementPage({ searchParams }: { searchParams: Promise<{ lop?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const { lop } = await searchParams;
   const [classes, sent, people] = await Promise.all([listClasses(actor), listSentAnnouncements(actor), announcementPeople(actor)]);
   const openClasses = classes.filter((c) => c.status === "OPEN" || c.status === "IN_PROGRESS");

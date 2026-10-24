@@ -16,7 +16,7 @@ const STATUSES: AttendanceStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
  * API-015 — FR-023, FR-024. Form gửi `studentIds` + `status:<id>` + `note:<id>` cho từng học sinh.
  */
 export async function saveAttendanceAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("TEACHER", "STAFF", "ADMIN");
+  const actor = await requireRole("TEACHER", "ADMIN");
   const sessionId = String(formData.get("sessionId") ?? "");
   if (!z.string().min(1).max(40).safeParse(sessionId).success) return { ok: false, message: "Buổi học không hợp lệ." };
   const reasonRaw = String(formData.get("reason") ?? "").trim();
@@ -49,7 +49,7 @@ const lessonText = z
 
 /** FEAT-B2: lưu nhật ký buổi học (GV của buổi / quản lý). */
 export async function saveLessonLogAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("TEACHER", "ADMIN", "STAFF");
+  const actor = await requireRole("TEACHER", "ADMIN");
   const fields = formFields(formData, ["sessionId", "lessonContent", "homework"]);
   const parsed = parseForm(z.object({ sessionId: z.string().min(1).max(40), lessonContent: lessonText, homework: lessonText }), fields);
   if (!parsed.ok) return parsed.state;

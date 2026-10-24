@@ -60,7 +60,7 @@ export async function listContacts(actor: Actor) {
       ? { role: "PARENT", childLinks: { some: { studentId: actor.id } } }
       : { role: "PARENT", childLinks: { some: { student: { enrollments: { some: { status: { in: [...LEARNING] }, class: myClasses } } } } } },
   ];
-  return db.user.findMany({ where: { ...active, OR: [{ role: { in: ["ADMIN", "STAFF"] } }, ...sameClass] }, orderBy: order, take: 500, select });
+  return db.user.findMany({ where: { ...active, OR: [{ role: "ADMIN" }, ...sameClass] }, orderBy: order, take: 500, select });
 }
 
 function directKey(a: string, b: string) {
@@ -324,11 +324,10 @@ export async function askAboutAssignment(actor: Actor, assignmentId: string, bod
   return conversationId;
 }
 
-/** "Nhắn trung tâm" (PH §7B): mở trò chuyện với giáo vụ (ưu tiên) hoặc quản trị đang hoạt động. */
+/** "Nhắn trung tâm" (PH §7B): mở trò chuyện với quản trị viên đang hoạt động (tài khoản tạo sớm nhất). */
 export async function startCenterConversation(actor: Actor): Promise<string> {
-  const staff = await db.user.findFirst({ where: { role: "STAFF", status: "ACTIVE", id: { not: actor.id } }, orderBy: { createdAt: "asc" }, select: { id: true } });
-  const center = staff ?? (await db.user.findFirst({ where: { role: "ADMIN", status: "ACTIVE", id: { not: actor.id } }, orderBy: { createdAt: "asc" }, select: { id: true } }));
-  if (!center) throw new DomainError("NO_CENTER", "Trung tâm chưa có tài khoản giáo vụ để nhận tin.");
+  const center = await db.user.findFirst({ where: { role: "ADMIN", status: "ACTIVE", id: { not: actor.id } }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  if (!center) throw new DomainError("NO_CENTER", "Trung tâm chưa có tài khoản quản trị để nhận tin.");
   return startDirectConversation(actor, center.id);
 }
 

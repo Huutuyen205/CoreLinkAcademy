@@ -136,7 +136,6 @@ type UserSeed = { email: string; phone: string; fullName: string; role: Role; st
 
 const users: UserSeed[] = [
   { email: "admin@demo.corelink.vn", phone: "+84900000001", fullName: "Quản trị Demo", role: "ADMIN" },
-  { email: "giaovu@demo.corelink.vn", phone: "+84900000002", fullName: "Giáo vụ Demo", role: "STAFF" },
   { email: "gv.toan@demo.corelink.vn", phone: "+84900000011", fullName: "Giáo viên Toán Demo", role: "TEACHER" },
   { email: "gv.van@demo.corelink.vn", phone: "+84900000012", fullName: "Giáo viên Văn Demo", role: "TEACHER" },
   { email: "gv.anh@demo.corelink.vn", phone: "+84900000013", fullName: "Giáo viên Anh Demo", role: "TEACHER" },

@@ -241,7 +241,7 @@ export async function submitLessonPlan(actor: Actor, documentId: string): Promis
   if (doc.reviewStatus === "PENDING") throw new DomainError("PENDING", "Giáo án đang chờ duyệt.");
   await db.$transaction(async (tx) => {
     await tx.document.update({ where: { id: documentId }, data: { reviewStatus: "PENDING", reviewNote: null, reviewedAt: null, reviewedById: null } });
-    const managers = await tx.user.findMany({ where: { role: { in: ["ADMIN", "STAFF"] }, status: "ACTIVE" }, select: { id: true } });
+    const managers = await tx.user.findMany({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true } });
     await notifyUsers(tx, managers.map((m) => m.id), { kind: "review", title: `Giáo án chờ duyệt: ${doc.title}`, body: `${actor.fullName} gửi giáo án để duyệt.`, link: `/tai-lieu/${documentId}` });
   });
 }

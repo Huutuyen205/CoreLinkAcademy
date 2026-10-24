@@ -8,7 +8,7 @@ import { formatDateTime } from "@/lib/time";
 
 type Rows = Awaited<ReturnType<typeof listLeaveRequestsForHandler>>;
 
-/** Đơn xin nghỉ cần xử lý — dùng cho giáo viên (lớp mình) và giáo vụ (tất cả). */
+/** Đơn xin nghỉ cần xử lý — dùng cho giáo viên (lớp mình) và quản trị viên (tất cả). */
 export function LeaveRequestList({ rows, studentHref }: { rows: Rows; studentHref?: (id: string) => string }) {
   if (rows.length === 0) return <EmptyState message="Không có đơn xin nghỉ." />;
   return (

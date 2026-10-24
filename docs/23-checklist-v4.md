@@ -58,9 +58,9 @@ Mục ghi "(Giả định – cần xác nhận)" trong checklist đều đã l�
 | § | Mục | Kết quả | Ở đâu / ghi chú |
 |---|---|---|---|
 | 1 | Tìm kiếm lớp; tìm kiếm học sinh | Bổ sung | Lớp của tôi có ô tìm (mã lớp, khóa, phòng). Trang lớp có ô tìm học sinh (lớp trên 6 em) |
-| 2 | Đăng ký lịch rảnh (giả định) | Bổ sung | Menu "Hồ sơ & lịch rảnh": khung giờ theo thứ, chặn trùng. Giáo vụ xem ở hồ sơ GV |
+| 2 | Đăng ký lịch rảnh (giả định) | Bổ sung | Menu "Hồ sơ & lịch rảnh": khung giờ theo thứ, chặn trùng. Quản trị viên xem ở hồ sơ GV |
 | 4 | Gửi duyệt giáo án (giả định) | Bổ sung | Trang giáo án → "Gửi duyệt". Quản lý chọn Duyệt / Yêu cầu sửa kèm ghi chú; hai bên được báo |
-| 6 | Điểm danh, cập nhật điểm danh | Có sẵn | Mở được từ **30 phút trước giờ học đến 24 giờ sau giờ kết thúc** (BR-030). Ngoài khung chỉ giáo vụ sửa, kèm lý do |
+| 6 | Điểm danh, cập nhật điểm danh | Có sẵn | Mở được từ **30 phút trước giờ học đến 24 giờ sau giờ kết thúc** (BR-030). Ngoài khung chỉ Admin sửa, kèm lý do (vai trò giáo vụ đã bỏ — DECISION-D35) |
 | 6 | Ghi nhận thái độ học tập (giả định) | Bổ sung | Mỗi học sinh có ô "Thái độ" (Tích cực / Bình thường / Cần cố gắng) khi điểm danh; HS, PH, quản lý thấy ở lịch sử chuyên cần |
 | 7 | Giao, tìm kiếm, cập nhật, xóa bài tập | Có sẵn + Sửa | Menu mới "Bài tập": mọi bài, tìm theo tên, lọc lớp / trạng thái. Có thêm ô "bài kiểm tra" và "bài chữa" |
 | 8 | Xem bài làm, chấm, nhận xét, công bố, cập nhật điểm, bảng điểm, nhắc nộp | Có sẵn | Bài nộp → Chấm bài / Xem-sửa điểm; Công bố; Bảng điểm ở trang lớp (nút "Bảng điểm lớp") |
@@ -78,5 +78,5 @@ Mục ghi "(Giả định – cần xác nhận)" trong checklist đều đã l�
 | 4 | Xem điểm và nhận xét bài tập | Sửa | Cột "Điểm / nhận xét" ghi rõ trạng thái chờ chấm; thêm "Bài chữa của giáo viên" |
 | 5 | Điểm tổng hợp; lịch sử kết quả | Bổ sung | Trang Theo dõi con: "Kết quả học tập tổng hợp" (lọc môn, lớp, kỳ) và "Tiến độ khóa học & bài tập" |
 | 6 | Xem / tải tài liệu được phép | Có sẵn | Tài liệu: chỉ tài liệu trung tâm/GV bật "PH được xem" và chia sẻ cho lớp của con; nay có thêm tìm, lọc |
-| 7B | Nhắn tin với GV; nhắn với trung tâm | Sửa | Nút nhanh "Nhắn GV …" (GV các lớp của con) và **"Nhắn trung tâm"** (mở trò chuyện với giáo vụ) |
+| 7B | Nhắn tin với GV; nhắn với trung tâm | Sửa | Nút nhanh "Nhắn GV …" (GV các lớp của con) và **"Nhắn trung tâm"** (mở trò chuyện với Admin) |
 | 8 | Cập nhật thông tin liên hệ cá nhân | Có sẵn + Sửa | Có từ trước ở `/tai-khoan`; nay thêm mục "Tài khoản" vào menu PH |

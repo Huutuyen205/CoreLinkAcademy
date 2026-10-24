@@ -7,7 +7,7 @@ import { listContacts, listConversations, teachersOfLearner } from "@/server/mes
 
 const CONTACT_HINT = {
   ADMIN: "Trung tâm nhắn được cho mọi giáo viên, học sinh, phụ huynh.",
-  STAFF: "Trung tâm nhắn được cho mọi giáo viên, học sinh, phụ huynh.",
+  STAFF: "",
   TEACHER: "Bạn nhắn được cho trung tâm, học sinh và phụ huynh các lớp mình dạy.",
   STUDENT: "Em nhắn được cho giáo viên, bạn cùng lớp, phụ huynh của em và trung tâm.",
   PARENT: "Bạn nhắn được cho giáo viên, thành viên lớp của con và trung tâm.",

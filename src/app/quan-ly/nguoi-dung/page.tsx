@@ -9,7 +9,7 @@ import { SelectField, TextField } from "@/components/ui/field";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
+import { ACTIVE_ROLES, ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
 import { listUsers, USER_PAGE_SIZE } from "@/server/users/service";
 import { USER_STATUS } from "@/lib/labels";
 import { formatPhone } from "@/lib/phone";
@@ -35,14 +35,14 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
       <details className="mb-6 rounded-block border border-line bg-surface p-4">
         <summary className="cursor-pointer font-medium text-primary">Tạo tài khoản mới</summary>
         <div className="mt-4">
-          <CreateUserForm roles={(Object.keys(ROLE_LABELS) as Role[]).map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
+          <CreateUserForm roles={ACTIVE_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
         </div>
       </details>
 
       <details className="mb-6 rounded-block border border-line bg-surface p-4">
         <summary className="cursor-pointer font-medium text-primary">Thao tác được phép theo vai trò</summary>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {(Object.keys(ROLE_CAPABILITIES) as Role[]).map((r) => (
+          {ACTIVE_ROLES.map((r) => (
             <section key={r} className="rounded-control border border-line p-3">
               <h2 className="mb-2 text-base font-semibold text-primary">{ROLE_LABELS[r]}</h2>
               <dl className="space-y-1.5 text-sm">
@@ -60,7 +60,7 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm tên, email, SĐT, mã HS" defaultValue={q} maxLength={100} />
-        <SelectField name="role" label="Vai trò" placeholder="Tất cả" defaultValue={role ?? ""} options={(Object.keys(ROLE_LABELS) as Role[]).map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
+        <SelectField name="role" label="Vai trò" placeholder="Tất cả" defaultValue={role ?? ""} options={ACTIVE_ROLES.map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
         <SelectField name="status" label="Trạng thái" placeholder="Tất cả" defaultValue={status ?? ""} options={Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
         <div className="flex min-h-11 items-center">
           {(role || status || q) && (

@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Mở lớp mới" };
 
 // UC-005 — FR-017, FR-018.
 export default async function NewClassPage() {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { courses, teachers, rooms } = await classFormOptions(actor);
 
   return (

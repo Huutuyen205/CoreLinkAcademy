@@ -20,10 +20,10 @@ Một mục "Theo dõi con" (`/phu-huynh`). Chỉ đọc — không có thao tá
 | Chuyên cần | "Chuyên cần: X%", tỷ lệ từng lớp, 10 buổi gần nhất |
 | Điểm đã công bố | Bài đã công bố **và** đã chấm: tên, lớp, thời điểm công bố, nộp muộn, điểm/tối đa, nhận xét chung |
 
-Rỗng: chưa liên kết con → "Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ giáo vụ của học viện."; tuần trống, chưa điểm danh, chưa có kết quả → thông điệp riêng từng thẻ.
+Rỗng: chưa liên kết con → "Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con."; tuần trống, chưa điểm danh, chưa có kết quả → thông điệp riêng từng thẻ.
 
 ## 3. Hành trình
-Nhận mật khẩu tạm từ giáo vụ → đăng nhập bằng SĐT → đổi mật khẩu → `/phu-huynh` → chọn con → xem.
+Nhận mật khẩu tạm từ trung tâm → đăng nhập bằng SĐT → đổi mật khẩu → `/phu-huynh` → chọn con → xem.
 
 ## 4. Tình huống biên
 | Tình huống | Hành vi |

@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Trạng thái gửi thông báo" };
 
 // Admin §12A "Xem trạng thái gửi thông báo": đã gửi tới ai, ai đã đọc (lúc nào), ai có thông báo đẩy.
 export default async function AnnouncementStatusPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ loc?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const a = await orNotFound(getAnnouncementStatus(actor, (await params).id));
   const loc = (await searchParams).loc;
   const rows = loc === "chua-doc" ? a.rows.filter((r) => !r.readAt) : loc === "da-doc" ? a.rows.filter((r) => r.readAt) : a.rows;

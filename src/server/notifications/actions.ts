@@ -20,7 +20,7 @@ const announcementSchema = z.object({
 
 /** FR-048: Admin gửi theo đối tượng; GV gửi cho lớp mình. */
 export async function createAnnouncementAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, ["audience", "classId", "title", "body"]);
   const parsed = parseForm(announcementSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -53,7 +53,7 @@ export async function markAllReadAction(): Promise<void> {
 
 /** FEAT-B4: quản lý gửi nhắc lịch ngày mai ngay (không chờ lịch tự động 19:00). Không gửi trùng. */
 export async function sendRemindersNowAction(): Promise<ActionState> {
-  await requireRole("ADMIN", "STAFF");
+  await requireRole("ADMIN");
   const r = await sendTomorrowReminders();
   const b = await sendAssignmentReminders();
   const hw = b.dueSoon + b.overdue > 0 ? ` Nhắc bài tập: ${b.dueSoon} sắp đến hạn, ${b.overdue} quá hạn.` : "";

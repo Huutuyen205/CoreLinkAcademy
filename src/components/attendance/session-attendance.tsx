@@ -9,7 +9,7 @@ import { AttendanceForm } from "./attendance-form";
 
 type Data = Awaited<ReturnType<typeof getSessionForAttendance>>;
 
-/** Màn hình điểm danh một buổi (UC-007), dùng cho cả giáo viên và giáo vụ. */
+/** Màn hình điểm danh một buổi (UC-007), dùng cho cả giáo viên và quản trị viên. */
 export function SessionAttendance({ data, backHref, backLabel }: { data: Data; backHref: string; backLabel: string }) {
   const { session, roster, canEdit, needsReason, inWindow } = data;
   return (
@@ -25,7 +25,7 @@ export function SessionAttendance({ data, backHref, backLabel }: { data: Data; b
       {session.status === "CANCELLED" && <Alert tone="danger" className="mb-4">Buổi học đã hủy{session.cancelReason ? `: ${session.cancelReason}` : ""}.</Alert>}
       {session.status !== "CANCELLED" && !inWindow && !canEdit && (
         <Alert tone="info" className="mb-4">
-          Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ giáo vụ nếu cần sửa.
+          Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ trung tâm nếu cần sửa.
         </Alert>
       )}
       {needsReason && (

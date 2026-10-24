@@ -6,6 +6,8 @@
 | Owner | Trợ lý (BA + Security) · Phê duyệt: chủ dự án |
 | Nguồn sự thật trong code | `src/server/auth/policy.ts` (vai trò → quyền), `src/server/auth/scope.ts` (phạm vi), từng service (`assertCan` + kiểm tra phạm vi) |
 
+> **DECISION-D35 (2026-10-24):** bỏ vai trò giáo vụ. Quản lý = chỉ `ADMIN` (`isManager`), mọi quyền `"ADMIN", "STAFF"` trong `policy.ts` thành `"ADMIN"`.
+
 **Xác thực (authentication)** = biết ai đang đăng nhập: cookie `cl_session` → bảng `sessions` → `users` (ACTIVE, chưa hết hạn). **Phân quyền (authorization)** = vai trò + phạm vi dữ liệu, **luôn kiểm tra phía server** trong mỗi Server Action và mỗi trang. Ẩn nút trên UI chỉ là trải nghiệm, không phải phân quyền. Mỗi tài khoản có đúng **một** vai trò (DECISION-D04).
 
 ## 1. Vai trò
@@ -14,7 +16,7 @@
 |---|---|---|---|---|
 | ACT-000 | Khách | — | — | Không có phiên |
 | ROLE-001 | Quản trị viên | `ADMIN` | `/quan-ly` | Không tự khóa/tự đổi vai trò |
-| ROLE-002 | Giáo vụ / Tư vấn | `STAFF` | `/quan-ly` | Menu không có Người dùng, Khóa học, Môn học, Phòng, Nhật ký |
+| ROLE-002 | ~~Giáo vụ / Tư vấn~~ **Đã bỏ (DECISION-D35, 2026-10-24)** | `STAFF` | — | Không còn quyền nào; không đăng nhập được, phiên cũ vô hiệu; không tạo / đổi sang vai trò này. Mọi việc vận hành (lead, lớp, lịch, điểm danh ngoài khung, duyệt đơn/đề xuất, báo cáo, tài liệu, thông báo) do **Admin** làm. Cột "Staff" trong các bảng dưới chỉ còn giá trị lịch sử. Giá trị enum giữ trong DB cho dữ liệu cũ |
 | ROLE-003 | Giáo viên | `TEACHER` | `/giao-vien` | |
 | ROLE-004 | Học sinh | `STUDENT` | `/hoc-sinh` | |
 | ROLE-005 | Phụ huynh | `PARENT` | `/phu-huynh` | Chỉ đọc |

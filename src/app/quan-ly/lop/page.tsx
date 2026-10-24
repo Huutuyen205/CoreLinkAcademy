@@ -19,7 +19,7 @@ import { formatDate } from "@/lib/time";
 export const metadata: Metadata = { title: "Lớp học" };
 
 export default async function ClassListPage({ searchParams }: { searchParams: Promise<{ status?: string; q?: string; thongbao?: string; page?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const status = sp.status && sp.status in CLASS_STATUS ? (sp.status as ClassStatus) : undefined;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;

@@ -22,7 +22,7 @@ export default async function TeacherProfilePage() {
     <>
       <PageHeader
         title="Hồ sơ giới thiệu & lịch rảnh"
-        description="Giới thiệu bản thân cho học sinh, phụ huynh (trung tâm duyệt trước khi hiển thị) và đăng ký khung giờ rảnh để giáo vụ xếp lớp, dạy thay."
+        description="Giới thiệu bản thân cho học sinh, phụ huynh (trung tâm duyệt trước khi hiển thị) và đăng ký khung giờ rảnh để trung tâm xếp lớp, dạy thay."
         action={
           <Link href="/tai-khoan" className="text-sm">
             Thông tin cá nhân &amp; mật khẩu →

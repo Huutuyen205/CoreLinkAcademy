@@ -52,7 +52,7 @@ export async function cancelLeaveRequestAction(_prev: ActionState, formData: For
 }
 
 export async function handleLeaveRequestAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, ["requestId", "decision", "note"]);
   const parsed = parseForm(z.object({ requestId: id, decision: z.enum(["approve", "reject"]), note }), fields);
   if (!parsed.ok) return parsed.state;
@@ -95,7 +95,7 @@ export async function createScheduleRequestAction(_prev: ActionState, formData: 
   const result = await runAction(() => createScheduleRequest(actor, { sessionId: parsed.data.sessionId, ...proposal(parsed.data) }), fields);
   if (!result.ok) return result.state;
   revalidatePath("/giao-vien/de-xuat");
-  return { ok: true, message: "Đã gửi đề xuất cho giáo vụ." };
+  return { ok: true, message: "Đã gửi đề xuất cho trung tâm." };
 }
 
 export async function updateScheduleRequestAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -120,7 +120,7 @@ export async function cancelScheduleRequestAction(_prev: ActionState, formData: 
 }
 
 export async function handleScheduleRequestAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["requestId", "decision", "note", "substituteTeacherId"]);
   const parsed = parseForm(
     z.object({ requestId: id, decision: z.enum(["approve", "reject"]), note, substituteTeacherId: z.string().max(40).transform((v) => v || null) }),

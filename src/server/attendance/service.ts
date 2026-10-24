@@ -56,7 +56,7 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
   if (check.error) {
     const messages = {
       SESSION_CANCELLED: "Buổi học đã bị hủy, không điểm danh được.",
-      OUTSIDE_WINDOW: "Đã hết thời gian điểm danh của giáo viên. Liên hệ giáo vụ để sửa.",
+      OUTSIDE_WINDOW: "Đã hết thời gian điểm danh của giáo viên. Liên hệ trung tâm (quản trị viên) để sửa.",
       REASON_REQUIRED: "Sửa điểm danh ngoài khung thời gian cần nhập lý do.",
       FORBIDDEN: "Bạn không có quyền điểm danh.",
     } as const;

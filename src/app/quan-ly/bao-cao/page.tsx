@@ -39,7 +39,7 @@ function Bar({ value }: { value: number | null }) {
 
 // Admin §13A — FR-052: thống kê số lượng, chuyên cần, kết quả, hoàn thành bài tập; lọc thời gian/lớp/môn; xuất Excel (.xlsx, cột % là công thức).
 export default async function ReportsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const options = await reportFilterOptions(actor);
   const { filter, fromKey, toKey } = parseReportFilter(sp, vnDateKey(new Date()), options);

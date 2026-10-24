@@ -37,7 +37,7 @@ export default async function TeacherRequestsPage({ searchParams }: { searchPara
   return (
     <>
       <Flash code={thongbao} />
-      <PageHeader title="Đề xuất & đơn nghỉ" description="Xin nghỉ hoặc dời buổi dạy (giáo vụ duyệt) và duyệt đơn xin nghỉ của học sinh lớp bạn." />
+      <PageHeader title="Đề xuất & đơn nghỉ" description="Xin nghỉ hoặc dời buổi dạy (trung tâm duyệt) và duyệt đơn xin nghỉ của học sinh lớp bạn." />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           <Card title={`Đơn xin nghỉ của học sinh${pendingLeaves ? ` · ${pendingLeaves} chờ duyệt` : ""}`}>
@@ -121,7 +121,7 @@ export default async function TeacherRequestsPage({ searchParams }: { searchPara
               ]}
             />
           )}
-          <p className="mt-3 text-sm text-muted">Xin nghỉ: giáo vụ phân công giáo viên dạy thay hoặc cho lớp nghỉ và xếp học bù. Dời buổi: điền ngày giờ mới.</p>
+          <p className="mt-3 text-sm text-muted">Xin nghỉ: trung tâm phân công giáo viên dạy thay hoặc cho lớp nghỉ và xếp học bù. Dời buổi: điền ngày giờ mới.</p>
         </Card>
       </div>
     </>

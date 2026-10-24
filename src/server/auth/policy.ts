@@ -5,7 +5,7 @@ import { ForbiddenError } from "@/server/errors";
 
 export const ROLE_LABELS: Record<Role, string> = {
   ADMIN: "Quản trị viên",
-  STAFF: "Giáo vụ / Tư vấn",
+  STAFF: "Giáo vụ (đã ngừng)", // DECISION-D35: vai trò không còn dùng; giữ giá trị enum cho dữ liệu cũ
   TEACHER: "Giáo viên",
   STUDENT: "Học sinh",
   PARENT: "Phụ huynh",
@@ -25,14 +25,7 @@ export const ROLE_CAPABILITIES: Record<Role, { area: string; actions: string }[]
     { area: "Giao tiếp", actions: "Gửi thông báo mọi đối tượng; nhắn tin nhóm lớp và 1-1" },
     { area: "Báo cáo & nhật ký", actions: "Xem báo cáo, xuất Excel; xem nhật ký hệ thống (audit)" },
   ],
-  STAFF: [
-    { area: "Người dùng", actions: "Tạo tài khoản học sinh/phụ huynh, liên kết phụ huynh – học sinh" },
-    { area: "Tuyển sinh", actions: "Xem, nhập tay, đổi trạng thái lead; chuyển lead thành học viên" },
-    { area: "Đào tạo", actions: "Mở/sửa lớp, ghi danh, hủy/dời buổi, dạy thay, học bù, lịch tổng, sửa điểm danh ngoài khung" },
-    { area: "Tài liệu & yêu cầu", actions: "Quản lý giáo trình/tài liệu; duyệt đề xuất đổi lịch, đơn xin nghỉ" },
-    { area: "Giao tiếp", actions: "Gửi thông báo mọi đối tượng; nhắn tin nhóm lớp và 1-1" },
-    { area: "Báo cáo", actions: "Xem báo cáo, xuất Excel (không quản lý vai trò, danh mục, nhật ký)" },
-  ],
+  STAFF: [{ area: "Đã ngừng", actions: "Vai trò giáo vụ đã bỏ (DECISION-D35) — mọi việc vận hành do Quản trị viên làm. Tài khoản giáo vụ cũ bị khóa, không đăng nhập được." }],
   TEACHER: [
     { area: "Lớp của mình", actions: "Xem lịch dạy, điểm danh trong khung giờ, hồ sơ học sinh lớp mình" },
     { area: "Bài tập", actions: "Soạn/giao/đóng bài, chấm (kể cả ảnh bài tự luận), yêu cầu nộp lại, công bố điểm và bài chữa, bảng điểm" },
@@ -56,7 +49,7 @@ export const ROLE_CAPABILITIES: Record<Role, { area: string; actions: string }[]
 
 export const HOME_BY_ROLE: Record<Role, string> = {
   ADMIN: "/quan-ly",
-  STAFF: "/quan-ly",
+  STAFF: "/dang-nhap", // vai trò đã ngừng — không có trang
   TEACHER: "/giao-vien",
   STUDENT: "/hoc-sinh",
   PARENT: "/phu-huynh",
@@ -65,24 +58,24 @@ export const HOME_BY_ROLE: Record<Role, string> = {
 const PERMISSIONS = {
   "catalog.manage": ["ADMIN"],
   "room.manage": ["ADMIN"],
-  "lead.manage": ["ADMIN", "STAFF"],
+  "lead.manage": ["ADMIN"],
   "user.manage": ["ADMIN"],
-  "user.createLearner": ["ADMIN", "STAFF"],
-  "guardian.manage": ["ADMIN", "STAFF"],
-  "class.manage": ["ADMIN", "STAFF"],
-  "enrollment.manage": ["ADMIN", "STAFF"],
-  "attendance.override": ["ADMIN", "STAFF"],
+  "user.createLearner": ["ADMIN"],
+  "guardian.manage": ["ADMIN"],
+  "class.manage": ["ADMIN"],
+  "enrollment.manage": ["ADMIN"],
+  "attendance.override": ["ADMIN"],
   "assignment.author": ["TEACHER"],
   "submission.work": ["STUDENT"],
   "audit.read": ["ADMIN"],
   // Bổ sung (FR-036..FR-052)
-  "staff.view": ["ADMIN", "STAFF"], // xem danh sách/hồ sơ giáo viên, lịch tổng
-  "document.manage": ["ADMIN", "STAFF"], // giáo trình, phân phối tài liệu
-  "request.handle": ["ADMIN", "STAFF"], // duyệt đề xuất đổi lịch
-  "report.view": ["ADMIN", "STAFF"],
+  "staff.view": ["ADMIN"], // xem danh sách/hồ sơ giáo viên, lịch tổng
+  "document.manage": ["ADMIN"], // giáo trình, phân phối tài liệu
+  "request.handle": ["ADMIN"], // duyệt đề xuất đổi lịch
+  "report.view": ["ADMIN"],
   "level.manage": ["ADMIN"],
   // Checklist v4 (DECISION-D33)
-  "practice.author": ["ADMIN", "STAFF", "TEACHER"], // soạn đề luyện tập
+  "practice.author": ["ADMIN", "TEACHER"], // soạn đề luyện tập
   "practice.take": ["STUDENT"], // làm đề luyện tập
 } as const satisfies Record<string, readonly Role[]>;
 
@@ -96,11 +89,13 @@ export function assertCan(actor: { role: Role }, permission: Permission): void {
   if (!can(actor.role, permission)) throw new ForbiddenError();
 }
 
-/** STAFF chỉ được tạo tài khoản học sinh/phụ huynh (ASSUMPTION-A04). */
+/** Chỉ Admin tạo tài khoản; không tạo vai trò giáo vụ đã ngừng (DECISION-D35). */
 export function canCreateUserWithRole(actorRole: Role, targetRole: Role): boolean {
-  if (actorRole === "ADMIN") return true;
-  return actorRole === "STAFF" && (targetRole === "STUDENT" || targetRole === "PARENT");
+  return actorRole === "ADMIN" && targetRole !== "STAFF";
 }
+
+/** Vai trò còn dùng — cho ô chọn vai trò khi tạo / sửa tài khoản. */
+export const ACTIVE_ROLES = ["ADMIN", "TEACHER", "STUDENT", "PARENT"] as const satisfies readonly Role[];
 
 /** Admin không tự khóa hoặc tự đổi vai trò của chính mình (T-10). */
 export function canChangeRoleOrStatus(actor: { id: string; role: Role }, targetUserId: string): boolean {

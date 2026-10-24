@@ -20,7 +20,7 @@ export default async function ParentLeavePage({ searchParams }: { searchParams: 
   return (
     <>
       <Flash code={(await searchParams).thongbao} />
-      <PageHeader title="Đơn xin nghỉ" description="Chọn buổi học sắp tới của con và ghi lý do. Giáo viên/giáo vụ duyệt thì buổi đó được ghi &ldquo;Có phép&rdquo;." />
+      <PageHeader title="Đơn xin nghỉ" description="Chọn buổi học sắp tới của con và ghi lý do. Giáo viên/trung tâm duyệt thì buổi đó được ghi &ldquo;Có phép&rdquo;." />
       <Card title="Gửi đơn xin nghỉ" className="mb-6">
         {targets.length === 0 ? (
           <p className="text-sm text-muted">Con không có buổi học nào trong 30 ngày tới có thể xin nghỉ.</p>

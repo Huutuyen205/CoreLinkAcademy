@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Buổi học" };
 // FR-024: Staff/Admin sửa điểm danh, ngoài khung bắt buộc lý do + audit.
 // Admin §7: quản lý buổi ngay tại đây (mở từ Lịch tổng) — đổi giáo viên, đổi phòng, dời giờ, ghi nhận nghỉ/hủy.
 export default async function ManageSessionPage({ params }: { params: Promise<{ id: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const [data, options] = await Promise.all([orNotFound(getSessionForAttendance(actor, (await params).id)), classFormOptions(actor)]);
   const s = data.session;
   const editable = s.status === "SCHEDULED" && s.startsAt > new Date();

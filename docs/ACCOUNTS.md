@@ -4,12 +4,12 @@ Tài khoản **giả** do `prisma/seed.ts` tạo, chỉ dùng cho môi trường
 
 - Cổng đăng nhập: `http://localhost:3000/dang-nhap` (email hoặc số điện thoại + mật khẩu).
 - Mật khẩu: giá trị `SEED_DEMO_PASSWORD` trong `.env`; nếu để trống, seed tự sinh và in ra **một lần** khi chạy.
-- Tài khoản do Admin/Staff tạo sau này dùng mật khẩu tạm và phải đổi ở lần đăng nhập đầu.
+- Tài khoản do Admin tạo sau này dùng mật khẩu tạm và phải đổi ở lần đăng nhập đầu.
 
 | Vai trò | Họ tên | Email | SĐT | Trang chính |
 |---|---|---|---|---|
 | Admin | Quản trị Demo | `admin@demo.corelink.vn` | 0900 000 001 | `/quan-ly` |
-| Staff (giáo vụ/tư vấn) | Giáo vụ Demo | `giaovu@demo.corelink.vn` | 0900 000 002 | `/quan-ly` |
+| ~~Staff (giáo vụ)~~ | Giáo vụ Demo | `giaovu@demo.corelink.vn` | 0900 000 002 | **Đã khóa** — vai trò giáo vụ bỏ (DECISION-D35); seed không tạo nữa |
 | Giáo viên | Giáo viên Toán Demo | `gv.toan@demo.corelink.vn` | 0900 000 011 | `/giao-vien` — lớp TOAN9-K1 |
 | Giáo viên | Giáo viên Văn Demo | `gv.van@demo.corelink.vn` | 0900 000 012 | `/giao-vien` — lớp VAN9-K1 |
 | Giáo viên | Giáo viên Anh Demo | `gv.anh@demo.corelink.vn` | 0900 000 013 | `/giao-vien` — lớp ANH-THCS-K1 |

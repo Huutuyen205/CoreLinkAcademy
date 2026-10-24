@@ -37,7 +37,7 @@ const setSchema = z.object({
 const SET_FIELDS = ["title", "description", "topic", "format", "difficulty", "subjectId", "levelId"];
 
 export async function createPracticeSetAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, SET_FIELDS);
   const parsed = parseForm(setSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -47,7 +47,7 @@ export async function createPracticeSetAction(_prev: ActionState, formData: Form
 }
 
 export async function updatePracticeSetAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, ["setId", ...SET_FIELDS]);
   const parsed = parseForm(setSchema.extend({ setId: id }), fields);
   if (!parsed.ok) return parsed.state;
@@ -59,7 +59,7 @@ export async function updatePracticeSetAction(_prev: ActionState, formData: Form
 }
 
 export async function setPracticeActiveAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ setId: id, active: z.enum(["0", "1"]) }), formFields(formData, ["setId", "active"]));
   if (!parsed.ok) return parsed.state;
   const active = parsed.data.active === "1";
@@ -71,7 +71,7 @@ export async function setPracticeActiveAction(_prev: ActionState, formData: Form
 }
 
 export async function deletePracticeSetAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ setId: id }), formFields(formData, ["setId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deletePracticeSet(actor, parsed.data.setId));
@@ -99,7 +99,7 @@ const questionSchema = z.object({
 
 /** Thêm/sửa câu hỏi đề luyện (cùng cách nhập như bài tập + ô lời giải). */
 export async function savePracticeQuestionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, ["setId", "questionId", "type", "prompt", "points", "options", "correctOption", "acceptedAnswers", "explanation"]);
   const parsed = parseForm(questionSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -124,7 +124,7 @@ export async function savePracticeQuestionAction(_prev: ActionState, formData: F
 }
 
 export async function deletePracticeQuestionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ setId: id, questionId: id }), formFields(formData, ["setId", "questionId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deletePracticeQuestion(actor, parsed.data.setId, parsed.data.questionId));
