@@ -3,9 +3,20 @@
 import { ChevronDown, Download, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { Avatar } from "@/components/ui/avatar";
 import { logout } from "@/server/auth/actions";
 import type { NavItem } from "./nav-links";
+
+/** Nút gửi form đăng xuất: báo "đang đăng xuất" và chặn bấm lặp trong lúc chờ máy chủ. */
+function LogoutButton({ className }: { className: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" role="menuitem" disabled={pending} aria-busy={pending} className={`${className} disabled:cursor-wait disabled:opacity-60`}>
+      <LogOut className="size-4" aria-hidden="true" /> {pending ? "Đang đăng xuất…" : "Đăng xuất"}
+    </button>
+  );
+}
 
 /**
  * Menu người dùng ở góc phải thanh trên: ảnh + tên, mở ra hồ sơ, đổi mật khẩu, cài ứng dụng, đăng xuất.
@@ -95,9 +106,7 @@ export function UserMenu({
             </div>
           )}
           <form action={logout} className="border-t border-line">
-            <button type="submit" role="menuitem" className={`${item} text-danger`}>
-              <LogOut className="size-4" aria-hidden="true" /> Đăng xuất
-            </button>
+            <LogoutButton className={`${item} text-danger`} />
           </form>
         </div>
       )}

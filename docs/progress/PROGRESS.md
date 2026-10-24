@@ -1,5 +1,50 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-24 (thêm 6) — Nav lớp của giáo viên dễ bấm hơn, nút Đăng xuất có phản hồi
+
+- `giao-vien/lop/[id]/_tabs/tab-nav.tsx`: trên điện thoại 4 mục (Chi tiết · Giáo án và tài liệu · Bài tập và đề · Học sinh) thành lưới 2×2 nút cao 48px, hiện đủ cả bốn — trước đây "Học sinh" nằm ngoài màn hình (phải vuốt ngang). ≥ sm giữ tab gạch chân một hàng. Bỏ thanh cuộn ngang + `scrollIntoView` nên component không còn là client component.
+- `components/layout/user-menu.tsx`: nút Đăng xuất hiện "Đang đăng xuất…" và khóa bấm lặp trong lúc chờ máy chủ (dev có lúc chờ 1,5–6 s do biên dịch trang đăng nhập, nhìn như "không hoạt động"). Không đổi logic `logout`.
+- Kiểm thử: Edge headless bấm thật ở 390×844 và 1400×900 — cả bốn tab nằm trong màn hình và bấm trúng; Đăng xuất xóa phiên DB và về `/dang-nhap`.
+
+## 2026-10-24 (thêm 5) — Trang bài tập giáo viên gọn lại + "AI chấm" cả bài (DECISION-D44, FR-056)
+
+PO: cột "Giao bài" + "Thông tin bài" làm trang dài ngoằng khi thu nhỏ; muốn nút cùng cỡ, bật bằng một nút như hộp thoại, 2 tab; nút phiếu giấy đổi thành "AI chấm" và chấm cả bài chưa chấm; form trắc nghiệm hiện đáp án có ô tích, không tô đáp án đúng.
+
+- **Hộp thoại "Quản lý bài"** (`manage-modal.tsx`, `manage-controls.tsx`): trang `/giao-vien/bai-tap/[id]` bỏ cột phải; nút **Quản lý bài** ở đầu trang mở hộp thoại (điện thoại: tấm trượt từ dưới lên, cuộn bên trong). Tab **Chi tiết** = form thông tin bài, lời giải, xóa bài (2 cột trên màn rộng). Tab **Quản lý bài** (tên cũ "Giao bài") = 4 nút cùng cỡ: **Chấm bài** (→ Bài nộp), **AI chấm**, **công tắc mở/đóng bài**, **Nhắc nộp bài**; thêm "Công bố kết quả" và cảnh báo bài chưa chấm; bài nháp chỉ có "Giao bài cho lớp". Hộp đóng bằng ×/Esc hoặc khi trang chuyển hướng; hai tab giữ nguyên trong DOM nên không mất chữ đang nhập.
+- **AI chấm** (`gradeUngradedWithAi`, `aiGradeUngradedAction`): chấm mọi bài đã nộp nhưng chưa chấm của bài tập; điểm tự luận do AI đề xuất ghi qua `gradeSubmission` (đáp án mẫu = ô "Bài chữa / lời giải"); câu bỏ trống = 0; bài có ảnh AI không đọc được để lại cho GV; tối đa 45 giây/lần bấm, còn bài thì báo để bấm tiếp; hết lượt AI thì dừng và báo. Đánh dấu `submissions.aiGradedAt` (migration `20261031100000_submission_ai_graded`, chỉ `ADD COLUMN`) → Bài nộp hiện "AI chấm · chờ duyệt" + nút "Duyệt điểm AI", trang chấm có cảnh báo; GV lưu điểm hoặc yêu cầu nộp lại thì bỏ dấu. HS/PH vẫn chỉ thấy sau khi GV công bố. Audit `ai.grade_batch`.
+- **Phiếu giấy** không bị bỏ: chuyển thành nút "Nhập phiếu giấy (AI đọc)" ở đầu trang Bài nộp (bài toàn trắc nghiệm).
+- **Form trắc nghiệm** (`question-form.tsx`): mỗi đáp án một ô nhập A–F (2–6, thêm/xóa được) với ô tròn trống bên trái để tích đáp án đúng; không tô màu. Server vẫn nhận `options` + `correctOption` như cũ (ô trống bị bỏ, số thứ tự đáp án đúng được đánh lại). Danh sách câu hỏi của GV vẫn in đậm "(đúng)" như trước.
+- Cập nhật docs 01 (v4.3, FR-056), 03, 04 (UC-008, UC-010), 05 (P2-51, P2-59), 10, 12 (T-22), 13, 17 (D44, sửa D34 ở điểm "AI không tự chấm"), 24 (§6), P-03.
+- **Kiểm chứng**:
+  - `vitest` 277/277 · tích hợp 69/69 (thêm 1 test "AI chấm cả bài") trên `corelink_local_test`; `tsc` ✓ · `eslint` ✓.
+  - Migration đã chạy trên Postgres local (`corelink_local`, `corelink_local_test`).
+  - Xem bằng Chromium headless trên `next dev` + DB local: hộp thoại 2 tab ở 390 px và 1280 px (4 nút cùng cỡ, công tắc, tab Chi tiết), không lỗi JS; form MCQ hiện ô tròn và lưu được. Đã trả dữ liệu thử về như cũ.
+- **Chưa kiểm**:
+  - Bấm "AI chấm" bằng AI thật (chỉ chạy chế độ mẫu).
+  - `next build` bản mới.
+  - **Supabase do PO tự `db:migrate`**.
+- **Giả định cần PO xác nhận**: (1) "2 tab chi tiết và bài làm" hiểu là 2 tab *Chi tiết* + *Quản lý bài*; (2) "trong lớp đó" hiểu là các bài nộp của bài tập đang mở (không phải mọi bài tập của lớp); (3) vẫn in đậm đáp án đúng ở danh sách câu hỏi cho GV (chỉ form sửa/thêm bỏ tô màu).
+
+## 2026-10-24 (thêm 4) — Hình minh họa Toán do hệ thống vẽ (DECISION-D43, FR-067)
+
+PO: AI không sinh ảnh trực tiếp; AI chỉ mô tả hình, hệ thống tự vẽ. Làm Toán trước (hình học, đồ thị hàm số, công thức, bảng biến thiên/trục số/Venn), dùng cho slide, đề/bài tập in, tài liệu và web. Vẫn đang dùng API miễn phí nên prompt phải đơn giản.
+
+- **Mô tả hình (`figure`)**: AI trả một đối tượng JSON nhỏ, Zod kiểm (`src/server/figures/schema.ts`). Có 6 loại: `function`, `geometry` (2D/3D chiếu xiên), `variation`, `numberline`, `venn` (2–3 tập), `formula` (LaTeX qua MathJax, chỉ gói base+ams, chặn `\href`, `\def`…). Hình sai/không vẽ được thì bỏ hình và giữ chữ. Mỗi lần sinh tối đa 6 hình. Không chạy mã do AI viết: biểu thức hàm dùng bộ phân tích riêng (`expr.ts`), không dùng `eval`.
+- **Vẽ** (`src/server/figures/draw/*`, `render.ts`): SVG cho web; PNG 2× qua `@resvg/resvg-js`, kèm font DejaVu (`src/server/figures/fonts/`), cho `.pptx` và `.docx`. Slide có hình thì chữ thu hẹp bên trái, hình bên phải (`slide-layout.ts`). Bản xem trước slide hiện hình SVG.
+- **Prompt**: chỉ nhóm Toán (`FIGURE_GROUPS`) được thêm hướng dẫn hình. Hướng dẫn ngắn, mỗi loại một ví dụ, ghi rõ "không chắc số liệu thì không thêm hình" và "hình của câu hỏi không được lộ đáp án".
+- **Lưu và hiển thị**: migration `20261031090000_question_figures` thêm cột `figure JSONB` vào `questions` và `practice_questions`. Câu hỏi lưu từ AI giữ hình. `QuestionFigure` hiện hình ở trang bài tập của giáo viên, trang làm bài (học sinh/phụ huynh), trang chấm, đề luyện và kết quả. Form sửa câu có ô "Bỏ hình minh họa của câu này". `dangerouslySetInnerHTML` chỉ dùng cho SVG do server vẽ (docs/12 T-08, T-21).
+- Thêm 2 gói `@resvg/resvg-js@2.6.2` và `mathjax-full@3.2.2` (`serverExternalPackages`, font khai trong `outputFileTracingIncludes`). Cập nhật docs 01 (FR-067), 05 (FEAT-048, P2-57/58), 10, 12, 13, 14, 17 (D43), 24 (§5A).
+- **Kiểm chứng**:
+  - `vitest` 277/277 · tích hợp 68/68 trên `corelink_local_test`.
+  - `tsc` ✓ · `eslint` ✓ · `next build` ✓.
+  - Migration đã chạy trên Postgres local (`corelink_local`, `corelink_local_test`). Đã xem PNG cả 6 loại hình bằng mắt.
+  - Smoke bản build thật: gán hình cho một câu đã giao → trang giáo viên và trang học sinh đều 200 và có hình kèm chú thích. Đã trả dữ liệu thử về như cũ.
+- **Chưa kiểm**:
+  - Mở `.pptx`/`.docx` bằng Office/LibreOffice (máy không có).
+  - `resvg`/`mathjax` trên môi trường deploy (tracing gói native linux).
+  - Gọi AI thật để xem API miễn phí có trả `figure` đúng mẫu không.
+  - **Supabase do PO tự `db:migrate`**.
+
 ## 2026-10-24 (thêm 3) — Cổng phụ huynh = cổng học sinh của con đang chọn + ô chọn con (DECISION-D42)
 
 PO: phụ huynh y hệt học sinh (kế thừa), khác ở Tin nhắn và thêm Đơn xin nghỉ; ô chọn con ở thanh trên, rê chuột là xổ danh sách con; con làm bài ngay trên máy bố mẹ, bố mẹ xem tiến độ con trên tài khoản mình.
