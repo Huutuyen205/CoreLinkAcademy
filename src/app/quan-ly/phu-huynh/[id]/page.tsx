@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Hồ sơ phụ huynh" };
 
 // Admin §4 — FR-014, FR-036: chi tiết phụ huynh, liên kết / gỡ liên kết con.
 export default async function ParentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { id } = await params;
   const [p, students] = await Promise.all([orNotFound(getParentProfile(actor, id)), linkableStudents(actor, id)]);
 

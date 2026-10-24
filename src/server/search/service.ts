@@ -20,7 +20,7 @@ function personWhere(q: string): Prisma.UserWhereInput {
 }
 
 export function canGlobalSearch(role: Actor["role"]): boolean {
-  return role === "ADMIN" || role === "STAFF" || role === "TEACHER";
+  return role === "ADMIN" || role === "TEACHER";
 }
 
 export async function globalSearch(actor: Actor, rawQuery: string): Promise<SearchGroup[]> {

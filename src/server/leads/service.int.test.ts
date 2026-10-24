@@ -14,7 +14,7 @@ let catalog: Awaited<ReturnType<typeof createCatalog>>;
 
 describe.skipIf(!process.env.TEST_DATABASE_URL)("tuyển sinh — integration", () => {
   beforeAll(async () => {
-    staff = await createUser(tag, "STAFF");
+    staff = await createUser(tag, "ADMIN"); // giáo vụ đã bỏ (DECISION-D35) — Admin quản lý lead
     teacher = await createUser(tag, "TEACHER");
     catalog = await createCatalog(tag);
   });

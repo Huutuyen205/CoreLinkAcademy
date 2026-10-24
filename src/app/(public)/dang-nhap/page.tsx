@@ -135,7 +135,7 @@ export default async function LoginPage() {
               </Link>
             </p>
             <p className="text-center">
-              Quên mật khẩu? Vui lòng liên hệ <span className="font-semibold text-ink">Ban giáo vụ</span> để được cấp lại tức thời.
+              Quên mật khẩu? Vui lòng liên hệ <span className="font-semibold text-ink">quản trị viên trung tâm</span> để được cấp lại tức thời.
             </p>
             <div className="flex items-center justify-between pt-1">
               <Link

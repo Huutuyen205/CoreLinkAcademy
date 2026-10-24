@@ -39,7 +39,7 @@ export default async function ParentDashboard({ searchParams }: { searchParams: 
       <div className="space-y-6">
         <Flash code={sp.thongbao} />
         <PageHeader title={`Xin chào, ${actor.fullName}`} />
-        <EmptyState message="Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ giáo vụ của học viện để được hỗ trợ ghép hồ sơ con." />
+        <EmptyState message="Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con." />
       </div>
     );
   }

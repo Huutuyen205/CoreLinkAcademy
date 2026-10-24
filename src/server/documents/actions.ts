@@ -57,7 +57,7 @@ const revalidateDocs = () => {
 
 /** FR-042: tải lên giáo trình / tài liệu / giáo án. */
 export async function createDocumentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const kind = z.enum(["CURRICULUM", "MATERIAL", "LESSON_PLAN"]).safeParse(formData.get("kind"));
   if (!kind.success) return { ok: false, message: "Loại tài liệu không hợp lệ." };
   const { fields, data } = docInput(formData);
@@ -71,7 +71,7 @@ export async function createDocumentAction(_prev: ActionState, formData: FormDat
 }
 
 export async function updateDocumentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const documentId = String(formData.get("documentId") ?? "");
   if (!id.safeParse(documentId).success) return { ok: false, message: "Tài liệu không hợp lệ." };
   const { fields, data } = docInput(formData);
@@ -84,7 +84,7 @@ export async function updateDocumentAction(_prev: ActionState, formData: FormDat
 }
 
 export async function setDocumentActiveAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ documentId: id, active: z.enum(["1", "0"]) }), formFields(formData, ["documentId", "active"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setDocumentActive(actor, parsed.data.documentId, parsed.data.active === "1"));
@@ -94,7 +94,7 @@ export async function setDocumentActiveAction(_prev: ActionState, formData: Form
 }
 
 export async function deleteDocumentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ documentId: id }), formFields(formData, ["documentId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deleteDocument(actor, parsed.data.documentId));
@@ -104,7 +104,7 @@ export async function deleteDocumentAction(_prev: ActionState, formData: FormDat
 }
 
 export async function addDocumentFilesAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const documentId = String(formData.get("documentId") ?? "");
   if (!id.safeParse(documentId).success) return { ok: false, message: "Tài liệu không hợp lệ." };
   const result = await runAction(async () => addDocumentFiles(actor, documentId, await readUploads(formData, "files")));
@@ -114,7 +114,7 @@ export async function addDocumentFilesAction(_prev: ActionState, formData: FormD
 }
 
 export async function deleteDocumentFileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ documentId: id, fileId: id }), formFields(formData, ["documentId", "fileId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deleteDocumentFile(actor, parsed.data.documentId, parsed.data.fileId));
@@ -125,7 +125,7 @@ export async function deleteDocumentFileAction(_prev: ActionState, formData: For
 
 /** Chia sẻ / phân phối cho lớp. */
 export async function shareDocumentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const fields = formFields(formData, ["documentId", "classId"]);
   const parsed = parseForm(z.object({ documentId: id, classId: z.string().min(1, "Chọn lớp.").max(40) }), fields);
   if (!parsed.ok) return parsed.state;
@@ -136,7 +136,7 @@ export async function shareDocumentAction(_prev: ActionState, formData: FormData
 }
 
 export async function unshareDocumentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const parsed = parseForm(z.object({ documentId: id, classId: id }), formFields(formData, ["documentId", "classId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => unshareDocument(actor, parsed.data.documentId, parsed.data.classId));
@@ -158,7 +158,7 @@ export async function submitLessonPlanAction(_prev: ActionState, formData: FormD
 
 /** Quản lý duyệt / yêu cầu sửa giáo án. */
 export async function reviewLessonPlanAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["documentId", "decision", "note"]);
   const parsed = parseForm(z.object({ documentId: id, decision: z.enum(["approve", "reject"], { errorMap: () => ({ message: "Chọn quyết định." }) }), note: optionalText(500) }), fields);
   if (!parsed.ok) return parsed.state;

@@ -10,7 +10,6 @@ import { cn } from "@/lib/format";
 
 const DEMO_ACCOUNTS = [
   { role: "ADMIN", label: "Admin", email: "admin@demo.corelink.vn", badge: "Quản trị viên" },
-  { role: "STAFF", label: "Giáo vụ", email: "giaovu@demo.corelink.vn", badge: "Vận hành" },
   { role: "TEACHER", label: "Giáo viên", email: "gv.toan@demo.corelink.vn", badge: "Giảng dạy" },
   { role: "STUDENT", label: "Học sinh", email: "hs1@demo.corelink.vn", badge: "Học tập" },
   { role: "PARENT", label: "Phụ huynh", email: "ph1@demo.corelink.vn", badge: "Đồng hành" },

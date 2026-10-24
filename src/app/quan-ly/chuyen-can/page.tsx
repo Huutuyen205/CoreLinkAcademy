@@ -26,7 +26,7 @@ const dateOk = (v?: string) => (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.t
 
 // Admin §11: theo dõi tình hình điểm danh, lịch sử chuyên cần theo lớp và theo học sinh (bấm tên → hồ sơ học sinh).
 export default async function AttendanceTrackingPage({ searchParams }: { searchParams: Promise<{ lop?: string; tu?: string; den?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const [classes, alerts] = await Promise.all([trackingClassOptions(actor), listAbsenceAlerts(actor)]);
   const classId = classes.some((c) => c.id === sp.lop) ? sp.lop : undefined;

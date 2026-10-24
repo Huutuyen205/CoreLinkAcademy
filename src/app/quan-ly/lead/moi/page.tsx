@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Nhập lead" };
 
 // UC-020 — FR-006: khách gọi điện, đến trực tiếp hoặc được giới thiệu.
 export default async function NewLeadPage() {
-  await requireRole("ADMIN", "STAFF");
+  await requireRole("ADMIN");
   const [subjects, courses] = await Promise.all([listSubjects(), listPublishedCourses()]);
 
   return (

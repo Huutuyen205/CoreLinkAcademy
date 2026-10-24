@@ -31,7 +31,7 @@ export const metadata: Metadata = { title: "Chi tiết lớp" };
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ q?: string; thongbao?: string }> };
 
 export default async function ManageClassPage({ params, searchParams }: Props) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { id } = await params;
   const sp = await searchParams;
   const [klass, options] = await Promise.all([orNotFound(getClassForManager(actor, id)), classFormOptions(actor)]);

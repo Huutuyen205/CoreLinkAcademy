@@ -1,18 +1,22 @@
-# P-02 — Cổng quản lý (Admin, Giáo vụ/Tư vấn)
+# P-02 — Cổng quản lý (Quản trị viên / Admin)
 
 | Mục | Giá trị |
 |---|---|
-| Phiên bản | 1.0 (2026-10-21) · Owner: BA + Designer (trợ lý) · Approver: chủ dự án |
-| Người dùng | Staff, Admin — chủ yếu máy tính |
-| Mục tiêu | Không bỏ sót lead (GOAL-002); vận hành lớp, ghi danh, điểm danh; quản trị dữ liệu nền |
+| Phiên bản | 2.0 (2026-10-24) — bỏ vai trò giáo vụ theo DECISION-D35, toàn bộ cổng quản lý do Admin sử dụng · Owner: BA + Designer (trợ lý) · Approver: chủ dự án |
+| Người dùng | Quản trị viên (`ADMIN`) — chủ yếu máy tính |
+| Mục tiêu | Không bỏ sót lead (GOAL-002); trực tiếp vận hành lớp, ghi danh, điểm danh, duyệt đơn/đề xuất; quản trị dữ liệu nền |
 | FR | FR-006..009, 012..021, 024, 026, 034, 035 · UC-002, 003, 005, 006, 007, 012, 014, 015, 018, 019, 020 |
 
-## 1. Điều hướng
-Sidebar (≥ 1024px) / ngăn kéo "Menu" (< 1024px):
-- **Staff + Admin:** Tổng quan · Lead · Lớp học · Học viên
-- **Chỉ Admin:** Người dùng · Khóa học · Môn học · Phòng học · Nhật ký
+> **DECISION-D35 (2026-10-24):** Đã bỏ vai trò giáo vụ (`STAFF`). Toàn bộ tính năng tuyển sinh, đào tạo, duyệt đơn, báo cáo trước đây nay do Admin trực tiếp đảm nhận.
 
-Cuối menu: họ tên, vai trò, "Đổi mật khẩu", "Đăng xuất". Staff mở URL chỉ dành cho Admin → về `/quan-ly`.
+## 1. Điều hướng
+Sidebar (≥ 1024px) / ngăn kéo "Menu" (< 1024px) cho Quản trị viên:
+- **Tổng quan & tuyển sinh:** Tổng quan · Lead · Lớp học · Lịch tổng · Đề xuất & đơn nghỉ · Chuyên cần · Đánh giá của GV · Báo cáo
+- **Con người:** Học viên · Giáo viên · Phụ huynh
+- **Tài liệu & tương tác:** Giáo trình, tài liệu, giáo án · Đề luyện tập · Thông báo · Tin nhắn
+- **Quản trị hệ thống:** Người dùng · Khóa học · Môn & cấp học · Phòng học · Nhật ký
+
+Cuối menu: họ tên, vai trò, "Đổi mật khẩu", "Đăng xuất".
 
 ## 2. Đăng nhập và đổi mật khẩu (chung mọi vai trò)
 - `/dang-nhap`: email hoặc SĐT + mật khẩu. Sai → "Thông tin đăng nhập không đúng." (giữ ô email/SĐT); 5 lần → khóa 15 phút; > 20 lần/10'/IP → chặn tạm.

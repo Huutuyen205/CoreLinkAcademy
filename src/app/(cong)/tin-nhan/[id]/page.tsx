@@ -137,7 +137,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
                   <span className="block truncate text-xs text-muted">{m.note ?? ROLE_LABELS[m.role]}</span>
                 </span>
                 {m.canDirect && <ConfigForm action={startConversationAction} hidden={{ userId: m.id }} submitLabel="Nhắn riêng" submitVariant="secondary" fields={[]} />}
-                {c.canModerate && m.id !== actor.id && (m.role !== "TEACHER" || actor.role === "ADMIN" || actor.role === "STAFF") && (
+                {c.canModerate && m.id !== actor.id && (m.role !== "TEACHER" || actor.role === "ADMIN") && (
                   <ActionButton
                     action={setMemberMutedAction}
                     hidden={{ conversationId: c.id, userId: m.id, muted: c.mutedIds.includes(m.id) ? "0" : "1" }}

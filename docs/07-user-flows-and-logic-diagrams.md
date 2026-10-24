@@ -143,14 +143,14 @@ sequenceDiagram
 2. Đến giờ (từ 30 phút trước) → "Điểm danh" → mặc định có mặt → chỉnh em vắng → Lưu (≤ 30 s).
 3. Tối: `/giao-vien/lop/[id]` → "Tạo bài tập" → thêm câu → "Giao bài cho lớp".
 4. Sau hạn: "Bài chờ chấm" → chấm tự luận → "Công bố kết quả".
-5. Xem cảnh báo vắng 2 buổi liên tiếp → báo giáo vụ (ngoài hệ thống).
+5. Xem cảnh báo vắng 2 buổi liên tiếp → liên hệ gia đình / trung tâm.
 
 ### 4.3 Học sinh — làm bài
 
 1. `/hoc-sinh` → "Bài cần làm" → mở bài → làm → "Lưu nháp" (tùy) → "Nộp bài" (xác nhận).
 2. Sau khi GV công bố: `/hoc-sinh/ket-qua` → bấm tên bài → xem điểm, đáp án, nhận xét.
 
-### 4.4 Staff — một ngày
+### 4.4 Quản trị viên (Admin) — một ngày (vai trò giáo vụ đã bỏ theo DECISION-D35)
 
 1. `/quan-ly`: xử lý "Lead quá 24 giờ" → `/quan-ly/lead?quahan=1`.
 2. Khách gọi điện → "Nhập lead" (UC-020).
@@ -270,11 +270,11 @@ flowchart TD
   B -- GV --> C{"GV chính hoặc GV của buổi?"}
   C -- không --> X[404]
   C -- có --> CX{Buổi CANCELLED?}
-  B -- "STAFF/ADMIN" --> CX
+  B -- "ADMIN" --> CX
   CX -- có --> CA[Alert buổi đã hủy, không form]
   CX -- không --> D{Trong khung BR-030?}
   D -- có --> F[Form, mặc định có mặt]
-  D -- không, GV --> RO[Chỉ xem + hướng dẫn liên hệ giáo vụ]
+  D -- không, GV --> RO[Chỉ xem + hướng dẫn liên hệ trung tâm]
   D -- không, quản lý --> F2[Form + ô lý do bắt buộc]
   F --> S[Lưu: lọc HS thuộc lớp, upsert]
   F2 --> RS{Có lý do?}
@@ -323,7 +323,7 @@ sequenceDiagram
 ```mermaid
 flowchart TD
   A["/phu-huynh?con="] --> B{Có con liên kết ACTIVE?}
-  B -- không --> E[EmptyState liên hệ giáo vụ]
+  B -- không --> E[EmptyState liên hệ trung tâm]
   B -- có --> C{?con= có giá trị?}
   C -- không --> D[Chọn con đầu tiên]
   C -- có --> F{Thuộc danh sách con?}

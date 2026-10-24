@@ -1,4 +1,4 @@
-// Đơn xin nghỉ của phụ huynh (Phụ huynh §2 — FR-044). Người duyệt: GV của lớp/buổi hoặc giáo vụ/Admin (DECISION-D25).
+// Đơn xin nghỉ của phụ huynh (Phụ huynh §2 — FR-044). Người duyệt: GV của lớp/buổi hoặc Admin (DECISION-D25).
 import type { Prisma, RequestStatus } from "@prisma/client";
 import { isManager, linkedStudentIds } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";

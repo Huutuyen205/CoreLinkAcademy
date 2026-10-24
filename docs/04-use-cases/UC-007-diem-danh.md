@@ -22,8 +22,8 @@ GV: "Điểm danh" ở "Buổi dạy hôm nay", lịch dạy, hoặc chi tiết 
 5. "Đã lưu điểm danh n học sinh."; lưu lại được nhiều lần trong khung.
 
 ## 5. Alternate flows
-### A1 — Staff/Admin ngoài khung
-1. Alert cảnh báo "Ngoài khung điểm danh của giáo viên: cần nhập lý do, thay đổi được ghi vào nhật ký."; form có ô "Lý do sửa ngoài khung thời gian" bắt buộc.
+### A1 — Admin ngoài khung
+1. Alert cảnh báo "Ngoài khung điểm danh của giáo viên: cần nhập lý do, thay đổi được ghi vào nhật ký."; form có ô "Lý do sửa ngoài khung thời gian" bắt buộc. (Giáo vụ đã bỏ theo DECISION-D35).
 2. Lưu → audit `attendance.override` {reason, before[], after[]}.
 ### A2 — GV dạy thay
 1. GV của buổi (khác GV chính) mở được buổi đó; ở chi tiết lớp chỉ thấy các buổi mình dạy, không thấy bài tập/bảng điểm.
@@ -33,9 +33,9 @@ GV: "Điểm danh" ở "Buổi dạy hôm nay", lịch dạy, hoặc chi tiết 
 ## 6. Exception / failure flows
 | ID | Điều kiện | Hành vi | Mã |
 |---|---|---|---|
-| E1 | GV ngoài khung | Chỉ xem: danh sách tên + nhãn trạng thái/"Chưa điểm danh"; Alert "Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ giáo vụ nếu cần sửa." Nếu vẫn gửi (sửa HTML): "Đã hết thời gian điểm danh của giáo viên. Liên hệ giáo vụ để sửa." | OUTSIDE_WINDOW |
+| E1 | GV ngoài khung | Chỉ xem: danh sách tên + nhãn trạng thái/"Chưa điểm danh"; Alert "Ngoài khung điểm danh (30 phút trước giờ học đến 24 giờ sau giờ kết thúc). Bạn chỉ xem được; liên hệ trung tâm nếu cần sửa." Nếu vẫn gửi (sửa HTML): "Đã hết thời gian điểm danh của giáo viên. Liên hệ trung tâm nếu cần sửa." | OUTSIDE_WINDOW |
 | E2 | Buổi đã hủy | Alert "Buổi học đã hủy: <lý do>.", không có form; gửi: "Buổi học đã bị hủy, không điểm danh được." | SESSION_CANCELLED |
-| E3 | Staff ngoài khung thiếu lý do | Lỗi ô lý do "Sửa điểm danh ngoài khung thời gian cần nhập lý do." | REASON_REQUIRED |
+| E3 | Admin ngoài khung thiếu lý do | Lỗi ô lý do "Sửa điểm danh ngoài khung thời gian cần nhập lý do." | REASON_REQUIRED |
 | E4 | Lớp chưa có HS ACTIVE | "Lớp chưa có học sinh đang học." | — |
 | E5 | Danh sách gửi lên không có HS hợp lệ | "Không có học sinh nào để điểm danh." | EMPTY |
 | E6 | GV lớp khác mở URL | 404 | Forbidden |

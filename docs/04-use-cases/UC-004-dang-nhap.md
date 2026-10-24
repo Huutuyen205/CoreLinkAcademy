@@ -15,11 +15,11 @@ Có tài khoản ACTIVE với email hoặc SĐT.
 Mở `/dang-nhap` (nút "Đăng nhập" ở header) hoặc bị chuyển tới khi vào trang nội bộ chưa đăng nhập.
 
 ## 4. Main success flow
-1. Form: "Email hoặc số điện thoại", "Mật khẩu"; ghi chú "Quên mật khẩu? Vui lòng liên hệ giáo vụ…".
+1. Form: "Email hoặc số điện thoại", "Mật khẩu"; ghi chú "Quên mật khẩu? Vui lòng liên hệ quản trị viên…".
 2. Người dùng nhập, bấm "Đăng nhập" (nút "Đang đăng nhập…").
-3. Hệ thống kiểm tra rate limit IP (BR-009), tìm user (email viết thường hoặc SĐT chuẩn hóa), kiểm tra khóa tạm, kiểm tra mật khẩu (Argon2id), kiểm tra ACTIVE.
+3. Hệ thống kiểm tra rate limit IP (BR-009), tìm user (email viết thường hoặc SĐT chuẩn hóa), kiểm tra khóa tạm, kiểm tra mật khẩu (Argon2id), kiểm tra ACTIVE và vai trò không phải STAFF (STAFF đã bỏ theo DECISION-D35).
 4. Đặt lại bộ đếm sai, tạo phiên 7 ngày, đặt cookie `cl_session`.
-5. Chuyển tới `/quan-ly` (ADMIN/STAFF), `/giao-vien`, `/hoc-sinh` hoặc `/phu-huynh`.
+5. Chuyển tới `/quan-ly` (ADMIN), `/giao-vien`, `/hoc-sinh` hoặc `/phu-huynh`.
 
 ## 5. Alternate flows
 ### A1 — Mật khẩu tạm (`mustChangePassword`)

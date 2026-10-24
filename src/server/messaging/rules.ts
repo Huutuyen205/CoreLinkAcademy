@@ -3,11 +3,11 @@ import type { Role } from "@prisma/client";
 
 type Person = { id: string; role: Role };
 
-const isManagerRole = (role: Role) => role === "ADMIN" || role === "STAFF";
+const isManagerRole = (role: Role) => role === "ADMIN";
 
 /**
  * Cần kiểm tra gì để hai người được nhắn riêng:
- * - "always": một bên là trung tâm (Admin/Giáo vụ) — ai cũng liên hệ được trung tâm.
+ * - "always": một bên là trung tâm (Admin) — ai cũng liên hệ được trung tâm.
  * - "guardian": học sinh ↔ phụ huynh — chỉ khi là phụ huynh của chính em (không nhắn riêng với phụ huynh nhà khác).
  * - "shared-class": còn lại (HS ↔ HS, HS ↔ GV, GV ↔ PH, PH ↔ PH, GV ↔ GV) — phải cùng một lớp đang học.
  * - "never": tự nhắn cho mình.

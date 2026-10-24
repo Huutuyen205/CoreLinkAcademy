@@ -24,7 +24,7 @@ type SP = { status?: string; mon?: string; q?: string; quahan?: string; page?: s
 
 // FR-006: danh sách lead, lọc trạng thái/môn, tìm tên/SĐT, đánh dấu quá hạn. `?xem=bang`: bảng Kanban (FEAT-B1, DECISION-D32).
 export default async function LeadListPage({ searchParams }: { searchParams: Promise<SP> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const status = sp.status && sp.status in LEAD_STATUS ? (sp.status as LeadStatus) : undefined;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 100) : undefined;

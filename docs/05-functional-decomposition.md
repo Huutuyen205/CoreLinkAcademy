@@ -169,7 +169,7 @@ CoreLink Academy v3
 | P2-28 | Tìm kiếm tên không phân biệt dấu/hoa thường bằng index `pg_trgm` + `unaccent` khi lead/người dùng > vài chục nghìn | Nền tảng | Rà soát BE 2026-10-22 | Extension Supabase |
 | P2-29 | Hàng đợi nền (gửi thông báo, xuất Excel, báo cáo tháng) và cache dùng chung (Redis/KV) khi chạy nhiều instance | Vận hành | Rà soát BE 2026-10-22 | P2-03, P2-18 |
 | P2-30 | Trang Khóa học quản lý trên điện thoại: thu gọn form; bộ lọc lead thu gọn (trang Môn học/Phòng đã thu gọn ở FR-036) | Nền tảng | Rà soát giao diện điện thoại 2026-10-21 | — |
-| P2-32 | GV đăng ký lịch rảnh để giáo vụ xếp lịch | Đào tạo | Giáo viên.md §2 ("Giả định – cần xác nhận") | Chờ PO |
+| P2-32 | GV đăng ký lịch rảnh để quản trị viên xếp lịch | Đào tạo | Giáo viên.md §2 ("Giả định – cần xác nhận") | Chờ PO |
 | P2-33 | Ghi nhận thái độ học tập khi điểm danh theo tiêu chí trung tâm | Đào tạo | Giáo viên.md §6 (giả định, BR15) | Chờ tiêu chí |
 | P2-34 | Gửi duyệt giáo án trước buổi dạy | Đào tạo | Giáo viên.md §4 (giả định) | FR-042 |
 | P2-35 | Hồ sơ giới thiệu GV công khai + gửi duyệt | Công khai | Giáo viên.md §11A (giả định, BR36) | — |

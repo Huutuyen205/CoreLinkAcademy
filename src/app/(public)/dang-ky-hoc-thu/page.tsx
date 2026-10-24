@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Đăng ký học thử",
-  description: "Đăng ký buổi học thử miễn phí tại CoreLink Academy. Giáo vụ sẽ liên hệ tư vấn và xếp lớp phù hợp.",
+  description: "Đăng ký buổi học thử miễn phí tại CoreLink Academy. Trung tâm sẽ liên hệ tư vấn và xếp lớp phù hợp.",
 };
 
 type Props = { searchParams: Promise<{ khoa?: string | string[] }> };

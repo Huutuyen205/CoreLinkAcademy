@@ -23,7 +23,7 @@ Khách mở `/dang-ky-hoc-thu` (từ header "Học thử", nút trang chủ, ho�
 4. Hệ thống validate và chuẩn hóa SĐT (`0912 345 678` → `+84912345678`).
 5. Hệ thống tìm lead đang mở cùng SĐT → không có.
 6. Hệ thống tạo lead `NEW` (nguồn `web_form`) + hoạt động `CREATED` ghi thời điểm đồng ý, trong một transaction.
-7. Hệ thống chuyển tới `/dang-ky-hoc-thu/cam-on`: "Cảm ơn quý phụ huynh … Giáo vụ sẽ gọi lại trong giờ làm việc…".
+7. Hệ thống chuyển tới `/dang-ky-hoc-thu/cam-on`: "Cảm ơn quý phụ huynh … Trung tâm sẽ liên hệ lại trong thời gian sớm nhất…".
 
 ## 5. Alternate flows
 ### A1 — Vào từ trang chi tiết khóa

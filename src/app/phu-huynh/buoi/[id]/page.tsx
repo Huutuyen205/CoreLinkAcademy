@@ -35,7 +35,7 @@ export default async function ParentSessionPage({ params, searchParams }: { para
                 submitLabel="Gửi đơn xin nghỉ"
                 fields={[{ type: "textarea", name: "reason", label: "Lý do", required: true, maxLength: 500, rows: 3 }]}
               />
-              <p className="mt-3 text-sm text-muted">Giáo viên lớp hoặc giáo vụ sẽ duyệt. Khi được duyệt, buổi học được ghi &ldquo;Có phép&rdquo;.</p>
+              <p className="mt-3 text-sm text-muted">Giáo viên lớp hoặc trung tâm sẽ duyệt. Khi được duyệt, buổi học được ghi &ldquo;Có phép&rdquo;.</p>
             </Card>
           ) : undefined
         }

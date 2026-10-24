@@ -16,9 +16,9 @@ STAFF/ADMIN.
 
 ## 4. Main success flow
 1. Form: Nguồn* (Gọi điện / Đến trực tiếp / Được giới thiệu / Khác), Họ tên phụ huynh*, SĐT*, Email, Họ tên học sinh*, Khối, Môn quan tâm, Khóa học, Ghi chú.
-2. Staff nhập, bấm "Tạo lead".
+2. Quản trị viên nhập, bấm "Tạo lead".
 3. Hệ thống validate, chuẩn hóa SĐT, kiểm tra lead đang mở trùng SĐT → không có.
-4. Tạo lead NEW nguồn đã chọn + hoạt động CREATED "Nhập tay bởi giáo vụ (nguồn: Gọi điện)." có `actorId`.
+4. Tạo lead NEW nguồn đã chọn + hoạt động CREATED "Nhập tay bởi quản trị viên (nguồn: Gọi điện)." có `actorId`.
 5. Chuyển `/quan-ly/lead/[id]` "Đã tạo lead.".
 
 ## 5. Alternate flows

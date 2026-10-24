@@ -21,7 +21,7 @@ export default function ThankYouPage() {
           Cảm ơn quý phụ huynh!
         </h1>
         <p className="mt-3 text-sm sm:text-base text-muted leading-relaxed max-w-md mx-auto">
-          CoreLink Academy đã ghi nhận thông tin đăng ký học thử. Đội ngũ giáo vụ sẽ liên hệ lại với gia đình trong thời gian sớm nhất để hẹn lịch kiểm tra đầu vào.
+          CoreLink Academy đã ghi nhận thông tin đăng ký học thử. Trung tâm sẽ liên hệ lại với gia đình trong thời gian sớm nhất để hẹn lịch kiểm tra đầu vào.
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-3">

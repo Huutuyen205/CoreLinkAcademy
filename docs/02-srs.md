@@ -216,10 +216,10 @@ Phụ thuộc: MySQL 8 sẵn sàng; font Google (Be Vietnam Pro, Lora) tải lú
 
 #### FR-023 / FR-024 — Điểm danh trong và ngoài khung
 - **Beh:** màn hình buổi: tiêu đề lớp + số buổi, ngày giờ, phòng, khóa, trạng thái. Danh sách = HS ghi danh ACTIVE + HS đã có bản ghi ở buổi này (để sửa lịch sử). Mỗi HS: 4 lựa chọn radio (mặc định bản ghi cũ hoặc "Có mặt"), ô ghi chú ≤ 255. Lưu: chỉ nhận HS thuộc lớp (bỏ id lạ), upsert theo (buổi, HS), `markedBy = actor`. Buổi SCHEDULED đã qua giờ kết thúc → COMPLETED.
-  - GV (lớp mình hoặc buổi mình dạy thay) trong khung BR-030: sửa được. Ngoài khung: chỉ xem + Alert hướng dẫn liên hệ giáo vụ.
-  - Staff/Admin trong khung: như GV. Ngoài khung: Alert cảnh báo + ô "Lý do sửa ngoài khung thời gian" bắt buộc; audit `attendance.override` {reason, before[], after[]}.
+  - GV (lớp mình hoặc buổi mình dạy thay) trong khung BR-030: sửa được. Ngoài khung: chỉ xem + Alert hướng dẫn liên hệ trung tâm.
+  - Admin trong khung: như GV. Ngoài khung: Alert cảnh báo + ô "Lý do sửa ngoài khung thời gian" bắt buộc; audit `attendance.override` {reason, before[], after[]}. (Vai trò giáo vụ đã bỏ theo DECISION-D35).
 - **Err:** `SESSION_CANCELLED` (buổi hủy: Alert, không có form), `OUTSIDE_WINDOW`, `REASON_REQUIRED`, `EMPTY`; GV lớp khác → 404.
-- **AC:** Given buổi kết thúc lúc 19:30 hôm qua, When GV mở lúc 19:31 hôm nay, Then chỉ xem. Given Staff lưu ngoài khung không lý do, Then lỗi ô lý do, không ghi.
+- **AC:** Given buổi kết thúc lúc 19:30 hôm qua, When GV mở lúc 19:31 hôm nay, Then chỉ xem. Given Admin lưu ngoài khung không lý do, Then lỗi ô lý do, không ghi.
 - **Trace:** UC-007 · SCREEN-015, 028 · API-015 · attendances, class_sessions, audit_logs · TC-019, TC-020.
 
 #### FR-025 — Chuyên cần

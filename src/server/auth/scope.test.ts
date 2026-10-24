@@ -14,9 +14,9 @@ describe("phạm vi dữ liệu", () => {
     expect(canTeacherAccessClass("gvA", { teacherId: "gvB", sessionTeacherIds: ["gvA"] })).toBe(true);
   });
 
-  it("chỉ ADMIN/STAFF là quản lý", () => {
+  it("chỉ ADMIN là quản lý (giáo vụ đã bỏ — DECISION-D35)", () => {
     expect(isManager({ role: "ADMIN" })).toBe(true);
-    expect(isManager({ role: "STAFF" })).toBe(true);
+    expect(isManager({ role: "STAFF" })).toBe(false);
     expect(isManager({ role: "TEACHER" })).toBe(false);
   });
 });

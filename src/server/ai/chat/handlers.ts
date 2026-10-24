@@ -74,7 +74,7 @@ async function pickChild(ctx: Ctx, intent: string): Promise<{ child: Child } | {
   if (actor.role === "STUDENT") return { child: { id: actor.id, fullName: actor.fullName } };
   const children = await listMyChildren(actor);
   if (children.length === 0) {
-    return { answer: reply(intent, "Tài khoản của bạn chưa được liên kết với học sinh nào. Vui lòng liên hệ giáo vụ của trung tâm để được ghép hồ sơ con.") };
+    return { answer: reply(intent, "Tài khoản của bạn chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được ghép hồ sơ con.") };
   }
   if (ctx.childId) {
     const chosen = children.find((c) => c.id === ctx.childId);

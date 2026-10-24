@@ -33,7 +33,7 @@ export default async function ManagementDashboard({
 }: {
   searchParams: Promise<{ thongbao?: string | string[] }>;
 }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { thongbao } = await searchParams;
   const [leads, classes, alerts, scheduleRequests, leaveRequests] = await Promise.all([
     leadCounts(actor),

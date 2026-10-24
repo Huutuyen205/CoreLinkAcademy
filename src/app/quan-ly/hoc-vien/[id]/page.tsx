@@ -29,7 +29,7 @@ export const metadata: Metadata = { title: "Hồ sơ học sinh" };
 
 // Admin §2 — FR-036: hồ sơ, lịch sử lớp, chuyển/gỡ lớp, phụ huynh, chuyên cần, kết quả, đánh giá.
 export default async function StudentDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { id } = await params;
   const s = await orNotFound(getStudentProfile(actor, id));
   const [attendance, results, classes, parents, evaluations] = await Promise.all([

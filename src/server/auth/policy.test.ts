@@ -1,22 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { ForbiddenError } from "@/server/errors";
-import { assertCan, can, canChangeRoleOrStatus, canCreateUserWithRole, HOME_BY_ROLE } from "./policy";
+import { ACTIVE_ROLES, assertCan, can, canChangeRoleOrStatus, canCreateUserWithRole, HOME_BY_ROLE } from "./policy";
 
 describe("policy theo vai trò", () => {
-  it("TC-036 STAFF không quản lý người dùng/vai trò và không xem audit", () => {
-    expect(can("STAFF", "user.manage")).toBe(false);
-    expect(can("STAFF", "audit.read")).toBe(false);
+  it("DECISION-D35: vai trò giáo vụ (STAFF) đã bỏ — không còn quyền nào", () => {
+    for (const p of ["user.manage", "audit.read", "lead.manage", "class.manage", "attendance.override", "report.view", "document.manage", "practice.author"] as const) {
+      expect(can("STAFF", p)).toBe(false);
+    }
     expect(can("ADMIN", "audit.read")).toBe(true);
-    expect(() => assertCan({ role: "STAFF" }, "audit.read")).toThrow(ForbiddenError);
+    expect(can("ADMIN", "lead.manage")).toBe(true);
+    expect(() => assertCan({ role: "STAFF" }, "class.manage")).toThrow(ForbiddenError);
   });
 
-  it("TC-036 STAFF chỉ tạo được học sinh/phụ huynh", () => {
-    expect(canCreateUserWithRole("STAFF", "STUDENT")).toBe(true);
-    expect(canCreateUserWithRole("STAFF", "PARENT")).toBe(true);
-    expect(canCreateUserWithRole("STAFF", "TEACHER")).toBe(false);
-    expect(canCreateUserWithRole("STAFF", "ADMIN")).toBe(false);
+  it("chỉ Admin tạo tài khoản; không tạo được vai trò giáo vụ", () => {
     expect(canCreateUserWithRole("ADMIN", "TEACHER")).toBe(true);
+    expect(canCreateUserWithRole("ADMIN", "STUDENT")).toBe(true);
+    expect(canCreateUserWithRole("ADMIN", "STAFF")).toBe(false);
+    expect(canCreateUserWithRole("STAFF", "STUDENT")).toBe(false);
     expect(canCreateUserWithRole("TEACHER", "STUDENT")).toBe(false);
+    expect(ACTIVE_ROLES).not.toContain("STAFF");
   });
 
   it("TC-038 Admin không tự khóa/đổi vai trò của chính mình", () => {
@@ -36,7 +38,8 @@ describe("policy theo vai trò", () => {
   });
 
   it("mỗi vai trò có trang chủ riêng", () => {
-    expect(HOME_BY_ROLE.STAFF).toBe("/quan-ly");
+    expect(HOME_BY_ROLE.ADMIN).toBe("/quan-ly");
+    expect(HOME_BY_ROLE.STAFF).toBe("/dang-nhap");
     expect(HOME_BY_ROLE.PARENT).toBe("/phu-huynh");
   });
 });

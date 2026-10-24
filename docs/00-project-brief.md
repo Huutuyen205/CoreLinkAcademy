@@ -13,7 +13,7 @@
 - **Ý tưởng:** website + hệ thống quản lý cho một học viện đào tạo đa môn phổ thông.
 - **Vấn đề:** phụ huynh khó tìm khóa phù hợp và đăng ký học thử; giáo vụ quản lý khách tiềm năng, lớp, lịch bằng sổ/bảng tính nên bỏ sót lead, trùng lịch; giáo viên điểm danh/chấm bài thủ công; phụ huynh phải hỏi giáo viên mới biết con đi học và điểm số.
 - **Giá trị:** một hệ thống duy nhất từ lúc phụ huynh để lại số điện thoại → thành học viên → học, điểm danh, làm bài → phụ huynh theo dõi.
-- **Phạm vi sản phẩm:** Web công khai (SEO) + cổng nội bộ theo 5 vai trò, một cơ sở, tiếng Việt.
+- **Phạm vi sản phẩm:** Web công khai (SEO) + cổng nội bộ theo 4 vai trò (Quản trị viên, Giáo viên, Học sinh, Phụ huynh — vai trò giáo vụ đã bỏ theo DECISION-D35), một cơ sở, tiếng Việt.
 - **Bối cảnh:** v1/v2 ôm 98 FR, 14 tính năng AI, 84 bảng, tài liệu và code không khớp. v3 làm lại với 35 FR có thể kiểm chứng (DECISION-D01, D05).
 
 ## 2. Mục tiêu và đo lường
@@ -32,8 +32,8 @@
 | ID | Actor / role | Nhu cầu chính | Quyền / phạm vi (chi tiết: docs/03) |
 |---|---|---|---|
 | ACT-000 | Khách (phụ huynh tiềm năng, chưa đăng nhập) | Tìm khóa theo môn/khối, xem lộ trình, học phí tham khảo, đăng ký học thử | Đọc môn/khóa đã xuất bản; tạo lead qua form |
-| ACT-001 / ROLE-001 | Quản trị viên (`ADMIN`) | Cấu hình danh mục, người dùng, vai trò, xem audit | Toàn hệ thống |
-| ACT-002 / ROLE-002 | Giáo vụ / Tư vấn (`STAFF`) | Xử lý lead, chuyển học viên, mở lớp, ghi danh, sửa điểm danh ngoài khung | Toàn bộ dữ liệu tuyển sinh + đào tạo; không quản lý vai trò, không xem audit |
+| ACT-001 / ROLE-001 | Quản trị viên (`ADMIN`) | Cấu hình danh mục, người dùng, vai trò, xem audit, trực tiếp vận hành lớp, lịch, lead, đơn nghỉ | Toàn hệ thống |
+| ACT-002 / ROLE-002 | ~~Giáo vụ / Tư vấn~~ **Đã bỏ (DECISION-D35)** | `STAFF` | — | Không còn quyền nào; Admin đảm nhận toàn bộ vận hành |
 | ACT-003 / ROLE-003 | Giáo viên (`TEACHER`) | Xem lịch dạy, điểm danh, giao bài, chấm, công bố | Lớp mình dạy (và buổi được phân công dạy thay) |
 | ACT-004 / ROLE-004 | Học sinh (`STUDENT`) | Xem lịch, làm bài, xem điểm đã công bố, chuyên cần | Chính mình |
 | ACT-005 / ROLE-005 | Phụ huynh (`PARENT`) | Theo dõi lịch, chuyên cần, điểm của con | Con đã liên kết, chỉ đọc |
@@ -62,9 +62,9 @@ Danh sách Pha 2 nằm ở [05 §5](05-functional-decomposition.md#5-pha-2--ý-t
 | Priority | Feature | Actor | Outcome | Acceptance (rút gọn) | FR |
 |---|---|---|---|---|---|
 | P0 | Form học thử | Khách | Lead NEW trong DB | SĐT chuẩn hóa, trùng lead mở → thêm hoạt động | FR-004, 005 |
-| P0 | Xử lý + chuyển lead | Staff | Học sinh + phụ huynh + liên kết + ghi danh, một transaction | Lỗi bất kỳ bước → không lưu gì | FR-006..009 |
+| P0 | Xử lý + chuyển lead | Admin | Học sinh + phụ huynh + liên kết + ghi danh, một transaction | Lỗi bất kỳ bước → không lưu gì | FR-006..009 |
 | P0 | Đăng nhập theo vai trò | Mọi người | Vào đúng cổng | Khóa 15 phút sau 5 lần sai | FR-010..012 |
-| P0 | Mở lớp + chống trùng | Staff | Lớp + buổi theo lịch VN | Trùng GV/phòng → liệt kê xung đột | FR-017, 018 |
+| P0 | Mở lớp + chống trùng | Admin | Lớp + buổi theo lịch VN | Trùng GV/phòng → liệt kê xung đột | FR-017, 018 |
 | P0 | Điểm danh | GV | Bản ghi chuyên cần | Trong khung BR-030, mặc định có mặt | FR-023, 024 |
 | P0 | Làm bài → chấm → công bố | HS, GV | Điểm hiển thị cho HS/PH | Không lộ đáp án trước công bố | FR-027..033 |
 | P0 | Cổng phụ huynh | PH | Lịch, chuyên cần, điểm của con | Con không liên kết → 404 | FR-022, 025, 033, 034 |

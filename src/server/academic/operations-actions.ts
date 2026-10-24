@@ -31,7 +31,7 @@ const classUpdateSchema = z.object({
 
 /** FR-037: sửa lớp, phân công giáo viên phụ trách, đổi phòng. */
 export async function updateClassAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["classId", "code", "teacherId", "roomId", "capacity"]);
   const parsed = parseForm(classUpdateSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -45,7 +45,7 @@ export async function updateClassAction(_prev: ActionState, formData: FormData):
 
 /** FR-038: phân công giáo viên dạy một buổi. */
 export async function assignSessionTeacherAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["sessionId", "teacherId", "note"]);
   const parsed = parseForm(z.object({ sessionId: id, teacherId: z.string().min(1, "Chọn giáo viên.").max(40), note }), fields);
   if (!parsed.ok) return parsed.state;
@@ -61,7 +61,7 @@ const makeupSchema = z
 
 /** FR-038: xếp lịch học bù. */
 export async function addMakeupSessionAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["classId", "date", "startTime", "endTime", "teacherId", "roomId", "note"]);
   const parsed = parseForm(makeupSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -77,7 +77,7 @@ export async function addMakeupSessionAction(_prev: ActionState, formData: FormD
 
 /** Admin §2: chuyển học sinh sang lớp khác. */
 export async function transferStudentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["enrollmentId", "toClassId"]);
   const parsed = parseForm(z.object({ enrollmentId: id, toClassId: z.string().min(1, "Chọn lớp mới.").max(40) }), fields);
   if (!parsed.ok) return parsed.state;
@@ -89,7 +89,7 @@ export async function transferStudentAction(_prev: ActionState, formData: FormDa
 
 /** Admin §7: đổi phòng cho một buổi. */
 export async function setSessionRoomAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["sessionId", "roomId"]);
   const parsed = parseForm(z.object({ sessionId: id, roomId: optionalId }), fields);
   if (!parsed.ok) return parsed.state;

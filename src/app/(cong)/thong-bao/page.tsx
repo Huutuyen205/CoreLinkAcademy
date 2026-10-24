@@ -29,7 +29,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
     const s = q.toString();
     return s ? `/thong-bao?${s}` : "/thong-bao";
   };
-  const canSend = actor.role === "ADMIN" || actor.role === "STAFF" || actor.role === "TEACHER";
+  const canSend = actor.role === "ADMIN" || actor.role === "TEACHER";
 
   return (
     <>

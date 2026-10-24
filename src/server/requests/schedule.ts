@@ -34,7 +34,7 @@ export async function createScheduleRequest(actor: Actor, input: ScheduleRequest
   checkProposal(input, now);
   const pending = await db.scheduleRequest.findFirst({ where: { sessionId: input.sessionId, teacherId: actor.id, status: "PENDING" }, select: { id: true } });
   if (pending) throw new DomainError("DUPLICATE", "Buổi này đã có đề xuất đang chờ duyệt. Hãy sửa đề xuất đó.");
-  const managers = await db.user.findMany({ where: { role: { in: ["ADMIN", "STAFF"] }, status: "ACTIVE" }, select: { id: true } });
+  const managers = await db.user.findMany({ where: { role: "ADMIN", status: "ACTIVE" }, select: { id: true } });
   await db.$transaction(async (tx) => {
     await tx.scheduleRequest.create({ data: { ...input, teacherId: actor.id } });
     await notifyUsers(tx, managers.map((m) => m.id), {
@@ -99,10 +99,10 @@ export async function countPendingScheduleRequests(actor: Actor): Promise<number
 export type ScheduleDecision = { approve: boolean; note: string | null; substituteTeacherId: string | null };
 
 /**
- * Giáo vụ xử lý đề xuất:
+ * Quản trị viên xử lý đề xuất:
  * - Dời buổi: áp thời gian đề xuất (kiểm tra trùng lịch GV/phòng như FR-021).
  * - Xin nghỉ: có GV dạy thay → phân công; không → hủy buổi (lớp được thông báo, xếp học bù sau).
- * Thay đổi lịch chạy trước; lỗi trùng lịch → đề xuất vẫn chờ để giáo vụ chọn cách khác.
+ * Thay đổi lịch chạy trước; lỗi trùng lịch → đề xuất vẫn chờ để quản trị viên chọn cách khác.
  */
 export async function handleScheduleRequest(actor: Actor, requestId: string, decision: ScheduleDecision): Promise<void> {
   assertCan(actor, "request.handle");

@@ -77,7 +77,7 @@ export const parentBottomNav: NavItem[] = [
 
 /** Menu cho các trang dùng chung mọi vai trò (tài liệu, thông báo, tin nhắn, tài khoản). */
 export function navForRole(role: Role): { nav: NavItem[]; bottomNav?: NavItem[] } {
-  if (role === "ADMIN" || role === "STAFF") return { nav: managementNav(role) };
+  if (role === "ADMIN" || role === "STAFF") return { nav: managementNav(role) }; // STAFF: vai trò đã ngừng, không còn phiên hợp lệ
   if (role === "TEACHER") return { nav: teacherNav, bottomNav: teacherBottomNav };
   if (role === "STUDENT") return { nav: studentNav, bottomNav: studentBottomNav };
   return { nav: parentNav, bottomNav: parentBottomNav };

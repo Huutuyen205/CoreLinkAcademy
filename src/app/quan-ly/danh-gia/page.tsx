@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Đánh giá của giáo viên" };
 
 // Admin §11 "Xem đánh giá, nhận xét của giáo viên": đánh giá định kỳ đã gửi, lọc theo lớp, học sinh, kỳ.
 export default async function ManagerEvaluationsPage({ searchParams }: { searchParams: Promise<{ lop?: string; q?: string; ky?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const classes = await trackingClassOptions(actor);
   const classId = classes.some((c) => c.id === sp.lop) ? sp.lop : undefined;

@@ -164,6 +164,7 @@ Xem [06-business-rules-and-states.md](06-business-rules-and-states.md).
 | 2026-10-24 | 4.0 | Thêm FR-064 form soạn bài 3 loại, nút nổi + phím tắt Alt+A soạn bài AI | PO yêu cầu làm nốt phần chưa làm (DECISION-D38) |
 | 2026-10-24 | 3.9 | Thêm FR-061 lộ trình theo buổi, FR-062 AI truy xuất đoạn tài liệu, FR-063 slide thương hiệu; FR-058 còn 4 mục | PO yêu cầu chỉnh tab, slide, AI (DECISION-D37) |
 | 2026-10-24 | 3.8 | Thêm FR-057 lịch lưới khung giờ, FR-058 trang lớp 5 mục, FR-059 đánh giá học sinh theo buổi, FR-060 đề bổ sung cá nhân | PO yêu cầu chỉnh giao diện theo lớp (DECISION-D36) |
+| 2026-10-24 | 3.8 | Bỏ vai trò giáo vụ: mọi chỗ ghi "giáo vụ"/"Staff" trong các FR nay do Admin đảm nhận | PO yêu cầu (DECISION-D35) |
 | 2026-10-24 | 3.7 | Thêm FR-054 chatbot, FR-055 soạn bài với AI, FR-056 AI hỗ trợ chấm bài | PO yêu cầu "thực hiện đi", làm cả các phase (DECISION-D34) |
 | 2026-10-23 | 3.6 | Checklist v4 của PO: bổ sung thông báo bài tập, bài chữa, nộp lại, tự ôn luyện (FR-053), tìm/kiểm duyệt tin nhắn, thông báo từng người + trạng thái gửi, chuyên cần/đánh giá cho quản lý, lịch tháng, kết quả tổng hợp, các mục giả định của GV — docs/23 | PO yêu cầu (DECISION-D33) |
 | 2026-10-22 | 3.5 | FR-006 Kanban lead; FR-022 xuất .ics; FR-034 biểu đồ tiến độ + tìm nhanh; FR-039 nhật ký buổi học; FR-048 nhắc lịch tự động — theo khảo sát sản phẩm tương tự (docs/22) | PO yêu cầu (DECISION-D32) |

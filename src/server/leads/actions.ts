@@ -99,7 +99,7 @@ export type CreateLeadState = ActionState & { existingLeadId?: string };
 
 /** API-021 — FR-006: Staff/Admin nhập lead tay. Trùng lead đang mở → trả id lead cũ (BR-011). */
 export async function createLeadAction(_prev: CreateLeadState, formData: FormData): Promise<CreateLeadState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["source", "parentName", "phone", "email", "studentName", "gradeLevel", "subjectId", "courseSlug", "note"]);
   const parsed = parseForm(manualLeadSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -129,7 +129,7 @@ const statusSchema = z.object({
 
 /** API-002 — FR-007. */
 export async function changeLeadStatusAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(statusSchema, formFields(formData, ["leadId", "status", "lostReason"]));
   if (!parsed.ok) return parsed.state;
   const { leadId, status, lostReason } = parsed.data;
@@ -148,7 +148,7 @@ const noteSchema = z.object({
 
 /** API-003 — FR-008. */
 export async function addLeadNoteAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(noteSchema, formFields(formData, ["leadId", "content"]));
   if (!parsed.ok) return parsed.state;
 
@@ -162,7 +162,7 @@ export type ConvertState = ActionState & { credentials?: IssuedCredential[]; stu
 
 /** API-004 — FR-009. Mật khẩu tạm chỉ trả về trong state của lần gửi này (hiển thị một lần). */
 export async function convertLeadAction(_prev: ConvertState, formData: FormData): Promise<ConvertState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, [
     "leadId",
     "studentName",

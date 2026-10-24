@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Phụ huynh" };
 
 // Admin §4 — FR-036: danh sách, tìm kiếm phụ huynh; xem con đã liên kết.
 export default async function ParentsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string; trangthai?: string; loc?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const q = typeof sp.q === "string" ? sp.q.slice(0, 80) : undefined;
   const status = sp.trangthai && sp.trangthai in USER_STATUS ? (sp.trangthai as UserStatus) : undefined;

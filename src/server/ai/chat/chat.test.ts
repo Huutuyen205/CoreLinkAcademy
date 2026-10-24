@@ -32,10 +32,10 @@ describe("matchIntent — câu hỏi PO nêu", () => {
     ["Buổi nào tôi chưa điểm danh", "TEACHER", "teacher_attendance_todo"],
     ["Có bài nào cần chấm không", "TEACHER", "teacher_grading"],
     ["Nay có bao nhiêu lớp?", "ADMIN", "mgr_today"],
-    ["Lớp TOAN9-K1 do ai dạy?", "STAFF", "mgr_class_teacher"],
+    ["Lớp TOAN9-K1 do ai dạy?", "ADMIN", "mgr_class_teacher"],
     ["Lớp này của giáo viên nào", "ADMIN", "mgr_class_teacher"],
     ["Phòng nào đang trống", "ADMIN", "mgr_rooms"],
-    ["Có lead mới nào không", "STAFF", "mgr_leads"],
+    ["Có lead mới nào không", "ADMIN", "mgr_leads"],
     ["Học phí khóa Toán 9 bao nhiêu", "PARENT", "contact_center"],
   ];
 
@@ -56,7 +56,7 @@ describe("matchIntent — câu hỏi PO nêu", () => {
 
   it("không trả ý định của vai trò khác", () => {
     expect(matchIntent("hôm nay có bao nhiêu lớp", "PARENT")?.intent).not.toBe("mgr_today");
-    for (const role of ["ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] as const) {
+    for (const role of ["ADMIN", "TEACHER", "STUDENT", "PARENT"] as const) {
       for (const text of ["chuyên cần", "lớp hôm nay", "lead", "chấm bài", "điểm"]) {
         const m = matchIntent(text, role);
         if (m) expect(intentsForRole(role).some((i) => i.id === m.intent)).toBe(true);
@@ -68,7 +68,7 @@ describe("matchIntent — câu hỏi PO nêu", () => {
 describe("danh mục ý định", () => {
   it("id duy nhất; mỗi vai trò có ≥ 3 nút gợi ý; từ khóa đã chuẩn hóa", () => {
     expect(new Set(INTENTS.map((i) => i.id)).size).toBe(INTENTS.length);
-    for (const role of ["ADMIN", "STAFF", "TEACHER", "STUDENT", "PARENT"] as const) {
+    for (const role of ["ADMIN", "TEACHER", "STUDENT", "PARENT"] as const) {
       expect(suggestionsForRole(role).length).toBeGreaterThanOrEqual(3);
     }
     for (const i of INTENTS) for (const k of Object.keys(i.keywords)) expect(normalizeText(k)).toBe(k);

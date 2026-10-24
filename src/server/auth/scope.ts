@@ -4,7 +4,7 @@ import { db } from "@/server/db";
 import { ForbiddenError } from "@/server/errors";
 import type { Actor } from "./session";
 
-const MANAGERS: Role[] = ["ADMIN", "STAFF"];
+const MANAGERS: Role[] = ["ADMIN"]; // DECISION-D35: bỏ giáo vụ
 
 export function isManager(actor: { role: Role }): boolean {
   return MANAGERS.includes(actor.role);

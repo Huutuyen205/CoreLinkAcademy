@@ -16,7 +16,7 @@ export const metadata: Metadata = { title: "Thêm tài liệu" };
 const KINDS: DocumentKind[] = ["CURRICULUM", "MATERIAL", "LESSON_PLAN"];
 
 export default async function NewDocumentPage({ searchParams }: { searchParams: Promise<{ loai?: string; lop?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const sp = await searchParams;
   const kind = KINDS.find((k) => k === sp.loai);
   if (!kind || !canCreateKind(actor.role, kind)) notFound();
@@ -69,7 +69,7 @@ export default async function NewDocumentPage({ searchParams }: { searchParams: 
       </p>
       <PageHeader
         title={`Thêm ${DOCUMENT_KIND[kind].toLowerCase()}`}
-        description={kind === "LESSON_PLAN" ? "Giáo án chỉ bạn và giáo vụ/Admin xem được." : "Tài liệu chỉ hiện với học sinh/phụ huynh của lớp được chia sẻ."}
+        description={kind === "LESSON_PLAN" ? "Giáo án chỉ bạn và quản trị viên xem được." : "Tài liệu chỉ hiện với học sinh/phụ huynh của lớp được chia sẻ."}
       />
       <Card>
         <ConfigForm

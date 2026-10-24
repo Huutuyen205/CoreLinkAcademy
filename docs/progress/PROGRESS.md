@@ -108,6 +108,22 @@ Nguyên nhân: model Gemini mặc định `gemini-2.5-flash` bị Google ngừng
 ### Việc PO
 - Redeploy Vercel để áp dụng. Nếu trước đó đã tự đặt `AI_MODEL=...` trên Vercel thì xóa đi (hoặc để nếu muốn ép model riêng).
 
+## 2026-10-24 — Bỏ vai trò giáo vụ (DECISION-D35)
+
+- Quản lý chỉ còn **Admin**: `policy.ts` (mọi quyền "ADMIN, STAFF" → "ADMIN"; chỉ Admin tạo tài khoản; `ACTIVE_ROLES` không có STAFF), `scope.isManager`, ~38 file `requireRole`, điểm danh ngoài khung, nhắn tin (trung tâm = Admin; "Nhắn trung tâm" mở trò chuyện với Admin), thông báo "chờ duyệt" (giáo án, hồ sơ giới thiệu, đề xuất) gửi Admin, tìm nhanh, trợ lý chat (`ai/chat/intents.ts`).
+- STAFF không đăng nhập được (thông báo "Vai trò giáo vụ đã ngừng sử dụng"), phiên cũ vô hiệu; ô chọn vai trò (tạo / sửa / lọc tài khoản) bỏ giáo vụ; trang đăng nhập bỏ tài khoản demo giáo vụ; seed không tạo nữa.
+- Chữ "giáo vụ" trên giao diện → "trung tâm" / "quản trị viên".
+- Tài liệu đã đồng bộ: 00 (tóm tắt & actors), 01 (v3.8), 02 (SRS điểm danh), 03 (vai trò RBAC), 04 (use cases UC-001, 004, 007, 011, 020), 05 (phân rã P2-32), 07 (user flows & diagrams), 08 (UI/UX & copy), 11 (API errors), 17 (DECISION-D35), 23 (checklist v4), ACCOUNTS, portals P-01, P-02, P-03, P-05.
+
+### Kiểm thử
+- `pnpm lint`: ✓ 0 lỗi.
+- `pnpm typecheck`: ✓ 0 lỗi.
+- `pnpm test`: ✓ 26 test files / 211 tests passed.
+
+### Việc PO
+1. (Tùy chọn) Xóa hẳn giá trị enum `STAFF` khỏi DB khi chắc chắn không cần dữ liệu cũ (hiện giữ enum để an toàn tương thích).
+2. Review, commit, push (theo quy tắc AGENTS.md người dùng tự push).
+
 ## 2026-10-24 — Gộp nhánh AI với `demo10` (checklist v4) trên remote
 
 Push bị từ chối vì remote có `demo10`. Gộp `origin/main` vào; hai bên cùng lấy mã mới nên **đánh lại số phần AI** (giữ nguyên số của checklist v4 đã push): FR-053..055 → **FR-054..056**, DECISION-D33 → **DECISION-D34**, `docs/23-ai-tro-ly.md` → **`docs/24-ai-tro-ly.md`**, docs/01 v3.6 → **v3.7**. FR-053 / D33 / docs/23 giờ là tự ôn luyện / checklist v4 / `docs/23-checklist-v4.md`. Xung đột `nav-icons.ts`: giữ cả "Bài tập", "Soạn bài", "Hồ sơ" của GV.

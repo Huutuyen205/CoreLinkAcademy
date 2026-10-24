@@ -20,7 +20,7 @@ const FILTERS: (RequestStatus | undefined)[] = ["PENDING", undefined];
 
 // Admin §7 — FR-043: xử lý đề xuất đổi lịch của giáo viên; FR-044: đơn xin nghỉ của phụ huynh.
 export default async function ManagerRequestsPage({ searchParams }: { searchParams: Promise<{ tat?: string; thongbao?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const sp = await searchParams;
   const all = sp.tat === "1";
   const status: RequestStatus | undefined = all ? undefined : "PENDING";

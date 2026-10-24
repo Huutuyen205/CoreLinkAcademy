@@ -8,7 +8,7 @@ import { linkableStudents } from "@/server/people/service";
 import { ResetPasswordForm } from "@/components/forms/reset-password-form";
 import { Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
+import { ACTIVE_ROLES, ROLE_CAPABILITIES, ROLE_LABELS } from "@/server/auth/policy";
 import { orNotFound } from "@/server/page";
 import { linkGuardianAction, setUserStatusAction, updateUserAction, unlinkGuardianAction } from "@/server/users/actions";
 import { getUser, listParents } from "@/server/users/service";
@@ -66,7 +66,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
                   label: "Vai trò",
                   required: true,
                   hint: isSelf ? "Bạn không thể tự đổi vai trò của mình." : "Đổi vai trò được ghi nhật ký và đăng xuất người dùng.",
-                  options: (isSelf ? [user.role] : (Object.keys(ROLE_LABELS) as Role[])).map((r) => ({ value: r, label: ROLE_LABELS[r] })),
+                  options: (isSelf ? [user.role] : [...ACTIVE_ROLES, ...(user.role === "STAFF" ? (["STAFF"] as Role[]) : [])]).map((r) => ({ value: r, label: ROLE_LABELS[r] })),
                   defaultValue: user.role,
                 },
                 { type: "email", name: "email", label: "Email", maxLength: 191, defaultValue: user.email ?? "" },

@@ -25,7 +25,7 @@ const ACTIVITY_LABELS = {
 } as const;
 
 export default async function LeadDetailPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string }> }) {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const { id } = await params;
   const { thongbao } = await searchParams;
   const lead = await orNotFound(getLead(actor, id));

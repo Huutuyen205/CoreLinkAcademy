@@ -32,7 +32,7 @@ Tài khoản PARENT đã đổi mật khẩu tạm; có ≥ 1 liên kết với 
 | ID | Điều kiện | Hành vi |
 |---|---|---|
 | E1 | `?con=` là HS không liên kết (IDOR) | 404 |
-| E2 | Chưa liên kết con nào (hoặc mọi con bị khóa) | EmptyState "Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ giáo vụ của học viện." |
+| E2 | Chưa liên kết con nào (hoặc mọi con bị khóa) | EmptyState "Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con." |
 | E3 | Truy cập trang khu khác (vd. `/hoc-sinh`) | Chuyển về `/phu-huynh` |
 
 ## 7. Business rules and validations

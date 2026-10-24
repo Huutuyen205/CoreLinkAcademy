@@ -21,7 +21,7 @@ export function checkAttendanceEdit(input: {
 }): { error: AttendanceEditError } | { error: null; override: boolean } {
   if (input.sessionStatus === "CANCELLED") return { error: "SESSION_CANCELLED" };
   if (input.role === "TEACHER") return input.inWindow ? { error: null, override: false } : { error: "OUTSIDE_WINDOW" };
-  if (input.role === "ADMIN" || input.role === "STAFF") {
+  if (input.role === "ADMIN") {
     if (input.inWindow) return { error: null, override: false };
     return input.reason?.trim() ? { error: null, override: true } : { error: "REASON_REQUIRED" };
   }

@@ -10,7 +10,7 @@ import { practiceSetFields } from "../fields";
 export const metadata: Metadata = { title: "Soạn đề luyện tập" };
 
 export default async function NewPracticeSetPage() {
-  const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
+  const actor = await requireRole("ADMIN", "TEACHER");
   const options = await practiceFilterOptions(actor);
   return (
     <>

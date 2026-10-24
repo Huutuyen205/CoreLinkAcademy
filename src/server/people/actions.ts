@@ -28,7 +28,7 @@ const FIELDS = ["userId", "fullName", "email", "phone", "dateOfBirth", "address"
 
 /** FR-036: Admin sửa hồ sơ mọi vai trò; Staff sửa hồ sơ học sinh/phụ huynh. */
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, FIELDS);
   const parsed = parseForm(profileSchema, fields);
   if (!parsed.ok) return parsed.state;
@@ -43,7 +43,7 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
 
 /** Admin §3: đổi nhanh trạng thái hoạt động (Đang dạy / Tạm nghỉ / Đã nghỉ) — cũng dùng cho HS/PH. */
 export async function setMemberStatusAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const parsed = parseForm(z.object({ userId: id, status: z.enum(["ACTIVE", "ON_LEAVE", "INACTIVE"]) }), formFields(formData, ["userId", "status"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => setMemberStatus(actor, parsed.data.userId, parsed.data.status));
@@ -95,7 +95,7 @@ export async function saveMyIntroAction(_prev: ActionState, formData: FormData):
 
 /** Quản lý duyệt / từ chối hồ sơ giới thiệu. */
 export async function reviewIntroAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("ADMIN", "STAFF");
+  const actor = await requireRole("ADMIN");
   const fields = formFields(formData, ["teacherId", "decision", "note"]);
   const parsed = parseForm(z.object({ teacherId: id, decision: z.enum(["approve", "reject"]), note: optionalText(500) }), fields);
   if (!parsed.ok) return parsed.state;
