@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FileList } from "@/components/files/file-list";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
 import type { getSessionForLearner } from "@/server/academic/learner";
-import { ATTENDANCE_STATUS, DOCUMENT_KIND, REQUEST_STATUS, SESSION_STATUS } from "@/lib/labels";
+import { ATTENDANCE_STATUS, ATTITUDE, DOCUMENT_KIND, REQUEST_STATUS, SESSION_STATUS } from "@/lib/labels";
 import { formatDateTime, formatTime, formatVn } from "@/lib/time";
 
 type Session = Awaited<ReturnType<typeof getSessionForLearner>>;
@@ -50,6 +50,20 @@ export function LearnerSessionView({ s, backHref, backLabel, extra }: { s: Sessi
                 )}
               </dd>
             </div>
+            {s.attendance?.attitude && ATTITUDE[s.attendance.attitude] && (
+              <div>
+                <dt className="text-sm text-muted">Thái độ học tập</dt>
+                <dd>
+                  <Badge tone={ATTITUDE[s.attendance.attitude]!.tone}>{ATTITUDE[s.attendance.attitude]!.label}</Badge>
+                </dd>
+              </div>
+            )}
+            {s.attendance?.comment && (
+              <div className="sm:col-span-2">
+                <dt className="text-sm text-muted">Nhận xét của giáo viên</dt>
+                <dd className="whitespace-pre-line">{s.attendance.comment}</dd>
+              </div>
+            )}
             {s.attendance?.note && (
               <div>
                 <dt className="text-sm text-muted">Ghi chú của giáo viên</dt>

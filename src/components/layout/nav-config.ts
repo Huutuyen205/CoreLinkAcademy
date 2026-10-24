@@ -32,23 +32,19 @@ export function managementNav(role: Role): NavItem[] {
 }
 
 export const teacherNav: NavItem[] = [
-  { href: "/giao-vien", label: "Tổng quan" },
-  { href: "/giao-vien/lich", label: "Lịch dạy" },
+  { href: "/giao-vien/lich", label: "Lịch" },
   { href: "/giao-vien/lop", label: "Lớp của tôi" },
-  { href: "/giao-vien/bai-tap", label: "Bài tập" },
-  { href: "/giao-vien/de-xuat", label: "Đề xuất & đơn nghỉ" },
-  { href: "/giao-vien/soan-bai", label: "Soạn bài với AI" },
-  { href: "/tai-lieu", label: "Tài liệu & giáo án" },
-  { href: "/on-luyen", label: "Đề luyện tập" },
-  { href: "/thong-bao", label: "Thông báo" },
+  { href: "/giao-vien/don", label: "Đơn" },
   { href: "/tin-nhan", label: "Tin nhắn" },
-  { href: "/giao-vien/ho-so", label: "Hồ sơ & lịch rảnh" },
+  { href: "/giao-vien/ho-so", label: "Hồ sơ và lịch rảnh" },
 ];
+/** Lịch ở giữa thanh đáy điện thoại. */
 export const teacherBottomNav: NavItem[] = [
-  { href: "/giao-vien", label: "Tổng quan" },
-  { href: "/giao-vien/lich", label: "Lịch dạy" },
   { href: "/giao-vien/lop", label: "Lớp" },
+  { href: "/giao-vien/don", label: "Đơn" },
+  { href: "/giao-vien/lich", label: "Lịch" },
   { href: "/tin-nhan", label: "Tin nhắn" },
+  { href: "/giao-vien/ho-so", label: "Hồ sơ" },
 ];
 
 export const studentNav: NavItem[] = [

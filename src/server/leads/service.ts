@@ -8,6 +8,7 @@ import { cached, CACHE_TAGS } from "@/server/cache";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { notifyUsers } from "@/server/notifications/service";
 import { LEAD_SOURCE_LABELS } from "@/lib/labels";
 import { normalizePhone, phoneFragment } from "@/lib/phone";
 import { formatDateTime } from "@/lib/time";
@@ -82,6 +83,13 @@ export async function submitTrialRequest(input: TrialRequestInput): Promise<{ le
         type: "CREATED",
         content: `Đăng ký học thử qua website. Đồng ý liên hệ lúc ${formatDateTime(now)}.\n${content}`,
       },
+    });
+    const managers = await tx.user.findMany({ where: { role: { in: ["ADMIN", "STAFF"] }, status: "ACTIVE" }, select: { id: true } });
+    await notifyUsers(tx, managers.map((m) => m.id), {
+      kind: "lead_new",
+      title: `Đăng ký học thử mới: ${input.parentName}`,
+      body: `${input.studentName ? `Học sinh ${input.studentName} · ` : ""}Môn ${subject.name} · SĐT ${input.phone}.`,
+      link: `/quan-ly/lead/${lead.id}`,
     });
     return { leadId: lead.id, resubmitted: false };
   });

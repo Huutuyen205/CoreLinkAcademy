@@ -6,7 +6,7 @@ import { FormMessage } from "@/components/forms/config-form";
 import { TextField } from "@/components/ui/field";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/format";
-import { saveAttendanceAction } from "@/server/attendance/actions";
+import { saveAttendanceAction, saveEvaluationsAction } from "@/server/attendance/actions";
 import { initialActionState } from "@/server/errors";
 
 const OPTIONS: { value: AttendanceStatus; label: string; className: string }[] = [
@@ -16,16 +16,19 @@ const OPTIONS: { value: AttendanceStatus; label: string; className: string }[] =
   { value: "EXCUSED", label: "Có phép", className: "has-[:checked]:border-muted has-[:checked]:bg-paper" },
 ];
 
-type Row = { id: string; fullName: string; studentCode: string | null; status: AttendanceStatus | null; note: string | null; attitude?: string | null };
+type Row = { id: string; fullName: string; studentCode: string | null; status: AttendanceStatus | null; note: string | null };
+type EvalRow = { id: string; fullName: string; studentCode: string | null; attitude: string | null; comment: string | null };
 
 const ATTITUDES = [
-  { value: "", label: "Thái độ: —" },
+  { value: "", label: "Thái độ" },
   { value: "GOOD", label: "Tích cực" },
   { value: "NORMAL", label: "Bình thường" },
   { value: "NEEDS_WORK", label: "Cần cố gắng" },
 ];
 
-/** GOAL-003: mặc định "có mặt", giáo viên chỉ chỉnh các em vắng/muộn rồi lưu. */
+const INPUT = "block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base";
+
+/** Điểm danh đầu giờ (GOAL-003): mặc định "có mặt", giáo viên chỉ chỉnh các em vắng/muộn rồi lưu. */
 export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: string; rows: Row[]; needsReason: boolean }) {
   const [state, action] = useActionState(saveAttendanceAction, initialActionState);
   return (
@@ -54,28 +57,10 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
                   </label>
                 ))}
               </div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_180px]">
-                <label className="block">
-                  <span className="sr-only">Ghi chú cho {r.fullName}</span>
-                  <input
-                    name={`note:${r.id}`}
-                    defaultValue={r.note ?? ""}
-                    maxLength={255}
-                    placeholder="Ghi chú (không bắt buộc)"
-                    className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base"
-                  />
-                </label>
-                <label className="block">
-                  <span className="sr-only">Thái độ học tập của {r.fullName}</span>
-                  <select name={`attitude:${r.id}`} defaultValue={r.attitude ?? ""} className="block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base">
-                    {ATTITUDES.map((a) => (
-                      <option key={a.value} value={a.value}>
-                        {a.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+              <label className="mt-2 block">
+                <span className="sr-only">Ghi chú điểm danh của {r.fullName}</span>
+                <input name={`note:${r.id}`} defaultValue={r.note ?? ""} maxLength={255} placeholder="Ghi chú" className={INPUT} />
+              </label>
             </fieldset>
           </li>
         ))}
@@ -86,13 +71,52 @@ export function AttendanceForm({ sessionId, rows, needsReason }: { sessionId: st
           label="Lý do sửa ngoài khung thời gian"
           required
           maxLength={255}
-          hint="Bắt buộc và được ghi vào nhật ký."
           defaultValue={state.values?.reason}
           error={state.fieldErrors?.reason}
         />
       )}
       <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 lg:bottom-0">
         <SubmitButton className="w-full sm:w-auto">Lưu điểm danh</SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+/** Đánh giá cuối buổi: thái độ + nhận xét từng học sinh có mặt; lưu riêng, không đổi điểm danh. */
+export function EvaluationForm({ sessionId, rows }: { sessionId: string; rows: EvalRow[] }) {
+  const [state, action] = useActionState(saveEvaluationsAction, initialActionState);
+  return (
+    <form action={action} className="space-y-4">
+      <FormMessage state={state} />
+      <input type="hidden" name="sessionId" value={sessionId} />
+      <ol className="divide-y divide-line rounded-block border border-line bg-surface">
+        {rows.map((r, i) => (
+          <li key={r.id} className="px-4 py-3">
+            <input type="hidden" name="studentIds" value={r.id} />
+            <p className="font-medium">
+              {i + 1}. {r.fullName} <span className="text-sm font-normal text-muted">{r.studentCode}</span>
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-[170px_1fr]">
+              <label className="block">
+                <span className="sr-only">Thái độ học tập của {r.fullName}</span>
+                <select name={`attitude:${r.id}`} defaultValue={r.attitude ?? ""} className={INPUT}>
+                  {ATTITUDES.map((a) => (
+                    <option key={a.value} value={a.value}>
+                      {a.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block">
+                <span className="sr-only">Nhận xét về {r.fullName}</span>
+                <input name={`comment:${r.id}`} defaultValue={r.comment ?? ""} maxLength={500} placeholder="Nhận xét" className={INPUT} />
+              </label>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 lg:bottom-0">
+        <SubmitButton className="w-full sm:w-auto">Lưu đánh giá</SubmitButton>
       </div>
     </form>
   );

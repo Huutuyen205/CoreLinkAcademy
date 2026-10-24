@@ -27,6 +27,7 @@ import { dayLabel } from "./matcher";
 import { matchClassCode, matchPeople } from "./names";
 import { sessionPresenceText } from "./rules";
 import type { ChatAnswer, ChatChoice } from "./types";
+import { syllabusForSession } from "@/lib/syllabus";
 
 export type Hints = { child?: string | null; classCode?: string | null; teacher?: string | null };
 
@@ -301,9 +302,8 @@ async function teacherLesson(ctx: Ctx): Promise<Reply> {
   const lines = sessions.map((s) => {
     const d = byId.get(s.id);
     const out = [`${sessionLine(s)}${d ? ` · buổi ${d.index}/${d.class.totalSessions}` : ""}`];
-    const syllabus = d && Array.isArray(d.class.course.syllabus) ? (d.class.course.syllabus as { title?: string; detail?: string }[]) : [];
-    const item = d && syllabus.length === d.class.totalSessions ? syllabus[d.index - 1] : undefined;
-    if (item?.title) out.push(`Theo khung khóa học: ${item.title}${item.detail ? ` — ${item.detail}` : ""}`);
+    const item = d ? syllabusForSession(d.class.course.syllabus, d.index, d.class.totalSessions) : null;
+    if (item?.title)out.push(`Theo khung khóa học: ${item.title}${item.detail ? ` — ${item.detail}` : ""}`);
     if (d?.lessonContent) out.push(`Nội dung đã ghi: ${d.lessonContent}`);
     if (d?.homework) out.push(`Bài về nhà: ${d.homework}`);
     if (d?.note) out.push(`Ghi chú: ${d.note}`);
@@ -350,7 +350,7 @@ async function teacherGrading(ctx: Ctx): Promise<Reply> {
   if (total === 0) return reply("teacher_grading", "Không có bài nộp nào đang chờ chấm.");
   return reply("teacher_grading", `Có ${total} bài nộp đang chờ bạn chấm:`, {
     lines: items.slice(0, 6).map((i) => `${i.student.fullName} · ${i.assignment.title} (${i.assignment.class.code})${i.submittedAt ? ` · nộp ${formatDateTime(i.submittedAt)}` : ""}`),
-    links: [{ label: "Mở danh sách chấm bài", href: "/giao-vien" }],
+    links: [{ label: "Mở danh sách chấm bài", href: "/giao-vien/bai-tap" }],
   });
 }
 
@@ -362,7 +362,7 @@ async function absenceAlerts(ctx: Ctx, intent: string): Promise<Reply> {
 
 async function teacherRequests(ctx: Ctx): Promise<Reply> {
   const n = await countPendingLeaveRequests(ctx.actor);
-  return reply("teacher_requests", n === 0 ? "Không có đơn xin nghỉ nào chờ duyệt." : `Có ${n} đơn xin nghỉ của học sinh đang chờ bạn duyệt.`, { links: [{ label: "Mở đơn xin nghỉ", href: "/giao-vien/don-nghi" }] });
+  return reply("teacher_requests", n === 0 ? "Không có đơn xin nghỉ nào chờ duyệt." : `Có ${n} đơn xin nghỉ của học sinh đang chờ bạn duyệt.`, { links: [{ label: "Mở đơn xin nghỉ", href: "/giao-vien/don" }] });
 }
 
 /* ───────── Quản lý ───────── */

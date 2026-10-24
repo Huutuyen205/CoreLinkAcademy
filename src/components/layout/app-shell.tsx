@@ -1,14 +1,17 @@
-import { Bell, Download, KeyRound, LogOut, User } from "lucide-react";
+import { Download, KeyRound, LogOut, User } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { Assistant } from "@/components/ai/assistant";
+import { ComposeShortcut } from "@/components/ai/compose-shortcut";
+import { NotificationBell, NotificationProvider } from "@/components/notifications/notification-center";
 import { Avatar } from "@/components/ui/avatar";
 import { canGlobalSearch } from "@/server/search/service";
 import { Brand, BridgeArc } from "./brand";
 import { CommandSearch } from "./command-search";
+import { UserMenu } from "./user-menu";
 import { BottomNav, MobileMenu, SideNav, type NavItem } from "./nav-links";
 
 type Props = {
@@ -21,23 +24,6 @@ type Props = {
   unread?: number;
   children: ReactNode;
 };
-
-function BellLink({ unread }: { unread: number }) {
-  return (
-    <Link
-      href="/thong-bao"
-      aria-label={unread > 0 ? `Thông báo: ${unread} chưa đọc` : "Thông báo"}
-      className="relative inline-flex size-10 items-center justify-center rounded-xl border border-white/20 bg-white/8 text-white no-underline transition-all duration-200 hover:bg-white/18 hover:border-white/35 hover:scale-105"
-    >
-      <Bell className="size-4.5" aria-hidden="true" />
-      {unread > 0 && (
-        <span className="absolute -right-1 -top-1 min-w-[18px] rounded-full bg-danger px-1 text-center text-[10px] font-bold leading-[18px] text-white shadow-sm ring-2 ring-primary-strong animate-pulse">
-          {unread > 99 ? "99+" : unread}
-        </span>
-      )}
-    </Link>
-  );
-}
 
 /**
  * Vỏ khu nội bộ v3.3 WOW: sidebar gradient xanh sâu với glow shadow trên ≥1024px;
@@ -99,6 +85,7 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
   );
 
   return (
+    <NotificationProvider userId={actor.id} initialUnread={unread}>
     <div className="min-h-dvh lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
       <a
         href="#noi-dung"
@@ -119,8 +106,7 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
 
         <div className="relative flex items-center justify-between gap-2 pb-1 border-b border-white/10">
           <Brand href={rootHref} tone="light" />
-          <BellLink unread={unread} />
-        </div>
+          </div>
         {canGlobalSearch(actor.role) && (
           <div className="relative -mt-2">
             <CommandSearch variant="bar" placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />
@@ -131,7 +117,6 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
           <SideNav items={nav} rootHref={rootHref} />
         </nav>
 
-        <div className="relative pt-1">{account}</div>
       </aside>
 
       {/* ─── Header mobile (<1024px) ─── */}
@@ -142,7 +127,7 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
               <Brand href={rootHref} tone="light" />
               <span className="ml-auto mr-2 flex items-center gap-1.5">
                 {canGlobalSearch(actor.role) && <CommandSearch placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />}
-                <BellLink unread={unread} />
+                <NotificationBell />
               </span>
               <span className="inline-flex min-h-10 items-center rounded-xl border border-white/30 bg-white/8 px-3.5 text-sm font-medium">
                 <span className="group-open:hidden">Menu</span>
@@ -160,17 +145,25 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
         </MobileMenu>
       </header>
 
-      {/* ─── Main content ─── */}
-      {/* min-w-0: cột nội dung không bị bảng/email dài kéo rộng hơn màn hình (gây kéo ngang trang). */}
-      <main
-        id="noi-dung"
-        className={bottomNav ? "min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 lg:p-8" : "min-w-0 px-4 py-6 lg:p-8"}
-      >
-        <div className="mx-auto max-w-[1140px]">{children}</div>
-      </main>
+      {/* ─── Cột nội dung: thanh trên (desktop) chứa chuông + người dùng ở góc phải ─── */}
+      <div className="min-w-0">
+        <div className="sticky top-0 z-30 hidden items-center justify-end gap-3 border-b border-line bg-paper/85 px-8 py-2.5 backdrop-blur-md lg:flex">
+          <NotificationBell tone="light" />
+          <UserMenu fullName={actor.fullName} roleLabel={ROLE_LABELS[actor.role]} avatarFileId={actor.avatarFileId} />
+        </div>
+        {/* min-w-0: cột nội dung không bị bảng/email dài kéo rộng hơn màn hình (gây kéo ngang trang). */}
+        <main
+          id="noi-dung"
+          className={bottomNav ? "min-w-0 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 lg:px-8 lg:pb-8 lg:pt-6" : "min-w-0 px-4 py-6 lg:p-8 lg:pt-6"}
+        >
+          <div className="mx-auto max-w-[1140px]">{children}</div>
+        </main>
+      </div>
 
       {bottomNav && bottomNav.length > 0 && <BottomNav items={bottomNav} rootHref={rootHref} />}
       <Assistant actor={actor} hasBottomNav={Boolean(bottomNav && bottomNav.length > 0)} />
+      {actor.role === "TEACHER" && <ComposeShortcut hasBottomNav={Boolean(bottomNav && bottomNav.length > 0)} />}
     </div>
+    </NotificationProvider>
   );
 }

@@ -9,6 +9,7 @@ import { DomainError, ForbiddenError } from "@/server/errors";
 import { fileMeta, storeFiles, type PreparedFile } from "@/server/files/storage";
 import { classAudienceIds, notifyUsers } from "@/server/notifications/service";
 import { canManageDocument, documentVisibilityWhere } from "./access";
+import { indexDocumentFiles, removeFileChunks } from "./chunks";
 
 export type DocumentInput = {
   kind: DocumentKind;
@@ -71,6 +72,16 @@ export async function listDocuments(actor: Actor, filter: DocumentFilter = {}) {
   return db.document.findMany({ where, orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }], take: 200, select: listSelect });
 }
 
+/** Giáo án gắn vào các buổi của một lớp (chỉ người có quyền xem tài liệu đó). */
+export async function listClassLessonPlans(actor: Actor, classId: string) {
+  return db.document.findMany({
+    where: { AND: [documentVisibilityWhere(actor), { kind: "LESSON_PLAN", isActive: true, session: { classId } }] },
+    orderBy: [{ session: { index: "asc" } }, { updatedAt: "desc" }],
+    take: 200,
+    select: listSelect,
+  });
+}
+
 export async function getDocument(actor: Actor, documentId: string) {
   const doc = await db.document.findFirst({ where: { id: documentId, ...documentVisibilityWhere(actor) }, select: listSelect });
   if (!doc) throw new ForbiddenError();
@@ -91,20 +102,23 @@ async function checkSessionScope(actor: Actor, sessionId: string | null) {
 }
 
 /** Tạo tài liệu: cần tệp tải lên hoặc đường dẫn. `shareClassIds` chia sẻ luôn cho các lớp (theo quyền chia sẻ). */
-export async function createDocument(actor: Actor, input: DocumentInput, files: PreparedFile[], shareClassIds: string[] = []): Promise<string> {
+/** Trích văn bản tệp để AI tra cứu; đặt `index: false` cho tệp do chính AI sinh ra (không để AI học lại nội dung do AI viết). */
+export async function createDocument(actor: Actor, input: DocumentInput, files: PreparedFile[], shareClassIds: string[] = [], opts: { index?: boolean } = {}): Promise<string> {
   if (!canCreateKind(actor.role, input.kind)) throw new ForbiddenError();
   if (files.length === 0 && !input.url) throw new DomainError("NO_CONTENT", "Hãy tải tệp tài liệu lên (hoặc dán liên kết ngoài nếu tệp quá lớn).", { files: "Chọn tệp tài liệu." });
   await checkSessionScope(actor, input.sessionId);
   if (input.kind === "LESSON_PLAN" && shareClassIds.length > 0) throw new DomainError("NOT_SHAREABLE", "Giáo án không chia sẻ cho học sinh.");
   const classIds = await shareableClassIds(actor, shareClassIds);
   const data = input.kind === "LESSON_PLAN" ? { ...input, visibleToStudents: false, visibleToParents: false } : input;
+  let fileIds: string[] = [];
   const id = await db.$transaction(async (tx) => {
     const doc = await tx.document.create({ data: { ...data, ownerId: actor.id }, select: { id: true } });
-    await storeFiles(tx, files, { documentId: doc.id }, actor.id);
+    fileIds = await storeFiles(tx, files, { documentId: doc.id }, actor.id);
     if (classIds.length) await tx.documentShare.createMany({ data: classIds.map((classId) => ({ documentId: doc.id, classId, sharedById: actor.id })), skipDuplicates: true });
     await notifyShared(tx, classIds, input.title, data.visibleToStudents, data.visibleToParents);
     return doc.id;
   });
+  if (opts.index !== false) await indexDocumentFiles(id, fileIds, files);
   return id;
 }
 
@@ -141,13 +155,15 @@ export async function addDocumentFiles(actor: Actor, documentId: string, files: 
   const doc = await manageable(actor, documentId);
   if (files.length === 0) throw new DomainError("NO_FILE", "Chọn tệp.", { files: "Chọn tệp." });
   if (doc._count.files + files.length > 10) throw new DomainError("TOO_MANY_FILES", "Mỗi tài liệu tối đa 10 tệp.");
-  await db.$transaction((tx) => storeFiles(tx, files, { documentId }, actor.id));
+  const fileIds = await db.$transaction((tx) => storeFiles(tx, files, { documentId }, actor.id));
+  await indexDocumentFiles(documentId, fileIds, files);
 }
 
 export async function deleteDocumentFile(actor: Actor, documentId: string, fileId: string): Promise<void> {
   await manageable(actor, documentId);
   const { count } = await db.storedFile.deleteMany({ where: { id: fileId, documentId } });
   if (count === 0) throw new ForbiddenError();
+  await removeFileChunks(documentId, fileId);
 }
 
 /** Lớp actor được chia sẻ tới: quản lý → lớp chưa kết thúc; GV → lớp mình phụ trách chưa kết thúc. */

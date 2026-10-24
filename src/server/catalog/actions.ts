@@ -8,6 +8,7 @@ import { requireRole } from "@/server/auth/guard";
 import { CACHE_TAGS, invalidate } from "@/server/cache";
 import type { ActionState } from "@/server/errors";
 import { slugify } from "@/lib/search";
+import { parseSyllabus } from "@/lib/syllabus";
 import { deleteCourse, deleteLevel, deleteRoom, deleteSubject, saveCourse, saveLevel, saveRoom, saveSubject, setCatalogActive } from "./admin";
 
 const optionalId = z.string().max(40).transform((v) => v || null);
@@ -88,27 +89,20 @@ const courseSchema = z
         return n;
       }),
     outcomes: z.string().max(5000).transform((v) => v.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)),
-    syllabus: z
-      .string()
-      .max(10000)
-      .transform((v) =>
-        v
-          .split(/\r?\n/)
-          .map((line) => line.trim())
-          .filter(Boolean)
-          .map((line) => {
-            const [title, ...rest] = line.split("|");
-            return { title: title!.trim(), detail: rest.join("|").trim() };
-          }),
-      ),
+    syllabus: z.string().max(30000).transform(parseSyllabus),
     isPublished: z.boolean(),
     isFeatured: z.boolean(),
   })
-  .refine((v) => v.gradeFrom <= v.gradeTo, { path: ["gradeTo"], message: "Khối đến phải ≥ khối từ." });
+  .refine((v) => v.gradeFrom <= v.gradeTo, { path: ["gradeTo"], message: "Khối đến phải ≥ khối từ." })
+  .refine((v) => v.syllabus.every((s) => s.title.length > 0 && s.title.length <= 200), { path: ["syllabus"], message: "Mỗi buổi cần có tiêu đề (tối đa 200 ký tự)." })
+  .refine((v) => v.syllabus.length === 0 || v.syllabus.length === v.totalSessions, (v) => ({
+    path: ["syllabus"],
+    message: `Lộ trình có ${v.syllabus.length} buổi nhưng khóa có ${v.totalSessions} buổi — mỗi dòng là một buổi.`,
+  }));
 
 const COURSE_FIELDS = ["id", "subjectId", "title", "slug", "summary", "description", "gradeFrom", "gradeTo", "level", "totalSessions", "sessionMinutes", "tuitionVnd", "outcomes", "syllabus"];
 
-/** API-010 — FR-015. Mục tiêu: mỗi dòng một ý; lộ trình: mỗi dòng "Tiêu đề | chi tiết". */
+/** API-010 — FR-015. Mục tiêu: mỗi dòng một ý; lộ trình: mỗi dòng một buổi "Tiêu đề | nội dung | mục tiêu | kiến thức | ví dụ" và đúng bằng số buổi. */
 export async function saveCourseAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN");
   const raw = formFields(formData, COURSE_FIELDS);

@@ -2,6 +2,7 @@
 import type { Prisma } from "@prisma/client";
 import { cached, CACHE_TAGS } from "@/server/cache";
 import { db } from "@/server/db";
+import { readSyllabus, type SyllabusItem } from "@/lib/syllabus";
 
 export type CatalogFilter = { subjectSlug?: string; grade?: number };
 
@@ -106,11 +107,6 @@ export function asStringArray(value: Prisma.JsonValue): string[] {
   return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
 }
 
-export function asSyllabus(value: Prisma.JsonValue): { title: string; detail: string }[] {
-  if (!Array.isArray(value)) return [];
-  return value.flatMap((item) =>
-    item && typeof item === "object" && !Array.isArray(item) && typeof item.title === "string"
-      ? [{ title: item.title, detail: typeof item.detail === "string" ? item.detail : "" }]
-      : [],
-  );
+export function asSyllabus(value: Prisma.JsonValue): SyllabusItem[] {
+  return readSyllabus(value);
 }

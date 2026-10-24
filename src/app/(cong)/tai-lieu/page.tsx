@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
-import { SelectField, TextField } from "@/components/ui/field";
+import { TextField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireActor } from "@/server/auth/guard";
@@ -92,9 +93,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           {kind && <input type="hidden" name="loai" value={kind} />}
           {filter.pendingReview && <input type="hidden" name="duyet" value="cho" />}
           <TextField name="q" label="Tìm theo tên" defaultValue={filter.q} maxLength={80} />
-          <SelectField name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-          {!learner && <SelectField name="cap" label="Cấp học" placeholder="Tất cả" defaultValue={filter.levelId ?? ""} options={options.levels.map((l) => ({ value: l.id, label: l.name }))} />}
-          <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
+          <FilterSelect name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
+          {!learner && <FilterSelect name="cap" label="Cấp học" placeholder="Tất cả" defaultValue={filter.levelId ?? ""} options={options.levels.map((l) => ({ value: l.id, label: l.name }))} />}
+          <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
           {!learner && <div className="flex flex-wrap gap-2">
             {isManager(actor) && (
               <label className="inline-flex min-h-11 items-center gap-2 text-sm">

@@ -120,7 +120,7 @@ CoreLink Academy v3
 | FEAT-037 | Điểm danh | Tỷ lệ tổng/từng lớp, lịch sử | HS, PH | Cổng | BR-032 | attendances | SCREEN-037, 038 / Q-018 | UC-017, 011 | FR-025 | P0 | Code; Unit (TC-021) |
 | FEAT-038 | Cổng PH | Chọn con, lịch, chuyên cần, điểm | PH | PH | — | guardianships + trên | SCREEN-038 | UC-011 | FR-034 | P0 | Code; Unit (TC-034) |
 | FEAT-039 | Cổng | 4 ô số liệu + cảnh báo vắng | Admin, Staff | Quản lý | BR-003 | nhiều | SCREEN-008 | UC-018 | FR-034 | P0 | Code |
-| FEAT-040 | Cổng | Buổi hôm nay, bài chờ chấm, cảnh báo | GV | GV | — | nhiều | SCREEN-024 | UC-018 | FR-034 | P0 | Code; đếm tổng: Bổ sung P3 |
+| FEAT-040 | Cổng | (Đã bỏ cho GV ở D39: vào thẳng Lịch) Buổi hôm nay, bài chờ chấm, cảnh báo | GV | GV | — | nhiều | SCREEN-024 | UC-018 | FR-034 | P0 | Code; đếm tổng: Bổ sung P3 |
 | FEAT-041 | Cổng | Bài cần làm, lịch, điểm mới | HS | HS | — | nhiều | SCREEN-033 | UC-018 | FR-034 | P0 | Code |
 | FEAT-042 | Audit | Ghi append-only, xem, lọc | Admin | Quản lý | — | audit_logs | SCREEN-023 / Q-034 | UC-019 | FR-035 | P1 | Code |
 | FEAT-043 | Điểm danh | 2 buổi gần nhất cùng ABSENT | Staff, GV | Cổng | BR-033 | attendances | SCREEN-008, 024, 027 / Q-017 | UC-018 | FR-026 | P1 | Code; Unit (TC-022) |
@@ -186,8 +186,8 @@ CoreLink Academy v3
 | P2-40 | Đánh giá định kỳ gửi Admin duyệt trước khi tới PH | Đào tạo | Giáo viên.md §9 | FR-049 |
 | P2-41 | ~~HS tự ôn luyện; lịch tháng~~ **Đã làm (FR-053, lịch tháng — D33)**; còn lại: ngân hàng câu hỏi dùng chung giữa đề, đề sinh ngẫu nhiên, câu có hình | Học sinh | Bảng ưu tiên P2 | — |
 | P2-31 | Ảnh banner riêng cho điện thoại (tỉ lệ dọc/vuông, chữ lớn) — banner hiện tại 1640×626 chỉ cao ~140px ở 375px, chữ trên ảnh khó đọc | Công khai | Rà soát giao diện điện thoại 2026-10-21 | Cần ảnh từ PO |
-| P2-48 | Trích văn bản từ tệp giáo trình/tài liệu (docx, pdf) để AI đọc nội dung thật (hiện AI chỉ nhận tên + mô tả tài liệu, khung chương trình, nhật ký buổi) | AI | DECISION-D34 | Thư viện đọc docx/pdf |
-| P2-49 | Giáo trình có cấu trúc theo từng buổi (mục tiêu, kiến thức, ví dụ) làm đầu vào chuẩn cho AI và hiển thị cho GV | AI / Đào tạo | DECISION-D34 | Migration |
+| P2-48 | **Đã làm một phần (D37, FR-062)**: trích văn bản Word/PDF có chữ/TXT + truy xuất đoạn cho AI. Còn lại: OCR bản scan/ảnh, `.pptx`/`.doc` cũ, pgvector nếu tìm toàn văn kém | AI | DECISION-D37 | Dịch vụ OCR / pgvector |
+| P2-49 | **Đã làm (D37, FR-061)**: lộ trình theo từng buổi (nội dung, mục tiêu, kiến thức, ví dụ), số buổi = số buổi khóa, hiện cho GV ở trang buổi và là đầu vào chuẩn của AI | AI / Đào tạo | DECISION-D37 | — |
 | P2-50 | Lưu đáp án mẫu/thang điểm câu tự luận cùng câu hỏi (cột mới) để AI chấm sát và GV dùng lại; hiện đáp án tự luận chỉ nằm trong tệp Word | AI / Khảo thí | DECISION-D34 | Migration |
 | P2-51 | Chấm gợi ý hàng loạt cả lớp bằng hàng đợi nền, so sánh điểm AI với điểm GV để đo chất lượng | AI | DECISION-D34 | P2-29 |
 | P2-52 | Công thức Toán dạng LaTeX/KaTeX trong đề, slide, Word | AI / Khảo thí | DECISION-D34 | P2-06 |

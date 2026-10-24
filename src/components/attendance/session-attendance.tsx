@@ -2,26 +2,52 @@ import Link from "next/link";
 import { Alert, Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import type { getSessionForAttendance } from "@/server/attendance/service";
 import { ATTENDANCE_STATUS, SESSION_STATUS } from "@/lib/labels";
+import { syllabusForSession } from "@/lib/syllabus";
 import { formatDateTime, formatTime, formatVn } from "@/lib/time";
 import { ConfigForm } from "@/components/forms/config-form";
 import { saveLessonLogAction } from "@/server/attendance/actions";
-import { AttendanceForm } from "./attendance-form";
+import { AttendanceForm, EvaluationForm } from "./attendance-form";
 
 type Data = Awaited<ReturnType<typeof getSessionForAttendance>>;
 
 /** Màn hình điểm danh một buổi (UC-007), dùng cho cả giáo viên và giáo vụ. */
 export function SessionAttendance({ data, backHref, backLabel }: { data: Data; backHref: string; backLabel: string }) {
   const { session, roster, canEdit, needsReason, inWindow } = data;
+  const started = Date.now() >= session.startsAt.getTime();
+  const evaluable = roster.filter((r) => r.record && (r.record.status === "PRESENT" || r.record.status === "LATE"));
+  const planned = syllabusForSession(session.class.course.syllabus, session.index, session.class.totalSessions);
   return (
     <>
       <p className="mb-2 text-sm">
         <Link href={backHref}>← {backLabel}</Link>
       </p>
       <PageHeader
-        title={`Điểm danh lớp ${session.class.code} — buổi ${session.index}`}
+        title={`Lớp ${session.class.code} · buổi ${session.index}`}
         description={`${formatVn(session.startsAt, "EEEE dd/MM/yyyy")} · ${formatTime(session.startsAt)}–${formatTime(session.endsAt)}${session.room ? ` · ${session.room.name}` : ""} · ${session.class.course.title}`}
         action={<Badge tone={SESSION_STATUS[session.status].tone}>{SESSION_STATUS[session.status].label}</Badge>}
       />
+      {planned && (
+        <Card title="Nội dung dự kiến" className="mb-4">
+          <p className="font-medium">{planned.title}</p>
+          <dl className="mt-2 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+            {(
+              [
+                ["Nội dung", planned.detail],
+                ["Mục tiêu", planned.objectives],
+                ["Kiến thức trọng tâm", planned.knowledge],
+                ["Ví dụ", planned.examples],
+              ] as const
+            )
+              .filter(([, v]) => v)
+              .map(([k, v]) => (
+                <div key={k}>
+                  <dt className="text-muted">{k}</dt>
+                  <dd className="whitespace-pre-line">{v}</dd>
+                </div>
+              ))}
+          </dl>
+        </Card>
+      )}
       {session.status === "CANCELLED" && <Alert tone="danger" className="mb-4">Buổi học đã hủy{session.cancelReason ? `: ${session.cancelReason}` : ""}.</Alert>}
       {session.status !== "CANCELLED" && !inWindow && !canEdit && (
         <Alert tone="info" className="mb-4">
@@ -40,7 +66,7 @@ export function SessionAttendance({ data, backHref, backLabel }: { data: Data; b
         <AttendanceForm
           sessionId={session.id}
           needsReason={needsReason}
-          rows={roster.map((r) => ({ id: r.id, fullName: r.fullName, studentCode: r.studentCode, status: r.record?.status ?? null, note: r.record?.note ?? null, attitude: r.record?.attitude ?? null }))}
+          rows={roster.map((r) => ({ id: r.id, fullName: r.fullName, studentCode: r.studentCode, status: r.record?.status ?? null, note: r.record?.note ?? null }))}
         />
       ) : (
         <ul className="divide-y divide-line rounded-block border border-line bg-surface">
@@ -53,21 +79,33 @@ export function SessionAttendance({ data, backHref, backLabel }: { data: Data; b
         </ul>
       )}
 
+      {session.status !== "CANCELLED" && canEdit && (
+        <Card title="Đánh giá học sinh" className="mt-6">
+          {!started ? (
+            <EmptyState message="Mở khi buổi học bắt đầu." />
+          ) : evaluable.length === 0 ? (
+            <EmptyState message="Điểm danh học sinh có mặt trước khi đánh giá." />
+          ) : (
+            <EvaluationForm
+              sessionId={session.id}
+              rows={evaluable.map((r) => ({ id: r.id, fullName: r.fullName, studentCode: r.studentCode, attitude: r.record?.attitude ?? null, comment: r.record?.comment ?? null }))}
+            />
+          )}
+        </Card>
+      )}
+
       {session.status !== "CANCELLED" && (
         <Card
           title="Nhật ký buổi học"
           className="mt-6"
           action={session.lessonLoggedAt ? <span className="text-xs text-muted">Ghi lần đầu {formatDateTime(session.lessonLoggedAt)}</span> : undefined}
         >
-          <p className="mb-3 text-sm text-muted">
-            Học sinh và phụ huynh xem được ở trang chi tiết buổi học. Lần lưu đầu tiên sẽ gửi thông báo cho cả lớp; sửa sau đó không gửi lại.
-          </p>
           <ConfigForm
             action={saveLessonLogAction}
             hidden={{ sessionId: session.id }}
             submitLabel={session.lessonLoggedAt ? "Cập nhật nhật ký" : "Lưu và gửi cho lớp"}
             fields={[
-              { type: "textarea", name: "lessonContent", label: "Nội dung đã học", rows: 4, maxLength: 5000, defaultValue: session.lessonContent ?? "", hint: "Ví dụ: Ôn tập hệ phương trình bậc nhất hai ẩn, chữa bài 3–7 SGK." },
+              { type: "textarea", name: "lessonContent", label: "Nội dung đã học", rows: 4, maxLength: 5000, defaultValue: session.lessonContent ?? "" },
               { type: "textarea", name: "homework", label: "Bài tập về nhà", rows: 3, maxLength: 5000, defaultValue: session.homework ?? "" },
             ]}
           />

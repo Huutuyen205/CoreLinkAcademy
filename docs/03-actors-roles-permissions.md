@@ -63,6 +63,7 @@ C = tạo, R = xem, U = sửa, D = xóa/ẩn, X = thao tác đặc biệt. "own"
 | Xuất lịch .ics (FEAT-B5) | — | — | — | own | own | con đã liên kết (`?con`) |
 | Nhắc lịch ngày mai (FEAT-B4) | — | X gửi ngay | X gửi ngay | R (nhận) | R (nhận) | R (nhận) |
 | Đề luyện tập — soạn (FR-053) | — | CRUD mọi đề | CRUD mọi đề | CRUD đề của mình; R đề đang mở của GV khác | — | — |
+| Đề bổ sung cá nhân (FR-060) | — | CRUD | CRUD | C/R/U/D đề của mình, chỉ cho HS đang học lớp mình phụ trách (khác → 403/404) | R đề dành riêng cho mình (sau khi mở); không thấy đề của bạn | — |
 | Đề luyện tập — làm, kết quả, lịch sử (FR-053) | — | — | — | — | R đề đang mở; CR lượt làm own | — |
 | Kiểm duyệt nhóm lớp: gỡ tin, chặn gửi (FR-050) | — | X mọi nhóm lớp | X mọi nhóm lớp | X nhóm lớp mình phụ trách (không chặn GV) | Thu hồi tin own | Thu hồi tin own |
 | Thông báo "từng người" + trạng thái gửi (FR-048) | — | CR + R trạng thái mọi thông báo | CR + R trạng thái mọi thông báo | R trạng thái thông báo mình gửi | — | — |

@@ -106,7 +106,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
                 hidden={{ documentId: d.id }}
                 submitLabel="Tải lên"
                 submitVariant="secondary"
-                fields={[{ type: "file", name: "files", label: "Thêm tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true }]}
+                fields={[{ type: "file", name: "files", label: "Thêm tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true, camera: true }]}
               />
             )}
           </Card>

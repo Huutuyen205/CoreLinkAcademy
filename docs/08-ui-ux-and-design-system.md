@@ -61,10 +61,11 @@ Sitemap: [07 §1](07-user-flows-and-logic-diagrams.md#1-sitemap). Trạng thái 
 | SCREEN-021 | `/quan-ly/mon-hoc` | Admin | Quản lý môn | Menu | Card mỗi môn (form sửa + xóa khi 0 khóa), thêm môn | V, D, S | FR-015 / UC-014 |
 | SCREEN-022 | `/quan-ly/phong` | Admin | Quản lý phòng | Menu | Card mỗi phòng (sửa, xóa/giải thích), thêm phòng | E, V, D, S | FR-016 / UC-014 |
 | SCREEN-023 | `/quan-ly/nhat-ky` | Admin | Truy vết | Menu | Lọc loại, DataTable, details JSON, Pagination | E | FR-035 / UC-019 |
-| SCREEN-024 | `/giao-vien` | GV | Việc hôm nay | Đăng nhập | Card buổi hôm nay, bài chờ chấm (tổng), cảnh báo vắng | E (3), L | FR-034 / UC-018 |
+| SCREEN-024 | `/giao-vien` | GV | Vào thẳng lịch | Đăng nhập | Chuyển hướng sang `/giao-vien/lich` (không còn trang tổng quan; D39) | — | FR-065 |
+| SCREEN-024b | `/giao-vien/don` | GV | Đơn | Menu | 2 tab `?tab=`: Đơn học sinh (duyệt đơn xin nghỉ), Đơn của tôi (đề xuất đổi lịch: chọn Lớp → Buổi → loại). `/giao-vien/de-xuat`, `/giao-vien/don-nghi` chuyển về đây | E, V, P | FR-043, 044, 065 |
 | SCREEN-025 | `/giao-vien/lich` | GV | Xem tuần dạy | Menu | WeekSchedule (liên kết điểm danh) | E | FR-022 / UC-016 |
 | SCREEN-026 | `/giao-vien/lop` | GV | Danh sách lớp mình | Menu | Lưới thẻ lớp | E | FR-022 |
-| SCREEN-027 | `/giao-vien/lop/[id]` | GV | Vận hành lớp mình | Lớp của tôi | Cảnh báo vắng (role=status), HS, buổi (cuộn trong khung), bài tập + "Tạo bài tập", bảng điểm (cuộn ngang trong khung) | E, P (404 lớp khác) | FR-023, 027, 033 |
+| SCREEN-027 | `/giao-vien/lop/[id]` | GV | Vận hành lớp mình | Lớp của tôi | 4 mục `?tab=` (thanh tab đánh số, cuộn ngang, tự đưa tab đang chọn vào giữa): Chi tiết (thông tin, buổi), Giáo án và tài liệu (+ AI; nhãn ai xem được), Bài tập và đề (+ AI, đề bổ sung, bảng điểm cuộn ngang), Học sinh (nút bật/tắt "Tạo đề bổ sung" từng em, nhãn vắng 2 buổi) | E, P (404 lớp khác) | FR-023, 027, 033, 058, 060 |
 | SCREEN-028 | `/giao-vien/buoi/[id]` | GV | Điểm danh | Hôm nay, lịch, lớp | SessionAttendance: Alert khung, AttendanceForm (radio lớn, nút dính đáy) | E, D, S, R | FR-023 / UC-007 |
 | SCREEN-029 | `/giao-vien/bai-tap/moi` | GV | Tạo bài | Chi tiết lớp | ConfigForm (tên, hướng dẫn, hạn, nộp muộn) | V, P | FR-027 / UC-008 |
 | SCREEN-030 | `/giao-vien/bai-tap/[id]` | GV | Soạn, giao, công bố | Tạo bài, lớp | Danh sách câu (đáp án đánh dấu), QuestionForm, Card giao bài (+ số bài chưa chấm), thông tin bài | E, V, D, S, R (đã giao) | FR-027, 028, 032 / UC-008, 010 |
@@ -140,7 +141,8 @@ Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2
 | `PageHeader` / `Card` | Nhãn/nút ở `action` giữ độ rộng theo nội dung (không kéo giãn); `Card` đệm 16px | Đệm 20px | Như trên |
 | DataTable | Danh sách dòng: cột chính in đậm + `dl` các cột còn lại (không cuộn ngang) | Như < 640 tới 767px; bảng từ 768px | Bảng |
 | Form | 1 cột | 2 cột (`columns=2`, ô `wide` chiếm 2 cột) | 2 cột |
-| Lịch tuần | Danh sách các ngày có buổi | Như trên | 7 cột |
+| Lịch tuần | Lưới khung giờ 7 cột (giờ ở trục dọc, nhãn T2..CN) | Như trên | Như trên, thêm tên thứ + phòng + GV |
+| Lịch tháng | Lưới 7 cột, mỗi ô tối đa 3 mã lớp + "+n" | Như trên | Như trên, thêm giờ buổi |
 | Bảng điểm GV | Cuộn ngang **trong khung** (ngoại lệ có chủ đích) | Như trên | Bảng đầy đủ |
 | Nút gửi dài (điểm danh, làm bài) | Dính đáy, trên thanh đáy (`bottom: 4rem + safe-area`) | Như trên | Dính đáy trang |
 | Hộp xác nhận | `window.confirm` cho thao tác khó hoàn tác (giao bài, công bố, nộp bài, hủy buổi, xóa, khóa, đặt lại MK, đổi trạng thái lớp) | | |

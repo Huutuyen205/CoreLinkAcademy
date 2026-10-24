@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
+import { attendanceRate, checkAttendanceEdit, checkSessionEvaluation, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
 
 const session = { startsAt: new Date("2026-10-21T11:00:00Z"), endsAt: new Date("2026-10-21T12:30:00Z") };
 
@@ -74,28 +74,34 @@ describe("planAttendanceWrites (ghi điểm danh theo lô)", () => {
     const plan = planAttendanceWrites([e("a", "PRESENT"), e("b", "PRESENT"), e("c", "LATE", "kẹt xe"), e("d", "PRESENT")], ["a", "b", "c"]);
     expect(plan.toCreate.map((x) => x.studentId)).toEqual(["d"]);
     expect(plan.updateGroups).toEqual([
-      { status: "PRESENT", note: null, attitude: null, studentIds: ["a", "b"] },
-      { status: "LATE", note: "kẹt xe", attitude: null, studentIds: ["c"] },
-    ]);
-  });
-
-  it("thái độ học tập khác nhau → nhóm updateMany khác nhau", () => {
-    const plan = planAttendanceWrites(
-      [
-        { ...e("a", "PRESENT"), attitude: "GOOD" },
-        { ...e("b", "PRESENT"), attitude: "GOOD" },
-        { ...e("c", "PRESENT"), attitude: "NEEDS_WORK" },
-      ],
-      ["a", "b", "c"],
-    );
-    expect(plan.updateGroups).toEqual([
-      { status: "PRESENT", note: null, attitude: "GOOD", studentIds: ["a", "b"] },
-      { status: "PRESENT", note: null, attitude: "NEEDS_WORK", studentIds: ["c"] },
+      { status: "PRESENT", note: null, studentIds: ["a", "b"] },
+      { status: "LATE", note: "kẹt xe", studentIds: ["c"] },
     ]);
   });
 
   it("trùng học sinh trong cùng lần gửi: lấy lần cuối như vòng upsert tuần tự", () => {
     const plan = planAttendanceWrites([e("a", "PRESENT"), e("a", "ABSENT")], []);
     expect(plan.toCreate).toEqual([e("a", "ABSENT")]);
+  });
+});
+
+describe("đánh giá học sinh cuối buổi", () => {
+  const session = { startsAt: new Date("2026-11-02T11:00:00Z"), endsAt: new Date("2026-11-02T12:30:00Z") };
+  const at = (iso: string) => new Date(iso);
+  const check = (role: "TEACHER" | "STAFF" | "STUDENT", now: string, sessionStatus: "SCHEDULED" | "COMPLETED" | "CANCELLED" = "SCHEDULED") =>
+    checkSessionEvaluation({ role, sessionStatus, session, now: at(now) });
+
+  it("chưa bắt đầu → chưa đánh giá; từ lúc bắt đầu tới hết khung 24 giờ → giáo viên được", () => {
+    expect(check("TEACHER", "2026-11-02T10:45:00Z")).toBe("NOT_STARTED");
+    expect(check("TEACHER", "2026-11-02T12:00:00Z")).toBeNull();
+    expect(check("TEACHER", "2026-11-02T12:30:00Z")).toBeNull();
+    expect(check("TEACHER", "2026-11-03T12:30:00Z")).toBeNull();
+    expect(check("TEACHER", "2026-11-03T12:31:00Z")).toBe("OUTSIDE_WINDOW");
+  });
+
+  it("quản lý sửa được về sau; học sinh không; buổi hủy thì không", () => {
+    expect(check("STAFF", "2026-12-01T00:00:00Z")).toBeNull();
+    expect(check("STUDENT", "2026-11-02T12:00:00Z")).toBe("FORBIDDEN");
+    expect(check("TEACHER", "2026-11-02T12:00:00Z", "CANCELLED")).toBe("SESSION_CANCELLED");
   });
 });

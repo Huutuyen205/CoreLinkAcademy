@@ -352,6 +352,10 @@ Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `pr
 | `conversation_members.mutedAt` | Tạm chặn gửi tin trong nhóm lớp | — |
 | `teacher_availabilities` (`teacherId` → `users` CASCADE, `weekday`, `startTime`, `endTime`, `note`) | Lịch rảnh GV | Index `(teacherId, weekday)`; không trùng khung (kiểm ở service) |
 | `practice_sets` (`title`, `description`, `topic`, `format`, `difficulty`, `subjectId`/`levelId` SET NULL, `isActive`, `createdById`) | Đề luyện tập | `isActive=false` là nháp |
+| `attendances.comment` (VARCHAR 500) | Nhận xét học sinh theo buổi (FR-059) | HS/PH xem; nhập cùng form điểm danh |
+| `document_chunks` (`documentId` → `documents` CASCADE, `fileId`, `position`, `text`, `search` không dấu, `tsv` tsvector) | Đoạn văn bản trích từ tệp để AI tra cứu (FR-062) | Index `(documentId, fileId)` + GIN `(tsv)`; ghi `tsv` bằng SQL thô `to_tsvector('simple', search)`. Migration `20261029090000_document_chunks` |
+| `courses.syllabus` (JSON, không đổi schema) | Mỗi phần tử `{title, detail, objectives?, knowledge?, examples?}`, số phần tử = `totalSessions` (FR-061) | Kiểm khi lưu khóa |
+| `practice_sets.classId` → `classes` (SET NULL), `practice_sets.forStudentId` → `users` (SET NULL) | Đề bổ sung cá nhân (FR-060) | `forStudentId` null = đề chung; có giá trị = chỉ học sinh đó thấy/làm. Index `(classId)`, `(forStudentId)`. Migration `20261028090000_class_tabs` |
 | `practice_questions` (`setId` CASCADE, `order`, `type` MCQ/SHORT, `prompt`, `options`, `correctOption`, `acceptedAnswers`, `explanation`, `points`) | Câu hỏi đề luyện | Đáp án + lời giải chỉ trả về sau khi nộp |
 | `practice_attempts` (`setId` CASCADE, `studentId` CASCADE, `answers` JSON, `score`, `maxScore`, `correctCount`, `total`, `submittedAt`) | Lượt làm (lịch sử luyện tập) | Index `(studentId, submittedAt)`, `(setId)` |
 

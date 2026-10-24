@@ -129,7 +129,7 @@ export async function handleScheduleRequest(actor: Actor, requestId: string, dec
       kind: "request_result",
       title: decision.approve ? "Đề xuất đổi lịch đã được duyệt" : "Đề xuất đổi lịch bị từ chối",
       body: `Lớp ${r.session.class.code}, buổi ${formatDateTime(r.session.startsAt)}.${decision.note ? ` Phản hồi: ${decision.note}` : ""}`,
-      link: "/giao-vien/de-xuat",
+      link: "/giao-vien/don?tab=cua-toi",
     });
   });
 }
@@ -142,6 +142,6 @@ export async function listMyUpcomingSessions(actor: Actor) {
     where: { teacherId: actor.id, status: "SCHEDULED", startsAt: { gt: now, lt: new Date(now.getTime() + 60 * 86_400_000) } },
     orderBy: { startsAt: "asc" },
     take: 150,
-    select: { id: true, index: true, startsAt: true, endsAt: true, class: { select: { code: true } } },
+    select: { id: true, index: true, startsAt: true, endsAt: true, class: { select: { id: true, code: true } } },
   });
 }

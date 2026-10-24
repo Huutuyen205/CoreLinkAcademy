@@ -36,7 +36,7 @@ export async function createLeaveRequest(actor: Actor, input: { studentId: strin
       kind: "leave_request",
       title: `Đơn xin nghỉ: ${student.fullName}`,
       body: `Lớp ${session.class.code}, buổi ${formatDateTime(session.startsAt)}. Lý do: ${input.reason}`,
-      link: "/giao-vien/don-nghi",
+      link: "/giao-vien/don",
     });
   });
 }

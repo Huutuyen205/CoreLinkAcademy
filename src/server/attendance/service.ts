@@ -5,15 +5,24 @@ import { assertCanViewStudent, canTeacherAccessClass, isManager } from "@/server
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
-import { attendanceRate, checkAttendanceEdit, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
+import { notifyUsers } from "@/server/notifications/service";
+import { formatDateTime } from "@/lib/time";
+import { attendanceRate, checkAttendanceEdit, checkSessionEvaluation, consecutiveAbsentees, isInAttendanceWindow, planAttendanceWrites } from "./rules";
 
-export type AttendanceEntry = { studentId: string; status: AttendanceStatus; note: string | null; attitude?: string | null };
+const ATTENDANCE_NOTE: Record<AttendanceStatus, { self: string; child: string }> = {
+  PRESENT: { self: "Em có mặt", child: "đã có mặt" },
+  LATE: { self: "Em đi muộn", child: "đi muộn" },
+  ABSENT: { self: "Em vắng mặt", child: "vắng mặt" },
+  EXCUSED: { self: "Em nghỉ có phép", child: "nghỉ có phép" },
+};
+
+export type AttendanceEntry = { studentId: string; status: AttendanceStatus; note: string | null };
 
 async function loadSession(actor: Actor, sessionId: string) {
   const session = await db.classSession.findUnique({
     where: { id: sessionId },
     include: {
-      class: { select: { id: true, code: true, teacherId: true, course: { select: { title: true } } } },
+      class: { select: { id: true, code: true, teacherId: true, totalSessions: true, course: { select: { title: true, syllabus: true } } } },
       room: { select: { name: true } },
       teacher: { select: { fullName: true } },
       attendances: { include: { markedBy: { select: { fullName: true } } } },
@@ -79,12 +88,12 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
     for (const g of updateGroups) {
       await tx.attendance.updateMany({
         where: { sessionId, studentId: { in: g.studentIds } },
-        data: { status: g.status, note: g.note, attitude: g.attitude, markedById: actor.id, markedAt: now },
+        data: { status: g.status, note: g.note, markedById: actor.id, markedAt: now },
       });
     }
     if (toCreate.length > 0) {
       const created = await tx.attendance.createMany({
-        data: toCreate.map((e) => ({ sessionId, studentId: e.studentId, status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now })),
+        data: toCreate.map((e) => ({ sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now })),
         skipDuplicates: true,
       });
       // Hiếm: người khác vừa điểm danh cùng buổi → một số dòng đã tồn tại và bị bỏ qua; ghi đè như upsert cũ.
@@ -92,14 +101,35 @@ export async function saveAttendance(actor: Actor, sessionId: string, entries: A
         for (const e of toCreate) {
           await tx.attendance.upsert({
             where: { sessionId_studentId: { sessionId, studentId: e.studentId } },
-            update: { status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now },
-            create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, attitude: e.attitude ?? null, markedById: actor.id, markedAt: now },
+            update: { status: e.status, note: e.note, markedById: actor.id, markedAt: now },
+            create: { sessionId, studentId: e.studentId, status: e.status, note: e.note, markedById: actor.id, markedAt: now },
           });
         }
       }
     }
     if (session.status === "SCHEDULED" && now > session.endsAt) {
       await tx.classSession.update({ where: { id: sessionId }, data: { status: "COMPLETED" } });
+    }
+    // Báo tình trạng điểm danh cho HS và PH — chỉ em mới được ghi hoặc đổi trạng thái (lưu lại không báo lặp).
+    const prev = new Map(session.attendances.map((a) => [a.studentId, a.status]));
+    const changed = valid.filter((e) => prev.get(e.studentId) !== e.status);
+    if (changed.length > 0) {
+      const people = await tx.user.findMany({
+        where: { id: { in: changed.map((e) => e.studentId) } },
+        select: { id: true, fullName: true, parentLinks: { where: { parent: { status: "ACTIVE" } }, select: { parentId: true } } },
+      });
+      const byId = new Map(people.map((p) => [p.id, p]));
+      const when = formatDateTime(session.startsAt);
+      for (const e of changed) {
+        const st = byId.get(e.studentId);
+        if (!st) continue;
+        const label = ATTENDANCE_NOTE[e.status];
+        const detail = `Lớp ${session.class.code}, buổi ${when}.${e.note ? ` Ghi chú: ${e.note}` : ""}`;
+        await notifyUsers(tx, [st.id], { kind: "attendance", title: `Điểm danh: ${label.self}`, body: detail, link: `/hoc-sinh/buoi/${sessionId}` });
+        for (const l of st.parentLinks) {
+          await notifyUsers(tx, [l.parentId], { kind: "attendance", title: `${st.fullName} ${label.child}`, body: detail, link: `/phu-huynh/buoi/${sessionId}?con=${st.id}` });
+        }
+      }
     }
     if (check.override) {
       await writeAudit(
@@ -171,6 +201,7 @@ export async function getStudentAttendance(actor: Actor, studentId: string) {
       status: true,
       note: true,
       attitude: true,
+      comment: true,
       session: { select: { startsAt: true, status: true, index: true, class: { select: { id: true, code: true, course: { select: { title: true } } } } } },
     },
   });
@@ -186,4 +217,36 @@ export async function getStudentAttendance(actor: Actor, studentId: string) {
     records: rows,
     classes: [...byClass.entries()].map(([id, v]) => ({ id, code: v.code, title: v.title, rate: attendanceRate(v.rows), total: v.rows.length })),
   };
+}
+
+export type EvaluationEntry = { studentId: string; attitude: string | null; comment: string | null };
+
+const EVALUATION_ERRORS = {
+  SESSION_CANCELLED: "Buổi học đã bị hủy, không đánh giá được.",
+  NOT_STARTED: "Buổi học chưa bắt đầu nên chưa đánh giá được.",
+  OUTSIDE_WINDOW: "Đã hết thời gian đánh giá của giáo viên. Liên hệ giáo vụ để sửa.",
+  FORBIDDEN: "Bạn không có quyền đánh giá học sinh.",
+} as const;
+
+/**
+ * Đánh giá cuối buổi (thái độ + nhận xét), ghi riêng với điểm danh đầu giờ: chỉ cập nhật học sinh ĐÃ có bản ghi
+ * điểm danh và có mặt/muộn; không đổi trạng thái chuyên cần. Gộp theo (thái độ, nhận xét) → mỗi nhóm một `updateMany`.
+ */
+export async function saveEvaluations(actor: Actor, sessionId: string, entries: EvaluationEntry[]) {
+  const session = await loadSession(actor, sessionId);
+  const error = checkSessionEvaluation({ role: actor.role, sessionStatus: session.status, session, now: new Date() });
+  if (error) throw new DomainError(error, EVALUATION_ERRORS[error]);
+
+  const eligible = new Set(session.attendances.filter((a) => a.status === "PRESENT" || a.status === "LATE").map((a) => a.studentId));
+  const groups = new Map<string, { attitude: string | null; comment: string | null; studentIds: string[] }>();
+  for (const e of new Map(entries.map((x) => [x.studentId, x])).values()) {
+    if (!eligible.has(e.studentId)) continue;
+    const key = JSON.stringify([e.attitude, e.comment]);
+    const g = groups.get(key) ?? { attitude: e.attitude, comment: e.comment, studentIds: [] };
+    g.studentIds.push(e.studentId);
+    groups.set(key, g);
+  }
+  if (groups.size === 0) throw new DomainError("EMPTY", "Chưa có học sinh nào được điểm danh có mặt để đánh giá.");
+  await db.$transaction([...groups.values()].map((g) => db.attendance.updateMany({ where: { sessionId, studentId: { in: g.studentIds } }, data: { attitude: g.attitude, comment: g.comment } })));
+  return { classId: session.classId, count: [...groups.values()].reduce((n, g) => n + g.studentIds.length, 0) };
 }

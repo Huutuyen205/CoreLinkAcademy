@@ -48,7 +48,7 @@ const ICONS: Record<string, LucideIcon> = {
   "/giao-vien": LayoutDashboard,
   "/giao-vien/lich": CalendarDays,
   "/giao-vien/lop": Shapes,
-  "/giao-vien/de-xuat": ClipboardList,
+  "/giao-vien/don": ClipboardList,
   "/giao-vien/bai-tap": NotebookPen,
   "/giao-vien/soan-bai": Sparkles,
   "/giao-vien/ho-so": CircleUserRound,

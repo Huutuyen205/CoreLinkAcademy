@@ -39,7 +39,7 @@ export default async function SubmissionsPage({ params, searchParams }: { params
                 Nhắc nộp bài
               </ActionButton>
             )}
-            <ButtonLink href={`/giao-vien/lop/${assignment.class.id}#bang-diem`} variant="secondary" size="sm">
+            <ButtonLink href={`/giao-vien/lop/${assignment.class.id}?tab=bai-tap#bang-diem`} variant="secondary" size="sm">
               Bảng điểm lớp
             </ButtonLink>
           </RowActions>

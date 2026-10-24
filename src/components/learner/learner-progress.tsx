@@ -42,6 +42,7 @@ export function AttendanceSummary({ data, limit = 10 }: { data: Attendance; limi
                 <span>
                   {formatDate(r.session.startsAt)} · {r.session.class.code}
                   {r.note && <span className="block text-sm text-muted">{r.note}</span>}
+                  {r.comment && <span className="block text-sm">{r.comment}</span>}
                 </span>
                 <span className="flex flex-wrap gap-1">
                   {r.attitude && ATTITUDE[r.attitude] && <Badge tone={ATTITUDE[r.attitude]!.tone}>{ATTITUDE[r.attitude]!.label}</Badge>}

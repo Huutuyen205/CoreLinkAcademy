@@ -7,7 +7,7 @@ import { formFields, parseForm, runAction } from "@/server/action";
 import { saveLessonLog } from "@/server/academic/lesson-log";
 import { requireRole } from "@/server/auth/guard";
 import type { ActionState } from "@/server/errors";
-import { saveAttendance, type AttendanceEntry } from "./service";
+import { saveAttendance, saveEvaluations, type AttendanceEntry, type EvaluationEntry } from "./service";
 import { ATTITUDE_VALUES } from "@/lib/labels";
 
 const STATUSES: AttendanceStatus[] = ["PRESENT", "LATE", "ABSENT", "EXCUSED"];
@@ -28,9 +28,7 @@ export async function saveAttendanceAction(_prev: ActionState, formData: FormDat
     const status = String(formData.get(`status:${studentId}`) ?? "PRESENT") as AttendanceStatus;
     if (!STATUSES.includes(status)) return { ok: false, message: "Trạng thái điểm danh không hợp lệ." };
     const note = String(formData.get(`note:${studentId}`) ?? "").trim().slice(0, 255) || null;
-    const rawAttitude = String(formData.get(`attitude:${studentId}`) ?? "");
-    const attitude = (ATTITUDE_VALUES as readonly string[]).includes(rawAttitude) ? rawAttitude : null;
-    entries.push({ studentId, status, note, attitude });
+    entries.push({ studentId, status, note });
   }
 
   const result = await runAction(() => saveAttendance(actor, sessionId, entries, reasonRaw || null), { reason: reasonRaw });
@@ -59,4 +57,25 @@ export async function saveLessonLogAction(_prev: ActionState, formData: FormData
   revalidatePath(`/quan-ly/buoi/${parsed.data.sessionId}`);
   revalidatePath(`/giao-vien/lop/${result.value}`);
   return { ok: true, message: "Đã lưu nhật ký buổi học." };
+}
+
+/** Đánh giá cuối buổi: `studentIds` + `attitude:<id>` + `comment:<id>`; ghi riêng với điểm danh. */
+export async function saveEvaluationsAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER", "STAFF", "ADMIN");
+  const sessionId = String(formData.get("sessionId") ?? "");
+  if (!z.string().min(1).max(40).safeParse(sessionId).success) return { ok: false, message: "Buổi học không hợp lệ." };
+  const ids = formData.getAll("studentIds").map(String).filter((id) => id.length > 0 && id.length <= 40).slice(0, 200);
+  const entries: EvaluationEntry[] = ids.map((studentId) => {
+    const rawAttitude = String(formData.get(`attitude:${studentId}`) ?? "");
+    return {
+      studentId,
+      attitude: (ATTITUDE_VALUES as readonly string[]).includes(rawAttitude) ? rawAttitude : null,
+      comment: String(formData.get(`comment:${studentId}`) ?? "").trim().slice(0, 500) || null,
+    };
+  });
+  const result = await runAction(() => saveEvaluations(actor, sessionId, entries));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/buoi/${sessionId}`);
+  revalidatePath(`/quan-ly/buoi/${sessionId}`);
+  return { ok: true, message: `Đã lưu đánh giá ${result.value.count} học sinh.` };
 }

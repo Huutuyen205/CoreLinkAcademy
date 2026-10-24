@@ -14,6 +14,7 @@ import { sanitizeFileName } from "@/server/files/rules";
 import { loadSessionContext, type SessionContext } from "./context";
 import { buildSystemPrompt, buildUserPrompt, resolveTopic, type Difficulty } from "./prompts";
 import { render } from "./render";
+import { findExcerpts } from "./retrieval";
 import { normalizeContent, toExamData } from "./exam";
 import { clampCount } from "./rules";
 import { KIND_LABELS, SCHEMAS, type GenerateKind, type GeneratedContent } from "./schemas";
@@ -44,6 +45,8 @@ export async function generateContent(actor: Actor, input: GenerateInput): Promi
   const count = clampCount(input.count, DEFAULT_COUNTS[input.kind], input.kind === "essay" ? 8 : 30);
   const topic = resolveTopic(ctx, input.topic);
   const opts = { topic: input.topic, count, difficulty: input.difficulty, notes: input.notes };
+  // Chỉ vài đoạn tài liệu liên quan nhất (đã lọc quyền) thay vì cả tệp; lỗi truy xuất không chặn việc soạn.
+  ctx.excerpts = await findExcerpts(actor, ctx, topic).catch(() => []);
   const result = await completeJson(
     {
       task: input.kind,
@@ -139,6 +142,8 @@ async function saveAsDocument(actor: Actor, ctx: SessionContext, content: Genera
       visibleToParents: false,
     },
     [{ fileName: sanitizeFileName(`${label}-${ctx.classCode}-buoi${ctx.sessionIndex}.${rendered.ext}`), mimeType: rendered.mimeType, size: rendered.data.byteLength, data: rendered.data }],
+    [],
+    { index: false },
   );
   await writeAudit({ actorId: actor.id, action: "ai.save_document", entity: "Document", entityId: id, detail: { sessionId: ctx.sessionId, kind: content.kind } });
   return id;

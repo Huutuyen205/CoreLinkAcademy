@@ -185,6 +185,7 @@ describe("prompt gửi AI không chứa dữ liệu học sinh", () => {
     homework: null,
     note: null,
     documents: [{ kind: "CURRICULUM", title: "Giáo trình Toán 9", description: "Chương 4" }],
+    excerpts: [],
   };
 
   it("có khóa học, buổi, khung chương trình; chỉ dẫn yêu cầu JSON đúng cấu trúc", () => {

@@ -1,5 +1,113 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-24 — Tách đánh giá cuối buổi khỏi điểm danh đầu giờ (sửa D36, FR-059)
+
+PO chỉ ra: điểm danh đầu giờ thì chưa có nhận xét. Trước đây thái độ + nhận xét nằm chung form điểm danh.
+
+- **Điểm danh** (đầu giờ): chỉ trạng thái + ghi chú; lưu điểm danh **không còn chạm** vào thái độ/nhận xét (đã bỏ khỏi `planAttendanceWrites`, `saveAttendance`).
+- **Đánh giá học sinh** (form riêng trên trang buổi): thái độ + nhận xét, `saveEvaluations` — chỉ em đã điểm danh có mặt/muộn, mở từ lúc buổi bắt đầu; giáo viên tới hết khung 24 giờ sau buổi, quản lý về sau; buổi hủy thì không. Quy tắc thuần `checkSessionEvaluation`.
+- Test: `tsc` ✓ · `eslint` ✓ · `vitest` 230 ✓ (mới: quy tắc thời điểm đánh giá) · integration 65/65 (viết lại test điểm danh: điểm danh → đánh giá → sửa điểm danh không xóa đánh giá; em vắng bị bỏ qua; buổi chưa bắt đầu chưa đánh giá được). Không đổi schema.
+- Chưa xem trực quan trang buổi trên máy thật.
+
+## 2026-10-24 — Điều hướng giáo viên gọn, tab Đơn, chụp ảnh, dropdown có tìm kiếm (DECISION-D39)
+
+PO: menu GV còn Lịch · Lớp của tôi · Đơn · Tin nhắn · Hồ sơ và lịch rảnh; thanh đáy điện thoại Lịch ở giữa; đề xuất đổi lịch chọn Lớp → Buổi; tạo bài/tài liệu chụp ảnh được; mọi dropdown lọc có khung tìm. FR-065, FR-066.
+
+- **Menu GV** (`nav-config.ts`): 5 mục; thanh đáy 5 mục (Lớp, Đơn, **Lịch**, Tin nhắn, Hồ sơ); `BottomNav` nhận tới 5 mục. `/giao-vien` chuyển sang `/giao-vien/lich` (bỏ Tổng quan). Thông báo chỉ còn chuông góc phải trên.
+- **Đơn** `/giao-vien/don?tab=`: Đơn học sinh (duyệt đơn nghỉ) / Đơn của tôi (danh sách đề xuất + form mới `ScheduleRequestForm`: Lớp → Buổi của lớp → loại; ngày giờ mới chỉ hiện khi "Dời buổi"). `/giao-vien/de-xuat`, `/giao-vien/don-nghi` redirect; link thông báo/AI/revalidate đã đổi.
+- **Chụp ảnh**: `CameraFileField` (camera trong trang qua `getUserMedia`, ảnh nén rồi gộp vào ô tệp; lỗi quyền → ô chụp hệ điều hành). `ConfigForm` có `camera: true`; bật ở tạo bài tập/đề, tạo tài liệu, "Thêm tệp" của bài tập và tài liệu.
+- **Dropdown lọc**: `FilterSelect` (nút + khung tìm tên bỏ dấu + danh sách, ↑↓ Enter Esc) thay `SelectField` ở 15 trang có `FilterForm`.
+- **Không đổi schema.** Tài liệu: docs/01 (FR-065, 066), 05, 07, 08, 17 (D39).
+
+### Kiểm thử
+- `tsc` ✓ · `eslint src` ✓ · `vitest` 29 file / 230 test ✓.
+- **Chưa xem trên trình duyệt/điện thoại thật**: camera (cần HTTPS hoặc localhost), thanh đáy 5 mục ở 360px, khung tìm của dropdown, luồng Lớp → Buổi.
+
+### Việc PO
+1. Thử trên điện thoại: thanh đáy, chụp ảnh khi tạo bài, đề xuất đổi lịch.
+2. Cho biết có áp cùng kiểu menu/bỏ Tổng quan cho HS, PH, quản lý không.
+3. Review, commit, push (tôi không push).
+
+## 2026-10-24 — Form soạn bài 3 loại + nút nổi và phím tắt AI (DECISION-D38)
+
+Làm nốt phần còn lại của D36/D37. FR-064.
+
+- **Form tạo bài** `/giao-vien/bai-tap/moi?lop=&loai=`: chọn loại **Bài tập về nhà** · **Đề thi, kiểm tra** (`isTest`) · **Bài bổ sung cá nhân** (chọn học sinh của lớp → đề luyện tập nháp, FR-060). Không đổi schema.
+- **Nút nổi ✨ + Alt+A** (`ComposeShortcut`, chỉ giáo viên): tới `/giao-vien/soan-bai` mở sẵn form; đang xem buổi → buổi đó, đang xem lớp → buổi gần nhất của lớp (`?lop=`). Ẩn ở trang soạn bài, bỏ qua khi đang gõ, dùng `code` nên đúng cả trên macOS. Trang soạn bài bỏ đoạn mô tả.
+- **Tài liệu**: docs/01 (FR-064), 17 (D38).
+- Kiểm thử: `tsc` ✓ · `eslint src` ✓ · `vitest` 29 file / 230 test ✓ (mới +1: liên kết theo ngữ cảnh) · `next dev` với phiên thật: 3 loại form, `soan-bai?lop=`, nút có ở lịch và ẩn ở trang soạn bài.
+- **Chưa xem trực quan** vị trí nút nổi so với nút chatbot trên điện thoại (có/không thanh dưới) và phím tắt trên trình duyệt thật.
+- Chưa làm: bài bổ sung có hạn nộp + điểm vào bảng điểm (D38 ghi rõ để sau nếu PO cần).
+
+## 2026-10-24 — Tab lớp 4 mục, slide thương hiệu, AI tiết kiệm token (DECISION-D37)
+
+PO: tab kiểu số thứ tự + gạch chân; bỏ tab Tài liệu (gộp vào Giáo án); slide đẹp có logo; thiết kế lại AI theo hướng tiết kiệm token đầu vào. FR-061..063.
+
+- **Tab lớp**: 4 mục — Chi tiết · Giáo án và tài liệu · Bài tập và đề · Học sinh. Thanh tab đánh số, cuộn ngang trên màn nhỏ, **tự đưa tab đang chọn vào giữa**, mờ dần ở mép phải. Mục Giáo án và tài liệu chia hai khối có nhãn ai xem được (giáo án: chỉ GV/quản lý; tài liệu: học sinh của lớp). Liên kết cũ `tab=tai-lieu` vẫn dùng được. "Lớp của tôi": 3 lối tắt.
+- **Slide** (`render-pptx.ts`, logo nhúng `brand-logo.ts`): bìa (logo + tên trung tâm + tiêu đề + nhãn lớp/buổi/ngày), trang chuyển mục, trang nội dung (logo, thanh thương hiệu, danh sách có chấm, số trang), trang kết. Nền xanh `#1C2D95` trùng màu nền logo. Cỡ chữ tính theo độ dài, tràn thì tách "(tiếp)".
+- **Lộ trình theo buổi** (`src/lib/syllabus.ts`): mỗi dòng `Tiêu đề | Nội dung | Mục tiêu | Kiến thức trọng tâm | Ví dụ`; số dòng phải bằng số buổi (kiểm khi lưu khóa); hiện "Nội dung dự kiến" ở trang buổi (GV); là đầu vào AI. Không đổi schema.
+- **AI truy xuất đoạn tài liệu**: trích văn bản Word/PDF có chữ/TXT lúc tải lên (`mammoth`, `unpdf`), lưu `document_chunks`; khi soạn chỉ gửi tối đa 4 đoạn × 700 ký tự khớp chủ đề + lộ trình, trong phạm vi quyền xem của giáo viên; tìm toàn văn Postgres (chưa pgvector). Tệp AI sinh ra không lập chỉ mục; xóa tệp xóa đoạn.
+- **Migration** `20261029090000_document_chunks` (đã áp vào Postgres local + DB test; `migrate diff` rỗng). Thêm thư viện `mammoth`, `unpdf` (đã cập nhật `pnpm-lock.yaml`, chỉ thêm dòng).
+- **Tài liệu**: docs/01 (FR-061..063, FR-058 còn 4 mục), 05 (P2-48/49), 07, 08, 10, 17 (D37), 24.
+
+### Kiểm thử
+- `tsc` ✓ · `eslint src` ✓ · `vitest` 28 file / 229 test ✓ (mới +15: cắt đoạn, truy vấn, trích docx/pdf/txt thật, lộ trình, bố cục slide) · **integration Postgres local 64/64** (mới +3: tải tệp → trích → tìm không dấu, không thấy tài liệu ngoài quyền, xóa tệp xóa đoạn, tệp AI không lập chỉ mục).
+- `next dev` với phiên thật: 4 tab lớp + liên kết cũ, "Lớp của tôi", trang buổi, lịch trả đúng nội dung.
+- **Chưa xem trực quan**: slide (máy không có PowerPoint/LibreOffice để dựng ảnh), thanh tab trên Samsung/iPhone thật. Slide được kiểm bằng test bố cục (không tràn, tách trang, 30 slide dài vẫn dựng được).
+
+### Việc PO
+1. Mở thử file slide do AI tạo bằng PowerPoint/Google Slides (cần đặt `AI_PROVIDER` thật hoặc dùng mẫu) và gửi ảnh nếu bố cục chưa ưng.
+2. Khi triển khai Supabase: chạy `prisma migrate deploy` (migration mới dùng `tsvector` có sẵn, không cần bật extension).
+3. Admin cập nhật lộ trình từng khóa theo dạng mới (mỗi dòng một buổi) để AI có căn cứ; khóa cũ lệch số buổi sẽ báo lỗi khi bấm lưu.
+4. Review, commit, push (tôi không push).
+
+## 2026-10-24 — Giao diện giáo viên theo lớp: lịch lưới, trang lớp 5 mục, đánh giá theo buổi, đề bổ sung (DECISION-D36)
+
+PO yêu cầu: lịch tuần theo khung giờ, lịch tháng rộng như lịch điện thoại, gom tài liệu/giáo án/bài tập/học sinh vào trang lớp, đánh giá học sinh theo buổi, nút tạo đề bổ sung từng học sinh; UI gọn, bỏ mô tả/ví dụ. FR-057..060.
+
+- **Lịch**: `WeekSchedule` viết lại thành lưới khung giờ (dùng chung GV, HS, PH, quản lý); `MonthSchedule` lưới 7 cột mọi cỡ màn hình, bấm số ngày sang tuần; GV có thêm xem tháng (`ViewSwitch` Tuần/Tháng dùng chung với HS).
+- **Trang lớp** `/giao-vien/lop/[id]?tab=`: Chi tiết · Tài liệu · Giáo án · Bài tập và đề · Học sinh (thư mục `_tabs/`); nút tạo tài liệu / giáo án / bài tập và nút "tạo bằng AI" (mở `soan-bai?buoi=` của buổi gần nhất); "Lớp của tôi" có 4 lối tắt ở chân thẻ lớp. GV dạy thay chỉ thấy Chi tiết.
+- **Đánh giá theo buổi**: thêm `attendances.comment`; form điểm danh có thái độ + nhận xét + ghi chú; HS/PH xem ở chi tiết buổi và lịch sử chuyên cần. Bỏ các dòng mô tả/ví dụ ở trang buổi.
+- **Đề bổ sung**: `practice_sets.classId/forStudentId`; nút "Tạo đề bổ sung" (bật/tắt) ở từng học sinh đang học → đề nháp, thêm câu ở `/on-luyen/[id]`, mở → chỉ học sinh đó thấy và làm, được báo riêng. Kho đề chung và GV khác không thấy.
+- **Migration** `20261028090000_class_tabs` (2 cột + 2 FK `SET NULL`, 2 index) — đã áp vào Postgres local và DB test.
+- **Tài liệu**: docs/01 (FR-057..060), 03, 07, 08, 10, 17 (D36).
+- **Chưa làm (đã ghi trong D36)**: gộp form bài tập/đề thi/bài bổ sung có chọn loại; nút nổi + phím tắt AI; cấu hình lại AI.
+
+### Kiểm thử
+- `tsc` ✓ · `eslint src` ✓ · `vitest` 26 file / 214 test ✓ (mới +1) · **integration Postgres local 61/61** (mới +4: đề bổ sung đúng quyền/đúng học sinh/báo riêng, nhận xét buổi lưu và HS xem lại).
+- Chạy `next dev` với phiên thật: 5 mục của lớp, lịch tuần/tháng GV + HS, "Lớp của tôi", trang buổi, `/on-luyen` đều trả đúng nội dung, log không lỗi.
+- **Chưa xem trực quan trên trình duyệt thật** (độ vừa của lưới giờ trên điện thoại 360–390px, chữ chip lịch tháng, `<details>` đề bổ sung) — cần PO xem.
+
+### Việc PO
+1. Mở lịch ở điện thoại + máy tính, xem lưới giờ/tháng; vào một lớp thử 5 mục và nút "Tạo đề bổ sung".
+2. Quyết định có làm tiếp: form bài tập chung có chọn loại (BTVN / bổ sung / đề thi), nút nổi + phím tắt AI.
+3. Review, commit, push (tôi không push).
+
+## 2026-10-24 — Thông báo đẩy trong ứng dụng + thanh góc phải (DECISION-D35)
+
+PO yêu cầu: chuông + icon người dùng lên góc phải trên, thông báo mới tự hiện khi đăng nhập (không cần bấm chuông), bổ sung các loại thông báo nhắc nhở. Chi tiết: **docs/25-thong-bao-day.md**.
+
+- **Giao diện**: thanh trên cố định (desktop) có chuông (bảng thả xuống 10 thông báo gần nhất) + menu người dùng (hồ sơ, đổi mật khẩu, cài app, đăng xuất); thẻ tài khoản rời sidebar. **Popup** tự trượt ra góc phải trên khi vào web / có thông báo mới (hỏi `/api/thong-bao/moi` mỗi 30 giây, tối đa 4 thẻ, loại gấp giữ tới khi đóng). Component: `notification-center.tsx`, `user-menu.tsx`, `kind-icon.ts`.
+- **Loại thông báo mới**: `session_soon` (≤ 60 phút trước buổi, GV + HS + PH, bỏ qua em nghỉ có phép), `attendance` (HS + PH khi điểm danh mới/đổi), `lead_new` (quản lý). Có sẵn từ trước: đổi lịch, bài tập mới, sắp đến hạn/quá hạn, có điểm, nộp bài, đơn nghỉ, đề xuất đổi lịch, đánh giá, tài liệu…
+- **Không đổi schema, không migration.** Thêm route `GET /api/thong-bao/moi` (phiên bắt buộc, chỉ dữ liệu của chính người gọi) và `GET /api/cron/nhac-sap-gio` (`CRON_SECRET`, tùy chọn).
+- **Tài liệu**: docs/25 (mới), 01 (FR-048), 17 (D35).
+
+### Kiểm thử
+- `tsc` ✓ · `eslint src` ✓ · `vitest` 26 file / 213 test ✓ (mới +2) · **integration Postgres local 57/57** (mới +3: sắp đến giờ không trùng + đơn nghỉ, điểm danh không báo lặp, lead mới).
+- **Chưa kiểm thử trực quan trên trình duyệt thật** (popup, bảng thả xuống, bố cục điện thoại — chuông nằm trong `<summary>` của menu nên đã chặn nổi bọt sự kiện, cần xem thử).
+
+### Việc PO
+1. Mở web ở desktop + điện thoại, đăng nhập vài vai trò để xem popup / thanh góc phải.
+2. Muốn thông báo "sắp đến giờ" đẩy tới điện thoại khi không ai mở web: đặt cron ngoài gọi `/api/cron/nhac-sap-gio` mỗi 5–10 phút (docs/25 §4). Chưa đăng ký trong `vercel.json` vì gói Hobby chỉ cho cron mỗi ngày.
+3. Review, commit, push (tôi không push).
+
+## 2026-10-24 — Sửa lỗi "Trợ lý AI đang bận hoặc chưa kết nối được" trên Vercel (DECISION-D34)
+
+Nguyên nhân: model Gemini mặc định `gemini-2.5-flash` bị Google ngừng cấp cho khóa mới (generateContent trả 404 "no longer available to new users"); khóa vẫn hợp lệ. Đổi mặc định sang bí danh **`gemini-flash-lite-latest`** (đang trỏ `gemini-3.5-flash-lite`) trong `src/server/ai/config.ts` — tên model không phải bí mật nên ghim trong mã, **không cần đặt `AI_MODEL`** ở `.env` hay Vercel; chỉ cần `AI_PROVIDER=gemini` + `AI_API_KEY`. Đã đo bằng gọi thật (JSON mode, 4096 token): 4/4 lần ~1 giây, JSON hợp lệ; `gemini-3.1-flash-lite` lúc 5 giây lúc 38 giây, `gemini-3.5-flash` có lần 503, `gemini-flash-latest` hết thời gian chờ. Cập nhật `docs/24-ai-tro-ly.md` §3.
+
+### Việc PO
+- Redeploy Vercel để áp dụng. Nếu trước đó đã tự đặt `AI_MODEL=...` trên Vercel thì xóa đi (hoặc để nếu muốn ép model riêng).
+
 ## 2026-10-24 — Gộp nhánh AI với `demo10` (checklist v4) trên remote
 
 Push bị từ chối vì remote có `demo10`. Gộp `origin/main` vào; hai bên cùng lấy mã mới nên **đánh lại số phần AI** (giữ nguyên số của checklist v4 đã push): FR-053..055 → **FR-054..056**, DECISION-D33 → **DECISION-D34**, `docs/23-ai-tro-ly.md` → **`docs/24-ai-tro-ly.md`**, docs/01 v3.6 → **v3.7**. FR-053 / D33 / docs/23 giờ là tự ôn luyện / checklist v4 / `docs/23-checklist-v4.md`. Xung đột `nav-icons.ts`: giữ cả "Bài tập", "Soạn bài", "Hồ sơ" của GV.

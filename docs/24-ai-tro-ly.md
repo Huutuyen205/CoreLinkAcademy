@@ -44,7 +44,7 @@ Quy tắc bất biến:
 |---|---|
 | `AI_PROVIDER` | `mock` (mặc định) · `gemini` · `openai` · `anthropic` |
 | `AI_API_KEY` | Khóa API của nhà cung cấp (không commit) |
-| `AI_MODEL` | Tên model. Bỏ trống → mặc định: `gemini-2.5-flash` · `gpt-4o-mini` · `claude-haiku-5-5` |
+| `AI_MODEL` | Tên model (không bắt buộc — tên model không phải bí mật, đã ghim sẵn trong `src/server/ai/config.ts`). Bỏ trống → mặc định: `gemini-flash-lite-latest` · `gpt-4o-mini` · `claude-haiku-5-5`. Chỉ đặt khi muốn đổi model. |
 | `AI_BASE_URL` | Chỉ cho `openai`: địa chỉ API tương thích OpenAI |
 | `AI_JSON_MODE` | `off` nếu model không hỗ trợ ép JSON (mặc định bật) |
 
@@ -97,7 +97,9 @@ Trang `/giao-vien/soan-bai` (giáo viên dạy buổi đó — phụ trách ho�
 | Đề trắc nghiệm / Bài tập (trắc nghiệm + trả lời ngắn) | **Bài tập NHÁP** (câu hỏi + đáp án + điểm, tổng 10) hoặc `.docx` đề + trang đáp án riêng |
 | Đề tự luận có đáp án mẫu + thang điểm (**Toán, Tiếng Anh**) | Bài tập nháp (câu tự luận) **và** `.docx` có đáp án mẫu/thang điểm (đáp án tự luận chưa có chỗ lưu trong bài tập — P2-50) |
 
-- **Đầu vào ("giáo trình của buổi")**: khóa, môn, khối, chuẩn đầu ra, mục khung chương trình ứng với buổi (khi khung có đúng số mục = số buổi), nhật ký nội dung/ghi chú buổi, tên + mô tả tài liệu của buổi/lớp, chủ đề và yêu cầu thêm của giáo viên. **AI chưa đọc nội dung bên trong tệp PDF/Word** (P2-48); giáo trình có cấu trúc theo buổi là P2-49.
+- **Đầu vào ("giáo trình của buổi")** (DECISION-D37): khóa, môn, khối, **mục lộ trình của buổi** (nội dung, mục tiêu, kiến thức trọng tâm, ví dụ — chỉ khi số mục đúng bằng số buổi), nhật ký nội dung/ghi chú buổi, chủ đề và yêu cầu thêm của giáo viên, và **tối đa 4 trích đoạn × 700 ký tự** từ tài liệu liên quan. Chuẩn đầu ra cả khóa chỉ gửi khi buổi chưa có mục tiêu riêng.
+- **Truy xuất đoạn tài liệu (FR-062)**: tải tệp Word/PDF có chữ/TXT lên → hệ thống trích văn bản, cắt đoạn ~800 ký tự, lưu `document_chunks` (chữ không dấu + `tsvector`). Khi soạn, tìm toàn văn Postgres theo *chủ đề + mục lộ trình*, chỉ trong tài liệu giáo viên được xem (gắn buổi, chia sẻ cho lớp, giáo trình đúng môn). Không có đoạn khớp (hoặc tệp là ảnh/bản scan) → chỉ gửi tên tài liệu. Tệp do AI sinh ra không được lập chỉ mục. **Chưa hỗ trợ**: OCR ảnh/scan, `.pptx`/`.doc` cũ, vector (pgvector) — thêm khi tìm toàn văn cho kết quả kém.
+- **Slide (FR-063)**: bìa + logo, trang chuyển mục (slide không có ý), nội dung (logo, thanh thương hiệu, số trang), trang kết. Cỡ chữ 24→18 tính theo độ dài; quá khung thì tách thành slide "(tiếp)". Chưa kiểm tra bằng mắt trên PowerPoint/Google Slides.
 - **Chuẩn đáp án**: trắc nghiệm đúng 4 lựa chọn, 1 đáp án; hệ thống **loại câu lỗi** (đáp án ngoài danh sách, lựa chọn trùng, câu trùng) và chia điểm bước 0,25. Công thức viết bằng ký tự thường (x², √, a/b), chưa dùng LaTeX (P2-52).
 - **Luôn có giáo viên duyệt**: bài sinh ra là nháp; AI có thể sai (nhất là Toán). Giáo viên dạy thay không tạo được bài tập cho lớp của người khác (chỉ lưu tệp).
 - **Văn**: chưa hỗ trợ đề tự luận có đáp án mẫu (chấm văn cần rubric riêng — P2-55).

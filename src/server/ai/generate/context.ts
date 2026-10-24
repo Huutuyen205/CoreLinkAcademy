@@ -3,6 +3,8 @@ import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { documentVisibilityWhere } from "@/server/documents/access";
 import { ForbiddenError } from "@/server/errors";
+import { syllabusForSession, type SyllabusItem } from "@/lib/syllabus";
+import type { Excerpt } from "./retrieval";
 import { subjectGroupOf, type SubjectGroup } from "./samples";
 
 export type SessionContext = {
@@ -22,13 +24,15 @@ export type SessionContext = {
   sessionMinutes: number;
   startsAt: Date;
   endsAt: Date;
-  /** Mục khung chương trình ứng với buổi (chỉ khi khung có đúng `totalSessions` mục). */
-  syllabusItem: { title: string; detail: string } | null;
+  /** Mục lộ trình ứng với buổi (chỉ khi lộ trình có đúng `totalSessions` mục). */
+  syllabusItem: SyllabusItem | null;
   outcomes: string[];
   lessonContent: string | null;
   homework: string | null;
   note: string | null;
   documents: { kind: string; title: string; description: string | null }[];
+  /** Đoạn tài liệu liên quan nhất (đã lọc quyền); điền ở `generateContent` sau khi biết chủ đề. */
+  excerpts: Excerpt[];
 };
 
 const asStrings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
@@ -67,8 +71,6 @@ export async function loadSessionContext(actor: Actor, sessionId: string): Promi
   });
 
   const c = s.class.course;
-  const syllabus = Array.isArray(c.syllabus) ? (c.syllabus as { title?: unknown; detail?: unknown }[]) : [];
-  const item = syllabus.length === s.class.totalSessions ? syllabus[s.index - 1] : undefined;
   return {
     sessionId: s.id,
     classId: s.classId,
@@ -86,12 +88,13 @@ export async function loadSessionContext(actor: Actor, sessionId: string): Promi
     sessionMinutes: c.sessionMinutes,
     startsAt: s.startsAt,
     endsAt: s.endsAt,
-    syllabusItem: item && typeof item.title === "string" ? { title: item.title, detail: typeof item.detail === "string" ? item.detail : "" } : null,
+    syllabusItem: syllabusForSession(c.syllabus, s.index, s.class.totalSessions),
     outcomes: asStrings(c.outcomes),
     lessonContent: s.lessonContent,
     homework: s.homework,
     note: s.note,
     documents: docs.map((d) => ({ kind: d.kind, title: d.title, description: d.description })),
+    excerpts: [],
   };
 }
 
@@ -107,6 +110,6 @@ export async function listTeachableSessions(actor: Actor) {
     },
     orderBy: { startsAt: "asc" },
     take: 200,
-    select: { id: true, index: true, startsAt: true, class: { select: { code: true, course: { select: { title: true } } } } },
+    select: { id: true, index: true, startsAt: true, classId: true, class: { select: { code: true, course: { select: { title: true } } } } },
   });
 }

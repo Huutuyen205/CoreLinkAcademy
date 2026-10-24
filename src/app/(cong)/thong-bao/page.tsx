@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Bell, BookOpen, CalendarClock, ClipboardCheck, FileText, Megaphone, MessageSquareText } from "lucide-react";
+import { kindIcon } from "@/components/notifications/kind-icon";
 import { PushToggle } from "@/components/notifications/push-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { Pagination, parsePage } from "@/components/ui/data-table";
@@ -13,30 +13,6 @@ import { NOTIFICATION_GROUPS } from "@/lib/labels";
 import { formatDateTime } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Thông báo" };
-
-const ICONS: Record<string, typeof Bell> = {
-  announcement: Megaphone,
-  schedule_change: CalendarClock,
-  schedule_request: CalendarClock,
-  request_result: CalendarClock,
-  leave_request: ClipboardCheck,
-  leave_result: ClipboardCheck,
-  reminder: ClipboardCheck,
-  results: ClipboardCheck,
-  submission: ClipboardCheck,
-  lesson: BookOpen,
-  schedule_reminder: CalendarClock,
-  evaluation: MessageSquareText,
-  document: FileText,
-  assignment: ClipboardCheck,
-  test: ClipboardCheck,
-  due_soon: ClipboardCheck,
-  overdue: ClipboardCheck,
-  resubmit: ClipboardCheck,
-  grade_update: ClipboardCheck,
-  solution: BookOpen,
-  review: FileText,
-};
 
 // FR-048: hộp thư thông báo của mọi vai trò.
 export default async function NotificationsPage({ searchParams }: { searchParams: Promise<{ page?: string; chua?: string; loai?: string }> }) {
@@ -116,7 +92,7 @@ export default async function NotificationsPage({ searchParams }: { searchParams
       ) : (
         <ul className="divide-y divide-line overflow-hidden rounded-block border border-line bg-surface">
           {rows.map((n) => {
-            const Icon = ICONS[n.kind] ?? Bell;
+            const Icon = kindIcon(n.kind);
             return (
               <li key={n.id} className={cn(!n.readAt && "bg-primary-soft/40")}>
                 <form action={openNotificationAction}>

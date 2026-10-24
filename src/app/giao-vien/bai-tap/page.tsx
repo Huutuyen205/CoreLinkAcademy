@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { SelectField, TextField } from "@/components/ui/field";
+import { TextField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { ActionLink, RowActions } from "@/components/ui/row-actions";
@@ -40,8 +41,8 @@ export default async function TeacherAssignmentsPage({ searchParams }: { searchP
       />
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.5fr_1fr_1fr] md:items-end">
         <TextField name="q" label="Tìm theo tên bài" defaultValue={q} maxLength={80} />
-        <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={classId ?? ""} options={classes.map((c) => ({ value: c.id, label: c.code }))} />
-        <SelectField name="trangthai" label="Trạng thái" placeholder="Tất cả" defaultValue={status ?? ""} options={STATUSES.map((s) => ({ value: s, label: ASSIGNMENT_STATUS[s].label }))} />
+        <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={classId ?? ""} options={classes.map((c) => ({ value: c.id, label: c.code }))} />
+        <FilterSelect name="trangthai" label="Trạng thái" placeholder="Tất cả" defaultValue={status ?? ""} options={STATUSES.map((s) => ({ value: s, label: ASSIGNMENT_STATUS[s].label }))} />
       </FilterForm>
       {rows.length === 0 ? (
         <EmptyState message={q || classId || status ? "Không có bài tập phù hợp." : "Chưa có bài tập nào."} />

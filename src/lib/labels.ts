@@ -158,8 +158,8 @@ export const ATTITUDE_VALUES = ["GOOD", "NORMAL", "NEEDS_WORK"] as const;
 /** Nhóm loại thông báo để lọc hộp thư (Admin §12, HS §7). */
 export const NOTIFICATION_GROUPS: { key: string; label: string; kinds: string[] }[] = [
   { key: "bai-tap", label: "Bài tập", kinds: ["assignment", "test", "due_soon", "overdue", "resubmit", "results", "grade_update", "solution", "reminder", "submission"] },
-  { key: "lich", label: "Lịch học", kinds: ["schedule_change", "schedule_reminder", "schedule_request", "request_result", "lesson"] },
-  { key: "don", label: "Đơn từ", kinds: ["leave_request", "leave_result", "review"] },
+  { key: "lich", label: "Lịch học", kinds: ["schedule_change", "schedule_reminder", "session_soon", "attendance", "schedule_request", "request_result", "lesson"] },
+  { key: "don", label: "Đơn từ", kinds: ["leave_request", "leave_result", "review", "lead_new"] },
   { key: "hoc-tap", label: "Kết quả & tài liệu", kinds: ["evaluation", "document"] },
   { key: "trung-tam", label: "Từ trung tâm", kinds: ["announcement"] },
 ];

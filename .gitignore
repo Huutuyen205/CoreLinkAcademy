@@ -13,3 +13,4 @@ test-results/
 backup/
 next-env.d.ts
 .localdb/
+package-lock.json

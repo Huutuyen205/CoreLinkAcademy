@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useId } from "react";
+import { CameraFileField } from "@/components/forms/camera-file-field";
 import { ComboboxField } from "@/components/ui/combobox";
 import { CheckboxField, FileField, SelectField, TextareaField, TextField } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
@@ -16,7 +17,7 @@ export type FieldConfig =
   | (Base & { type: "select"; options: { value: string; label: string }[]; placeholder?: string })
   | (Base & { type: "combobox"; options: { value: string; label: string }[]; placeholder?: string })
   | (Base & { type: "checkbox"; defaultChecked?: boolean })
-  | (Base & { type: "file"; accept?: string; multiple?: boolean })
+  | (Base & { type: "file"; accept?: string; multiple?: boolean; camera?: boolean })
   | (Base & { type: "checkboxes"; options: { value: string; label: string }[]; defaultValues?: string[] });
 
 type Props = {
@@ -86,6 +87,7 @@ export function ConfigForm({ action, fields, hidden, submitLabel, columns = 1, c
                 <ComboboxField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
               );
             case "file":
+              if (f.camera) return <CameraFileField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} accept={f.accept} error={e[f.name]} />;
               return (
                 <FileField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} accept={f.accept} multiple={f.multiple} error={e[f.name]} />
               );

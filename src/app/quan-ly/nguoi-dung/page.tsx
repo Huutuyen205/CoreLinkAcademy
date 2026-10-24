@@ -5,7 +5,8 @@ import { CreateUserForm } from "@/components/forms/create-user-form";
 import { UserRowActions } from "@/components/people/user-row-actions";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
-import { SelectField, TextField } from "@/components/ui/field";
+import { TextField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
@@ -60,8 +61,8 @@ export default async function UsersPage({ searchParams }: { searchParams: Promis
 
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm tên, email, SĐT, mã HS" defaultValue={q} maxLength={100} />
-        <SelectField name="role" label="Vai trò" placeholder="Tất cả" defaultValue={role ?? ""} options={(Object.keys(ROLE_LABELS) as Role[]).map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
-        <SelectField name="status" label="Trạng thái" placeholder="Tất cả" defaultValue={status ?? ""} options={Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
+        <FilterSelect name="role" label="Vai trò" placeholder="Tất cả" defaultValue={role ?? ""} options={(Object.keys(ROLE_LABELS) as Role[]).map((r) => ({ value: r, label: ROLE_LABELS[r] }))} />
+        <FilterSelect name="status" label="Trạng thái" placeholder="Tất cả" defaultValue={status ?? ""} options={Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
         <div className="flex min-h-11 items-center">
           {(role || status || q) && (
             <ButtonLink href="/quan-ly/nguoi-dung" variant="ghost">

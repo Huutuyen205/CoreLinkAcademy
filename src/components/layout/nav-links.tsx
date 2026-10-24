@@ -89,7 +89,7 @@ export function MobileMenu({ summary, children }: { summary: ReactNode; children
 /** Thanh điều hướng đáy premium: gradient border + dot indicator cho mục active. */
 export function BottomNav({ items, rootHref }: { items: NavItem[]; rootHref: string }) {
   const pathname = usePathname();
-  const shown = items.slice(0, 4);
+  const shown = items.slice(0, 5);
   return (
     <nav
       aria-label="Điều hướng nhanh"

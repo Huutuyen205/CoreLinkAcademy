@@ -428,7 +428,7 @@ export async function getClassForTeacher(actor: Actor, classId: string) {
   const klass = await db.class.findUniqueOrThrow({
     where: { id: classId },
     include: {
-      course: { select: { title: true } },
+      course: { select: { title: true, subjectId: true, totalSessions: true } },
       room: { select: { name: true } },
       teacher: { select: { id: true, fullName: true } },
       sessions: { orderBy: { index: "asc" }, select: { id: true, index: true, startsAt: true, endsAt: true, status: true, teacherId: true, _count: { select: { attendances: true } } } },

@@ -1,65 +1,100 @@
+import type { PracticeDifficulty } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ConfigForm } from "@/components/forms/config-form";
-import { Card, PageHeader } from "@/components/ui/feedback";
+import { ConfigForm, type FieldConfig } from "@/components/forms/config-form";
+import { Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { getClassForTeacher, listClasses } from "@/server/academic/service";
 import { createAssignmentAction } from "@/server/assessment/actions";
 import { requireRole } from "@/server/auth/guard";
 import { ACCEPT_ATTRIBUTE, ACCEPT_LABEL } from "@/server/files/rules";
 import { orNotFound } from "@/server/page";
+import { createSupplementalSetAction } from "@/server/practice/actions";
+import { cn } from "@/lib/format";
+import { PRACTICE_DIFFICULTY } from "@/lib/labels";
 import { formatVn } from "@/lib/time";
 
-export const metadata: Metadata = { title: "Tạo bài tập" };
+export const metadata: Metadata = { title: "Tạo bài tập, đề" };
 
-// UC-008 — FR-027: bài mới ở trạng thái nháp.
-export default async function NewAssignmentPage({ searchParams }: { searchParams: Promise<{ lop?: string }> }) {
+/** Ba loại dùng chung một form soạn: loại quyết định phần giao (DECISION-D38). */
+const KINDS = [
+  { key: "btvn", label: "Bài tập về nhà" },
+  { key: "kiem-tra", label: "Đề thi, kiểm tra" },
+  { key: "bo-sung", label: "Bài bổ sung cá nhân" },
+] as const;
+type Kind = (typeof KINDS)[number]["key"];
+
+const DIFFICULTIES = (Object.keys(PRACTICE_DIFFICULTY) as PracticeDifficulty[]).map((d) => ({ value: d, label: PRACTICE_DIFFICULTY[d].label }));
+
+// UC-008 — FR-027: bài mới ở trạng thái nháp. Bài bổ sung = đề luyện tập chỉ giao cho một học sinh (FR-060).
+export default async function NewAssignmentPage({ searchParams }: { searchParams: Promise<{ lop?: string; loai?: string }> }) {
   const actor = await requireRole("TEACHER");
-  const { lop } = await searchParams;
+  const { lop, loai } = await searchParams;
   if (lop === undefined) return <PickClass />;
   if (typeof lop !== "string" || lop.length > 40) notFound();
   const klass = await orNotFound(getClassForTeacher(actor, lop));
   if (!klass.isOwner) notFound();
+  const kind: Kind = KINDS.find((k) => k.key === loai)?.key ?? "btvn";
   const due = new Date(Date.now() + 7 * 24 * 3_600_000);
+  const students = klass.enrollments.filter((e) => e.status === "ACTIVE");
+
+  const common: FieldConfig[] = [
+    { type: "text", name: "title", label: "Tên bài", required: true, maxLength: 200, wide: true },
+    { type: "textarea", name: "instructions", label: "Hướng dẫn", maxLength: 5000, rows: 3, wide: true },
+    { type: "datetime-local", name: "dueAt", label: "Hạn nộp (giờ Việt Nam)", required: true, defaultValue: `${formatVn(due, "yyyy-MM-dd")}T21:00` },
+    { type: "checkbox", name: "allowLate", label: "Cho phép nộp muộn" },
+    { type: "checkbox", name: "acceptsFiles", label: "Nhận bài nộp dạng tệp/ảnh" },
+    { type: "number", name: "manualMaxScore", label: "Điểm tối đa khi bài không có câu hỏi", min: "1", max: "100", step: "0.25" },
+    { type: "file", name: "files", label: "Tệp đề bài kèm theo", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true, camera: true, wide: true },
+    { type: "textarea", name: "solution", label: "Bài chữa / lời giải", maxLength: 20000, rows: 4, wide: true },
+  ];
 
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href={`/giao-vien/lop/${klass.id}`}>← Lớp {klass.code}</Link>
+        <Link href={`/giao-vien/lop/${klass.id}?tab=bai-tap`}>← Lớp {klass.code}</Link>
       </p>
-      <PageHeader title="Tạo bài tập" description={`Lớp ${klass.code} · ${klass.course.title}. Bài được lưu nháp; thêm câu hỏi (hoặc bật nhận bài nộp dạng tệp/ảnh) rồi mới giao cho lớp.`} />
+      <PageHeader title="Tạo bài tập, đề" description={`Lớp ${klass.code}`} />
+      <nav aria-label="Loại bài" className="mb-4 flex flex-wrap gap-2">
+        {KINDS.map((k) => (
+          <Link
+            key={k.key}
+            href={`/giao-vien/bai-tap/moi?lop=${klass.id}&loai=${k.key}`}
+            aria-current={k.key === kind ? "page" : undefined}
+            className={cn("inline-flex min-h-11 items-center rounded-full border px-4 text-sm no-underline", k.key === kind ? "border-primary bg-primary-soft font-semibold text-primary" : "border-line bg-surface text-ink")}
+          >
+            {k.label}
+          </Link>
+        ))}
+      </nav>
       <Card>
-        <ConfigForm
-          action={createAssignmentAction}
-          hidden={{ classId: klass.id }}
-          submitLabel="Tạo bài (nháp)"
-          fields={[
-            { type: "text", name: "title", label: "Tên bài", required: true, maxLength: 200 },
-            { type: "textarea", name: "instructions", label: "Hướng dẫn", maxLength: 5000, rows: 3 },
-            { type: "datetime-local", name: "dueAt", label: "Hạn nộp (giờ Việt Nam)", required: true, defaultValue: `${formatVn(due, "yyyy-MM-dd")}T21:00` },
-            { type: "checkbox", name: "isTest", label: "Đây là bài kiểm tra / mock test (học sinh và phụ huynh nhận thông báo \"Lịch kiểm tra\")" },
-            { type: "checkbox", name: "allowLate", label: "Cho phép nộp muộn (bài nộp sau hạn được đánh dấu muộn)" },
-            { type: "checkbox", name: "acceptsFiles", label: "Nhận bài nộp dạng tệp/ảnh (học sinh chụp bài làm trên giấy hoặc nộp PDF/Word)" },
-            {
-              type: "number",
-              name: "manualMaxScore",
-              label: "Điểm tối đa khi bài không có câu hỏi",
-              hint: "Chỉ dùng cho bài chỉ nộp tệp; để trống = thang 10. Bài có câu hỏi tính theo tổng điểm câu.",
-              min: "1",
-              max: "100",
-              step: "0.25",
-            },
-            { type: "file", name: "files", label: "Tệp đề bài / tài liệu kèm theo (tùy chọn)", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true },
-            {
-              type: "textarea",
-              name: "solution",
-              label: "Bài chữa / lời giải (tùy chọn)",
-              hint: "Học sinh và phụ huynh chỉ xem được sau khi bạn công bố kết quả.",
-              maxLength: 20000,
-              rows: 4,
-            },
-          ]}
-        />
+        {kind === "bo-sung" ? (
+          students.length === 0 ? (
+            <EmptyState message="Lớp chưa có học sinh đang học." />
+          ) : (
+            <ConfigForm
+              action={createSupplementalSetAction}
+              hidden={{ classId: klass.id, subjectId: klass.course.subjectId }}
+              submitLabel="Tạo đề (nháp)"
+              columns={2}
+              fields={[
+                { type: "select", name: "studentId", label: "Học sinh", required: true, placeholder: "Chọn học sinh", wide: true, options: students.map((e) => ({ value: e.student.id, label: `${e.student.fullName}${e.student.studentCode ? ` (${e.student.studentCode})` : ""}` })) },
+                { type: "text", name: "title", label: "Tên đề", required: true, maxLength: 200, wide: true },
+                { type: "text", name: "topic", label: "Chuyên đề", required: true, maxLength: 100 },
+                { type: "text", name: "format", label: "Dạng bài", required: true, maxLength: 60, defaultValue: "Trắc nghiệm" },
+                { type: "select", name: "difficulty", label: "Mức độ", required: true, options: DIFFICULTIES, defaultValue: "MEDIUM" },
+              ]}
+            />
+          )
+        ) : (
+          <ConfigForm
+            action={createAssignmentAction}
+            hidden={{ classId: klass.id, ...(kind === "kiem-tra" ? { isTest: "on" } : {}) }}
+            submitLabel={kind === "kiem-tra" ? "Tạo đề thi (nháp)" : "Tạo bài (nháp)"}
+            columns={2}
+            fields={common}
+          />
+        )}
       </Card>
     </>
   );
@@ -74,7 +109,7 @@ async function PickClass() {
       <p className="mb-2 text-sm">
         <Link href="/giao-vien/bai-tap">← Bài tập</Link>
       </p>
-      <PageHeader title="Tạo bài tập" description="Chọn lớp sẽ giao bài." />
+      <PageHeader title="Chọn lớp" />
       <ul className="grid gap-3 sm:grid-cols-2">
         {classes.map((c) => (
           <li key={c.id}>

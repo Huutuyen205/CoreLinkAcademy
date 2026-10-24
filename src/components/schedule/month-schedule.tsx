@@ -29,9 +29,28 @@ export function monthGrid(month: string): { first: string; days: string[] } {
 }
 
 const HEAD = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+const MAX_CHIPS = 3;
 
-/** Thời khóa biểu theo tháng (HS §3 "Xem thời khóa biểu theo tuần/tháng"). */
-export function MonthSchedule({ month, sessions, monthHref, sessionHref }: { month: string; sessions: Session[]; monthHref: (m: string) => string; sessionHref: (s: Session) => string }) {
+const chip = (s: Session) =>
+  s.status === "CANCELLED" ? "bg-danger-soft text-danger line-through" : s.status === "COMPLETED" ? "bg-success-soft text-success" : "bg-primary-soft text-primary";
+
+/**
+ * Lịch tháng dạng lưới 7 cột như lịch điện thoại, rộng toàn trang. Bấm buổi để vào chi tiết;
+ * bấm số ngày (khi có `dayHref`) để xem tuần chứa ngày đó.
+ */
+export function MonthSchedule({
+  month,
+  sessions,
+  monthHref,
+  sessionHref,
+  dayHref,
+}: {
+  month: string;
+  sessions: Session[];
+  monthHref: (m: string) => string;
+  sessionHref: (s: Session) => string | null;
+  dayHref?: (day: string) => string;
+}) {
   const { days } = monthGrid(month);
   const byDay = new Map<string, Session[]>();
   for (const s of sessions) {
@@ -40,25 +59,25 @@ export function MonthSchedule({ month, sessions, monthHref, sessionHref }: { mon
   }
   const today = vnDateKey(new Date());
   const [y, m] = month.split("-");
+  const nav = "inline-flex size-11 items-center justify-center rounded-control border border-line bg-surface text-lg no-underline";
 
   return (
     <section aria-label="Lịch tháng">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="font-medium">{`Tháng ${Number(m)}/${y} · ${sessions.filter((s) => s.status !== "CANCELLED").length} buổi`}</p>
-        <nav aria-label="Chọn tháng" className="flex gap-2 text-sm">
-          <Link href={monthHref(shiftMonth(month, -1))} className="inline-flex min-h-11 items-center rounded-control border border-line bg-surface px-3 no-underline">
-            Tháng trước
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="font-medium">{`Tháng ${Number(m)}/${y}`}</p>
+        <nav aria-label="Chọn tháng" className="flex items-center gap-2 text-sm">
+          <Link href={monthHref(shiftMonth(month, -1))} className={nav} aria-label="Tháng trước">
+            ‹
           </Link>
           <Link href={monthHref(today.slice(0, 7))} className="inline-flex min-h-11 items-center rounded-control border border-line bg-surface px-3 no-underline">
-            Tháng này
+            Hôm nay
           </Link>
-          <Link href={monthHref(shiftMonth(month, 1))} className="inline-flex min-h-11 items-center rounded-control border border-line bg-surface px-3 no-underline">
-            Tháng sau
+          <Link href={monthHref(shiftMonth(month, 1))} className={nav} aria-label="Tháng sau">
+            ›
           </Link>
         </nav>
       </div>
-      {/* Máy tính: lưới 7 cột */}
-      <div className="hidden overflow-hidden rounded-block border border-line bg-surface md:block">
+      <div className="overflow-hidden rounded-block border border-line bg-surface">
         <div className="grid grid-cols-7 border-b border-line bg-paper text-center text-xs font-semibold text-muted">
           {HEAD.map((h) => (
             <div key={h} className="py-2">
@@ -70,54 +89,47 @@ export function MonthSchedule({ month, sessions, monthHref, sessionHref }: { mon
           {days.map((d) => {
             const inMonth = d.startsWith(month);
             const list = byDay.get(d) ?? [];
+            const shown = list.slice(0, MAX_CHIPS);
+            const num = Number(d.slice(8));
+            const numClass = cn("mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs font-semibold no-underline", d === today ? "bg-primary text-white" : inMonth ? "text-ink" : "text-subtle");
             return (
-              <div key={d} className={cn("min-h-24 border-b border-r border-line p-1.5 text-xs [&:nth-child(7n)]:border-r-0", !inMonth && "bg-paper/60 text-subtle")}>
-                <p className={cn("mb-1 font-semibold", d === today && "inline-flex size-6 items-center justify-center rounded-full bg-primary text-white")}>{Number(d.slice(8))}</p>
-                <ul className="space-y-1">
-                  {list.map((s) => (
-                    <li key={s.id}>
-                      <Link
-                        href={sessionHref(s)}
-                        className={cn(
-                          "block truncate rounded px-1.5 py-0.5 no-underline",
-                          s.status === "CANCELLED" ? "bg-danger-soft text-danger line-through" : s.status === "COMPLETED" ? "bg-success-soft text-success" : "bg-primary-soft text-primary",
+              <div key={d} className={cn("min-h-[5.5rem] border-b border-r border-line p-1 sm:min-h-28 sm:p-1.5 [&:nth-child(7n)]:border-r-0", !inMonth && "bg-paper/60")}>
+                {dayHref ? (
+                  <Link href={dayHref(d)} className={numClass} aria-label={`Xem tuần của ngày ${num}`}>
+                    {num}
+                  </Link>
+                ) : (
+                  <span className={numClass}>{num}</span>
+                )}
+                <ul className="space-y-0.5">
+                  {shown.map((s) => {
+                    const href = sessionHref(s);
+                    const cls = cn("block truncate rounded px-1 py-0.5 text-[10px] leading-tight no-underline sm:text-xs", chip(s));
+                    const text = (
+                      <>
+                        <span className="hidden sm:inline">{formatTime(s.startsAt)} </span>
+                        {s.class.code}
+                      </>
+                    );
+                    return (
+                      <li key={s.id}>
+                        {href ? (
+                          <Link href={href} className={cls} title={`${s.class.code} · ${s.class.course.title} · ${formatTime(s.startsAt)}–${formatTime(s.endsAt)}`}>
+                            {text}
+                          </Link>
+                        ) : (
+                          <span className={cls}>{text}</span>
                         )}
-                        title={`${s.class.code} · ${s.class.course.title}`}
-                      >
-                        {formatTime(s.startsAt)} {s.class.code}
-                      </Link>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
+                  {list.length > MAX_CHIPS && <li className="px-1 text-[10px] text-muted sm:text-xs">+{list.length - MAX_CHIPS}</li>}
                 </ul>
               </div>
             );
           })}
         </div>
       </div>
-      {/* Điện thoại: danh sách các ngày có buổi */}
-      <ul className="space-y-3 md:hidden">
-        {days
-          .filter((d) => d.startsWith(month) && byDay.has(d))
-          .map((d) => (
-            <li key={d} className="rounded-block border border-line bg-surface p-3">
-              <p className={cn("mb-2 text-sm font-semibold", d === today && "text-primary")}>
-                {`${d.slice(8)}/${d.slice(5, 7)}`}
-                {d === today ? " · Hôm nay" : ""}
-              </p>
-              <ul className="space-y-1.5">
-                {byDay.get(d)!.map((s) => (
-                  <li key={s.id}>
-                    <Link href={sessionHref(s)} className={cn("block text-sm no-underline", s.status === "CANCELLED" && "text-danger line-through")}>
-                      {formatTime(s.startsAt)}–{formatTime(s.endsAt)} · {s.class.code} · {s.class.course.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        {sessions.length === 0 && <li className="text-sm text-muted">Tháng này không có buổi học.</li>}
-      </ul>
-      <p className="mt-3 text-xs text-muted">Xanh dương: sắp học · xanh lá: đã học · đỏ gạch: nghỉ/hủy.</p>
     </section>
   );
 }

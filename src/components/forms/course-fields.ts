@@ -1,6 +1,7 @@
 import type { Course } from "@prisma/client";
 import { asStringArray, asSyllabus } from "@/server/catalog/public";
 import { GRADE_OPTIONS } from "@/lib/labels";
+import { formatSyllabus } from "@/lib/syllabus";
 import type { FieldConfig } from "./config-form";
 
 /** Cấu hình form khóa học dùng cho tạo mới và sửa (FR-015). */
@@ -21,11 +22,11 @@ export function courseFields(subjects: { id: string; name: string }[], c?: Cours
     {
       type: "textarea",
       name: "syllabus",
-      label: "Lộ trình (mỗi dòng: Tiêu đề | chi tiết)",
-      maxLength: 10000,
-      rows: 5,
+      label: "Lộ trình — mỗi dòng một buổi: Tiêu đề | Nội dung | Mục tiêu | Kiến thức trọng tâm | Ví dụ",
+      maxLength: 30000,
+      rows: 8,
       wide: true,
-      defaultValue: c ? asSyllabus(c.syllabus).map((s) => (s.detail ? `${s.title} | ${s.detail}` : s.title)).join("\n") : "",
+      defaultValue: c ? formatSyllabus(asSyllabus(c.syllabus)) : "",
     },
     { type: "checkbox", name: "isPublished", label: "Xuất bản trên website", defaultChecked: c?.isPublished ?? false },
     { type: "checkbox", name: "isFeatured", label: "Khóa nổi bật ở trang chủ", defaultChecked: c?.isFeatured ?? false },

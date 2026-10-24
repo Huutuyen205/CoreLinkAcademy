@@ -151,3 +151,103 @@ export async function sendAssignmentReminders(now = new Date()): Promise<{ dueSo
   }, { timeout: 30_000 });
   return { dueSoon, overdue };
 }
+
+export const SESSION_SOON_KIND = "session_soon";
+/** Nhắc trước giờ học/dạy bao nhiêu phút. */
+export const SESSION_SOON_MINUTES = 60;
+
+type SoonSession = {
+  id: string;
+  startsAt: Date;
+  classCode: string;
+  roomName: string | null;
+  teacherId: string;
+  students: { id: string; fullName: string; parentIds: string[]; onLeave: boolean }[];
+};
+
+/** Người nhận nhắc "sắp đến giờ": GV, HS, PH (gộp các con học cùng buổi). Em đã có đơn nghỉ được duyệt thì không nhắc. Hàm thuần. */
+export function buildSoonRecipients(sessions: SoonSession[], now: Date): { userId: string; link: string; title: string; body: string }[] {
+  const out: { userId: string; link: string; title: string; body: string }[] = [];
+  for (const s of sessions) {
+    const mins = Math.max(1, Math.round((s.startsAt.getTime() - now.getTime()) / 60_000));
+    const when = `${formatTime(s.startsAt)} (còn khoảng ${mins} phút)`;
+    const where = `Lớp ${s.classCode}${s.roomName ? ` · ${s.roomName}` : ""}`;
+    const attending = s.students.filter((st) => !st.onLeave);
+    out.push({ userId: s.teacherId, link: `/giao-vien/buoi/${s.id}`, title: `Sắp đến giờ dạy: lớp ${s.classCode}`, body: `${where}. Bắt đầu lúc ${when}. ${s.students.length} học sinh.` });
+    for (const st of attending) {
+      out.push({ userId: st.id, link: `/hoc-sinh/buoi/${s.id}`, title: `Sắp đến giờ học: lớp ${s.classCode}`, body: `${where}. Bắt đầu lúc ${when}.` });
+    }
+    const byParent = new Map<string, typeof attending>();
+    for (const st of attending) for (const p of st.parentIds) byParent.set(p, [...(byParent.get(p) ?? []), st]);
+    for (const [parentId, kids] of byParent) {
+      const names = kids.map((k) => k.fullName).join(", ");
+      out.push({ userId: parentId, link: `/phu-huynh/buoi/${s.id}?con=${kids[0]!.id}`, title: `Sắp đến giờ học của ${names}`, body: `${where}. Bắt đầu lúc ${when}.` });
+    }
+  }
+  return out;
+}
+
+let lastSoonRun = 0;
+
+/**
+ * Nhắc "sắp đến giờ học / dạy" cho các buổi bắt đầu trong SESSION_SOON_MINUTES phút tới.
+ * Chạy từ cron (nếu có) và từ lần máy khách hỏi thông báo mới (`throttleMs` để không quét quá dày) — nên không phụ thuộc cron.
+ * Mỗi (người, buổi) chỉ một lần: khóa tư vấn Postgres chặn hai tiến trình cùng quét, rồi so `kind` + `link`.
+ */
+export async function sendUpcomingSessionReminders(now = new Date(), throttleMs = 0): Promise<{ sessions: number; recipients: number }> {
+  if (throttleMs > 0 && now.getTime() - lastSoonRun < throttleMs) return { sessions: 0, recipients: 0 };
+  lastSoonRun = now.getTime();
+  const until = new Date(now.getTime() + SESSION_SOON_MINUTES * 60_000);
+  const sessions = await db.classSession.findMany({
+    where: { startsAt: { gt: now, lte: until }, status: "SCHEDULED", class: { status: { in: ["OPEN", "IN_PROGRESS"] } } },
+    select: {
+      id: true,
+      startsAt: true,
+      teacherId: true,
+      room: { select: { name: true } },
+      leaveRequests: { where: { status: "APPROVED" }, select: { studentId: true } },
+      class: {
+        select: {
+          code: true,
+          enrollments: {
+            where: { status: "ACTIVE", student: { status: "ACTIVE" } },
+            select: { student: { select: { id: true, fullName: true, parentLinks: { where: { parent: { status: "ACTIVE" } }, select: { parentId: true } } } } },
+          },
+        },
+      },
+    },
+  });
+  if (sessions.length === 0) return { sessions: 0, recipients: 0 };
+  const items = buildSoonRecipients(
+    sessions.map((s) => {
+      const leave = new Set(s.leaveRequests.map((l) => l.studentId));
+      return {
+        id: s.id,
+        startsAt: s.startsAt,
+        classCode: s.class.code,
+        roomName: s.room?.name ?? null,
+        teacherId: s.teacherId,
+        students: s.class.enrollments.map((e) => ({ id: e.student.id, fullName: e.student.fullName, parentIds: e.student.parentLinks.map((l) => l.parentId), onLeave: leave.has(e.student.id) })),
+      };
+    }),
+    now,
+  );
+  let recipients = 0;
+  await db.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(48001)`;
+      const done = await tx.notification.findMany({
+        where: { kind: SESSION_SOON_KIND, link: { in: [...new Set(items.map((i) => i.link))] }, userId: { in: [...new Set(items.map((i) => i.userId))] } },
+        select: { userId: true, link: true },
+      });
+      const sent = new Set(done.map((d) => `${d.userId}|${d.link}`));
+      for (const i of items) {
+        if (sent.has(`${i.userId}|${i.link}`)) continue;
+        sent.add(`${i.userId}|${i.link}`);
+        recipients += await notifyUsers(tx, [i.userId], { kind: SESSION_SOON_KIND, title: i.title, body: i.body, link: i.link });
+      }
+    },
+    { timeout: 20_000 },
+  );
+  return { sessions: sessions.length, recipients };
+}

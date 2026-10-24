@@ -37,7 +37,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href={`/giao-vien/lop/${a.class.id}`}>← Lớp {a.class.code}</Link> · <Link href="/giao-vien/bai-tap">Tất cả bài tập</Link>
+        <Link href={`/giao-vien/lop/${a.class.id}?tab=bai-tap`}>← Lớp {a.class.code}</Link> · <Link href="/giao-vien/bai-tap">Tất cả bài tập</Link>
       </p>
       <Flash code={(await searchParams).thongbao} />
       <PageHeader
@@ -113,7 +113,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
                 hidden={{ assignmentId: a.id }}
                 submitLabel="Tải lên"
                 submitVariant="secondary"
-                fields={[{ type: "file", name: "files", label: "Thêm tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true }]}
+                fields={[{ type: "file", name: "files", label: "Thêm tệp", hint: ACCEPT_LABEL, accept: ACCEPT_ATTRIBUTE, multiple: true, camera: true }]}
               />
             </div>
           </Card>

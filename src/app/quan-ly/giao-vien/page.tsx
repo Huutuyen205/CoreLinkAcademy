@@ -5,7 +5,8 @@ import { CreateUserForm } from "@/components/forms/create-user-form";
 import { UserRowActions } from "@/components/people/user-row-actions";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
-import { SelectField, TextField } from "@/components/ui/field";
+import { TextField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
@@ -39,7 +40,7 @@ export default async function TeachersPage({ searchParams }: { searchParams: Pro
       )}
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.5fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm tên, email, SĐT" defaultValue={q} maxLength={80} />
-        <SelectField
+        <FilterSelect
           name="trangthai"
           label="Trạng thái"
           placeholder="Tất cả"

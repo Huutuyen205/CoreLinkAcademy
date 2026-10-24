@@ -33,10 +33,12 @@
     "exceljs": "^4.4.0",
     "framer-motion": "^14.5.0",
     "lucide-react": "^1.61.0",
+    "mammoth": "^1.8.0",
     "next": "15",
     "pptxgenjs": "^4.0.1",
     "react": "19",
     "react-dom": "19",
+    "unpdf": "^0.12.1",
     "web-push": "^3.6.7",
     "zod": "3"
   },

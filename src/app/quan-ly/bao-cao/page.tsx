@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
-import { SelectField, TextField } from "@/components/ui/field";
+import { TextField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
@@ -69,8 +70,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_1fr_auto] md:items-end">
         <TextField type="date" name="tu" label="Từ ngày" defaultValue={fromKey} />
         <TextField type="date" name="den" label="Đến ngày" defaultValue={toKey} />
-        <SelectField name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
-        <SelectField name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
+        <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
+        <FilterSelect name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
       </FilterForm>
 
       <section aria-label="Số liệu chung" className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

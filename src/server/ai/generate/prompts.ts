@@ -66,13 +66,23 @@ export function buildUserPrompt(kind: GenerateKind, ctx: SessionContext, opts: G
     `Môn: ${ctx.subjectName}`,
     `Buổi: ${ctx.sessionIndex}/${ctx.totalSessions} · thời lượng ${ctx.sessionMinutes} phút`,
   ];
-  if (ctx.syllabusItem) lines.push(`Theo khung chương trình: ${ctx.syllabusItem.title}${ctx.syllabusItem.detail ? ` — ${ctx.syllabusItem.detail}` : ""}`);
-  if (ctx.outcomes.length > 0) lines.push(`Chuẩn đầu ra của khóa: ${ctx.outcomes.slice(0, 8).join("; ")}`);
-  if (ctx.lessonContent) lines.push(`Nội dung buổi giáo viên đã ghi: ${ctx.lessonContent.slice(0, 1500)}`);
-  if (ctx.note) lines.push(`Ghi chú buổi: ${ctx.note.slice(0, 500)}`);
-  if (ctx.documents.length > 0) {
-    lines.push("Tài liệu/giáo trình của buổi:");
-    for (const d of ctx.documents) lines.push(`- ${d.title}${d.description ? `: ${d.description.slice(0, 500)}` : ""}`);
+  const s = ctx.syllabusItem;
+  if (s) {
+    lines.push(`Lộ trình buổi này: ${s.title}${s.detail ? ` — ${s.detail}` : ""}`);
+    if (s.objectives) lines.push(`Mục tiêu buổi: ${s.objectives}`);
+    if (s.knowledge) lines.push(`Kiến thức trọng tâm: ${s.knowledge}`);
+    if (s.examples) lines.push(`Ví dụ gợi ý: ${s.examples}`);
+  }
+  // Chuẩn đầu ra cả khóa dài và ít liên quan khi đã có mục tiêu của buổi → bỏ để tiết kiệm token.
+  if (ctx.outcomes.length > 0 && !s?.objectives) lines.push(`Chuẩn đầu ra của khóa: ${ctx.outcomes.slice(0, 5).join("; ")}`);
+  if (ctx.lessonContent) lines.push(`Nội dung buổi giáo viên đã ghi: ${ctx.lessonContent.slice(0, 1200)}`);
+  if (ctx.note) lines.push(`Ghi chú buổi: ${ctx.note.slice(0, 300)}`);
+  if (ctx.excerpts.length > 0) {
+    lines.push("Trích đoạn tài liệu liên quan (dùng làm căn cứ nội dung):");
+    for (const e of ctx.excerpts) lines.push(`[${e.title}] ${e.text}`);
+  } else if (ctx.documents.length > 0) {
+    // Chưa có đoạn văn bản (tệp scan/ảnh hoặc chưa trích được): chỉ báo tên để AI biết có tài liệu.
+    lines.push(`Tài liệu của buổi: ${ctx.documents.map((d) => d.title).join("; ")}`);
   }
   lines.push("</du_lieu>", "", `Chủ đề cần soạn: ${topic}`);
   if (kind === "quiz" || kind === "exercises" || kind === "essay") {

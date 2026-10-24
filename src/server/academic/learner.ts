@@ -28,7 +28,7 @@ export async function getSessionForLearner(actor: Actor, sessionId: string, stud
       room: { select: { name: true } },
       teacher: { select: { fullName: true } },
       class: { select: { code: true, teacherId: true, course: { select: { title: true } } } },
-      attendances: { where: { studentId }, select: { status: true, note: true } },
+      attendances: { where: { studentId }, select: { status: true, note: true, attitude: true, comment: true } },
       leaveRequests: { where: { studentId }, orderBy: { createdAt: "desc" }, select: { id: true, status: true, reason: true, responseNote: true, createdAt: true } },
     },
   });

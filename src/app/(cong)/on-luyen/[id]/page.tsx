@@ -82,6 +82,7 @@ async function AuthorView({ id, actor, thongbao }: { id: string; actor: Actor; t
           <RowActions>
             <Badge tone={PRACTICE_DIFFICULTY[set.difficulty].tone}>{PRACTICE_DIFFICULTY[set.difficulty].label}</Badge>
             <Badge tone={set.isActive ? "success" : "neutral"}>{set.isActive ? "Đang mở cho HS" : "Nháp"}</Badge>
+            {set.forStudent && <Badge tone="warning">{`Bổ sung: ${set.forStudent.fullName}${set.class ? ` · lớp ${set.class.code}` : ""}`}</Badge>}
             {set.canEdit && (
               <ActionButton action={setPracticeActiveAction} hidden={{ setId: set.id, active: set.isActive ? "0" : "1" }} icon={set.isActive ? "hide" : "show"} tone={set.isActive ? "default" : "primary"}>
                 {set.isActive ? "Chuyển về nháp" : "Mở cho học sinh"}

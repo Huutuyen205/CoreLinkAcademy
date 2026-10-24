@@ -37,10 +37,11 @@ Quản lý — ADMIN, STAFF (AppShell, sidebar)
   /quan-ly/phong                  SCREEN-022 Phòng (FR-016)
   /quan-ly/nhat-ky                SCREEN-023 Nhật ký (FR-035)
 Giáo viên — TEACHER (sidebar ≥1024px, thanh đáy < 1024px)
-  /giao-vien                      SCREEN-024 Tổng quan
+  /giao-vien                      SCREEN-024 → chuyển sang /giao-vien/lich
+  /giao-vien/don                  SCREEN-024b Đơn (tab Đơn học sinh / Đơn của tôi)
   /giao-vien/lich?tuan=           SCREEN-025 Lịch dạy (FR-022)
   /giao-vien/lop                  SCREEN-026 Lớp của tôi
-  /giao-vien/lop/[id]             SCREEN-027 Chi tiết lớp + bảng điểm (FR-033)
+  /giao-vien/lop/[id]             SCREEN-027 Lớp: Chi tiết · Giáo án và tài liệu · Bài tập và đề (+ bảng điểm FR-033) · Học sinh (FR-058)
   /giao-vien/buoi/[id]            SCREEN-028 Điểm danh (FR-023)
   /giao-vien/bai-tap/moi?lop=     SCREEN-029 Tạo bài (FR-027)
   /giao-vien/bai-tap/[id]         SCREEN-030 Soạn/giao/công bố (FR-027, 028, 032)

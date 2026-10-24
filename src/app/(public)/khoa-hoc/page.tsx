@@ -4,7 +4,7 @@ import { Filter, Sparkles, X } from "lucide-react";
 import { CourseCard } from "@/components/catalog/course-card";
 import { Stagger, StaggerItem } from "@/components/home/motion";
 import { ButtonLink, buttonClass } from "@/components/ui/button";
-import { SelectField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { EmptyState } from "@/components/ui/feedback";
 import { listPublishedCourses, listSubjects, parseCatalogFilter } from "@/server/catalog/public";
@@ -83,14 +83,14 @@ export default async function CatalogPage({ searchParams }: Props) {
       <FilterForm
         className="grid gap-3.5 rounded-2xl border border-line bg-surface p-4 shadow-2xs sm:grid-cols-[1fr_1fr_auto] sm:items-end"
       >
-        <SelectField
+        <FilterSelect
           name="mon"
           label="Môn học"
           placeholder="Tất cả môn"
           defaultValue={filter.subjectSlug ?? ""}
           options={subjects.map((s) => ({ value: s.slug, label: s.name }))}
         />
-        <SelectField
+        <FilterSelect
           name="khoi"
           label="Khối lớp"
           placeholder="Tất cả khối"

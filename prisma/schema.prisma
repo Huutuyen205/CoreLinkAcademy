@@ -200,7 +200,8 @@ model User {
   pushSubscriptions       PushSubscription[]
   availabilities          TeacherAvailability[]
   practiceSets            PracticeSet[]
-  practiceAttempts        PracticeAttempt[]
+  practiceSetsForMe       PracticeSet[]         @relation("PracticeForStudent")
+  practiceAttempts       PracticeAttempt[]
   reviewedDocuments       Document[]            @relation("DocumentReviewer")
 
   @@index([role, fullName]) // listUsers/listLearners: lọc vai trò + sắp xếp theo tên
@@ -339,6 +340,7 @@ model Class {
   announcements  Announcement[]
   evaluations    Evaluation[]
   conversation   Conversation?
+  practiceSets   PracticeSet[]
 
   @@index([teacherId])
   @@index([courseId, status])
@@ -400,6 +402,7 @@ model Attendance {
   status     AttendanceStatus
   note       String?          @db.VarChar(255)
   attitude   String?          @db.VarChar(20) // GOOD | NORMAL | NEEDS_WORK — thái độ học tập (GV §6, giả định)
+  comment    String?          @db.VarChar(500) // nhận xét học sinh trong buổi (HS/PH xem)
   markedById String
   markedAt   DateTime         @default(now())
   session    ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -674,11 +677,29 @@ model Document {
   reviewedBy        User?           @relation("DocumentReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   files             StoredFile[]
   shares            DocumentShare[]
+  chunks            DocumentChunk[]
 
   @@index([kind, isActive])
   @@index([ownerId])
   @@index([subjectId])
   @@map("documents")
+}
+
+/// Đoạn văn bản trích từ tệp tài liệu (DECISION-D37): AI chỉ lấy vài đoạn liên quan thay vì cả tệp để tiết kiệm token.
+/// search = chữ không dấu, chữ thường; tsv = tsvector của search (cấu hình 'simple'), ghi bằng SQL thô.
+model DocumentChunk {
+  id         String                   @id @default(cuid())
+  documentId String
+  fileId     String?
+  position   Int                      @db.SmallInt
+  text       String                   @db.Text
+  search     String                   @db.Text
+  tsv        Unsupported("tsvector")?
+  document   Document                 @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, fileId])
+  @@index([tsv], type: Gin)
+  @@map("document_chunks")
 }
 
 /// Chia sẻ / phân phối tài liệu cho một lớp. Gỡ chia sẻ = xóa dòng (tệp gốc giữ nguyên).
@@ -848,16 +869,22 @@ model PracticeSet {
   subjectId   String?
   levelId     String?
   isActive    Boolean            @default(false) // false = nháp; true = HS thấy và làm được
+  classId      String? // đề bổ sung: lớp nguồn
+  forStudentId String? // đề bổ sung: chỉ học sinh này thấy và làm; null = đề chung
   createdById String
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   subject     Subject?           @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   level       EducationLevel?    @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  class       Class?             @relation(fields: [classId], references: [id], onDelete: SetNull)
+  forStudent  User?              @relation("PracticeForStudent", fields: [forStudentId], references: [id], onDelete: SetNull)
   createdBy   User               @relation(fields: [createdById], references: [id])
   questions   PracticeQuestion[]
   attempts    PracticeAttempt[]
 
   @@index([isActive, subjectId])
+  @@index([classId])
+  @@index([forStudentId])
   @@map("practice_sets")
 }
 

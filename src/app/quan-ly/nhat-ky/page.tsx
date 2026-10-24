@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
-import { SelectField } from "@/components/ui/field";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
 import { AUDIT_ACTION_LABELS, AUDIT_PAGE_SIZE, listAuditLogs } from "@/server/audit/queries";
@@ -22,7 +22,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
     <>
       <PageHeader title="Nhật ký" description="Các thao tác nhạy cảm. Nhật ký không thể sửa hoặc xóa." />
       <FilterForm className="mb-6 flex flex-wrap items-end gap-2">
-        <SelectField name="action" label="Loại thao tác" placeholder="Tất cả" defaultValue={action ?? ""} options={Object.entries(AUDIT_ACTION_LABELS).map(([value, label]) => ({ value, label }))} />
+        <FilterSelect name="action" label="Loại thao tác" placeholder="Tất cả" defaultValue={action ?? ""} options={Object.entries(AUDIT_ACTION_LABELS).map(([value, label]) => ({ value, label }))} />
         {action && (
           <ButtonLink href="/quan-ly/nhat-ky" variant="ghost">
             Bỏ lọc

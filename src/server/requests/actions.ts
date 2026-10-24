@@ -59,7 +59,7 @@ export async function handleLeaveRequestAction(_prev: ActionState, formData: For
   const result = await runAction(() => handleLeaveRequest(actor, parsed.data.requestId, parsed.data.decision === "approve", parsed.data.note), fields);
   if (!result.ok) return result.state;
   // Đơn đã xử lý rời khỏi danh sách chờ (form biến mất) → báo kết quả bằng Flash sau khi chuyển trang.
-  const back = actor.role === "TEACHER" ? "/giao-vien/de-xuat" : "/quan-ly/de-xuat";
+  const back = actor.role === "TEACHER" ? "/giao-vien/don" : "/quan-ly/de-xuat";
   revalidatePath(back);
   redirect(`${back}?thongbao=${parsed.data.decision === "approve" ? "duyet-don" : "tu-choi-don"}`);
 }
@@ -94,7 +94,7 @@ export async function createScheduleRequestAction(_prev: ActionState, formData: 
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => createScheduleRequest(actor, { sessionId: parsed.data.sessionId, ...proposal(parsed.data) }), fields);
   if (!result.ok) return result.state;
-  revalidatePath("/giao-vien/de-xuat");
+  revalidatePath("/giao-vien/don");
   return { ok: true, message: "Đã gửi đề xuất cho giáo vụ." };
 }
 
@@ -105,7 +105,7 @@ export async function updateScheduleRequestAction(_prev: ActionState, formData: 
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => updateScheduleRequest(actor, parsed.data.requestId, proposal(parsed.data)), fields);
   if (!result.ok) return result.state;
-  revalidatePath("/giao-vien/de-xuat");
+  revalidatePath("/giao-vien/don");
   return { ok: true, message: "Đã cập nhật đề xuất." };
 }
 
@@ -115,7 +115,7 @@ export async function cancelScheduleRequestAction(_prev: ActionState, formData: 
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => cancelScheduleRequest(actor, parsed.data.requestId));
   if (!result.ok) return result.state;
-  revalidatePath("/giao-vien/de-xuat");
+  revalidatePath("/giao-vien/don");
   return { ok: true, message: "Đã rút đề xuất." };
 }
 

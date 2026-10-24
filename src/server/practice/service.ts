@@ -7,6 +7,7 @@ import { isManager } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { notifyUsers } from "@/server/notifications/service";
 import { autoGrade, jsonStrings, round2, validateQuestion, type QuestionData } from "@/lib/grading";
 
 export type PracticeSetInput = {
@@ -17,6 +18,9 @@ export type PracticeSetInput = {
   difficulty: PracticeDifficulty;
   subjectId: string | null;
   levelId: string | null;
+  /** Đề bổ sung cho một học sinh của lớp (chỉ người tạo đề mới đặt, không đổi khi sửa). */
+  classId?: string | null;
+  forStudentId?: string | null;
 };
 
 export type PracticeFilter = { q?: string; subjectId?: string; topic?: string; format?: string; difficulty?: PracticeDifficulty };
@@ -31,17 +35,22 @@ function filterWhere(f: PracticeFilter): Prisma.PracticeSetWhereInput {
   };
 }
 
+/** Đề HS được thấy: đang mở và là đề chung hoặc đề bổ sung dành riêng cho em. */
+function visibleToStudent(studentId: string): Prisma.PracticeSetWhereInput {
+  return { isActive: true, OR: [{ forStudentId: null }, { forStudentId: studentId }] };
+}
+
 /** Đề người soạn được sửa: quản lý mọi đề; GV đề của mình. */
 async function editableSet(actor: Actor, setId: string) {
   assertCan(actor, "practice.author");
-  const set = await db.practiceSet.findUnique({ where: { id: setId }, select: { id: true, createdById: true, isActive: true } });
+  const set = await db.practiceSet.findUnique({ where: { id: setId }, select: { id: true, createdById: true, isActive: true, forStudentId: true, title: true } });
   if (!set || (!isManager(actor) && set.createdById !== actor.id)) throw new ForbiddenError();
   return set;
 }
 
 /** Giá trị có sẵn cho bộ lọc (chuyên đề, dạng bài) — chỉ từ đề đang mở với HS, hoặc mọi đề với người soạn. */
 export async function practiceFilterOptions(actor: Actor) {
-  const where: Prisma.PracticeSetWhereInput = actor.role === "STUDENT" ? { isActive: true } : {};
+  const where: Prisma.PracticeSetWhereInput = actor.role === "STUDENT" ? visibleToStudent(actor.id) : { forStudentId: null };
   const [topics, formats, subjects, levels] = await Promise.all([
     db.practiceSet.findMany({ where, distinct: ["topic"], orderBy: { topic: "asc" }, select: { topic: true } }),
     db.practiceSet.findMany({ where, distinct: ["format"], orderBy: { format: "asc" }, select: { format: true } }),
@@ -55,7 +64,13 @@ export async function practiceFilterOptions(actor: Actor) {
 export async function listPracticeSets(actor: Actor, filter: PracticeFilter) {
   const base = filterWhere(filter);
   const scope: Prisma.PracticeSetWhereInput =
-    actor.role === "STUDENT" ? { isActive: true } : isManager(actor) ? {} : actor.role === "TEACHER" ? { OR: [{ isActive: true }, { createdById: actor.id }] } : { id: "__none__" };
+    actor.role === "STUDENT"
+      ? visibleToStudent(actor.id)
+      : isManager(actor)
+        ? {}
+        : actor.role === "TEACHER"
+          ? { OR: [{ isActive: true, forStudentId: null }, { createdById: actor.id }] }
+          : { id: "__none__" };
   const rows = await db.practiceSet.findMany({
     where: { AND: [scope, base] },
     orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
@@ -71,6 +86,8 @@ export async function listPracticeSets(actor: Actor, filter: PracticeFilter) {
       subject: { select: { name: true } },
       level: { select: { name: true } },
       createdBy: { select: { fullName: true } },
+      forStudent: { select: { fullName: true } },
+      class: { select: { code: true } },
       _count: { select: { questions: true, attempts: true } },
       ...(actor.role === "STUDENT"
         ? { attempts: { where: { studentId: actor.id }, orderBy: { submittedAt: "desc" as const }, select: { score: true, maxScore: true, submittedAt: true } } }
@@ -86,20 +103,38 @@ export async function listPracticeSets(actor: Actor, filter: PracticeFilter) {
 
 export async function createPracticeSet(actor: Actor, input: PracticeSetInput): Promise<string> {
   assertCan(actor, "practice.author");
-  const s = await db.practiceSet.create({ data: { ...input, createdById: actor.id }, select: { id: true } });
+  const { classId = null, forStudentId = null, ...rest } = input;
+  if (forStudentId) {
+    if (!classId) throw new DomainError("INVALID", "Đề bổ sung cần chọn lớp.");
+    const klass = await db.class.findUnique({ where: { id: classId }, select: { teacherId: true } });
+    if (!klass || (!isManager(actor) && klass.teacherId !== actor.id)) throw new ForbiddenError();
+    const enrolled = await db.enrollment.count({ where: { classId, studentId: forStudentId, status: "ACTIVE" } });
+    if (enrolled === 0) throw new DomainError("NOT_ENROLLED", "Học sinh không còn học lớp này.");
+  }
+  const s = await db.practiceSet.create({ data: { ...rest, classId: forStudentId ? classId : null, forStudentId, createdById: actor.id }, select: { id: true } });
   return s.id;
 }
 
 export async function updatePracticeSet(actor: Actor, setId: string, input: PracticeSetInput): Promise<void> {
   await editableSet(actor, setId);
-  await db.practiceSet.update({ where: { id: setId }, data: input });
+  await db.practiceSet.update({
+    where: { id: setId },
+    data: { title: input.title, description: input.description, topic: input.topic, format: input.format, difficulty: input.difficulty, subjectId: input.subjectId, levelId: input.levelId },
+  });
 }
 
 /** Mở cho HS (cần ít nhất một câu) / chuyển về nháp. */
 export async function setPracticeActive(actor: Actor, setId: string, active: boolean): Promise<void> {
   await editableSet(actor, setId);
+  const set = await editableSet(actor, setId);
   if (active && (await db.practiceQuestion.count({ where: { setId } })) === 0) throw new DomainError("NO_QUESTIONS", "Đề cần ít nhất một câu hỏi trước khi mở cho học sinh.");
-  await db.practiceSet.update({ where: { id: setId }, data: { isActive: active } });
+  await db.$transaction(async (tx) => {
+    await tx.practiceSet.update({ where: { id: setId }, data: { isActive: active } });
+    // Đề bổ sung: báo riêng học sinh được giao khi mở lần đầu sau nháp.
+    if (active && !set.isActive && set.forStudentId) {
+      await notifyUsers(tx, [set.forStudentId], { kind: "assignment", title: "Đề luyện tập bổ sung", body: set.title, link: `/on-luyen/${setId}` });
+    }
+  });
 }
 
 export async function deletePracticeSet(actor: Actor, setId: string): Promise<void> {
@@ -164,13 +199,15 @@ export async function getPracticeSetForAuthor(actor: Actor, setId: string) {
       subject: { select: { name: true } },
       level: { select: { name: true } },
       createdBy: { select: { fullName: true } },
+      forStudent: { select: { fullName: true } },
+      class: { select: { code: true } },
       questions: { orderBy: { order: "asc" } },
       _count: { select: { attempts: true } },
     },
   });
   if (!set) throw new ForbiddenError();
   const canEdit = isManager(actor) || set.createdById === actor.id;
-  if (!canEdit && !set.isActive) throw new ForbiddenError();
+  if (!canEdit && (!set.isActive || set.forStudentId)) throw new ForbiddenError();
   const avg = await db.practiceAttempt.aggregate({ where: { setId }, _avg: { score: true, maxScore: true } });
   return {
     ...set,
@@ -184,7 +221,7 @@ export async function getPracticeSetForAuthor(actor: Actor, setId: string) {
 export async function openPracticeSet(actor: Actor, setId: string) {
   assertCan(actor, "practice.take");
   const set = await db.practiceSet.findFirst({
-    where: { id: setId, isActive: true },
+    where: { id: setId, ...visibleToStudent(actor.id) },
     include: { subject: { select: { name: true } }, level: { select: { name: true } }, questions: { orderBy: { order: "asc" } } },
   });
   if (!set) throw new ForbiddenError();
@@ -199,7 +236,7 @@ export async function openPracticeSet(actor: Actor, setId: string) {
 /** HS nộp lượt làm: chấm ngay, lưu câu trả lời. Trả id lượt làm. */
 export async function submitPracticeAttempt(actor: Actor, setId: string, raw: Record<string, string>): Promise<string> {
   assertCan(actor, "practice.take");
-  const set = await db.practiceSet.findFirst({ where: { id: setId, isActive: true }, include: { questions: { orderBy: { order: "asc" } } } });
+  const set = await db.practiceSet.findFirst({ where: { id: setId, ...visibleToStudent(actor.id) }, include: { questions: { orderBy: { order: "asc" } } } });
   if (!set || set.questions.length === 0) throw new ForbiddenError();
   const answers: Record<string, string> = {};
   let score = 0;
@@ -253,5 +290,18 @@ export async function listMyPracticeHistory(actor: Actor) {
     orderBy: { submittedAt: "desc" },
     take: 200,
     select: { id: true, score: true, maxScore: true, correctCount: true, total: true, submittedAt: true, set: { select: { id: true, title: true, topic: true, difficulty: true } } },
+  });
+}
+
+/** Đề bổ sung đã giao cho học sinh của một lớp (GV phụ trách lớp hoặc quản lý). */
+export async function listClassSupplementalSets(actor: Actor, classId: string) {
+  assertCan(actor, "practice.author");
+  const klass = await db.class.findUnique({ where: { id: classId }, select: { teacherId: true } });
+  if (!klass || (!isManager(actor) && klass.teacherId !== actor.id)) throw new ForbiddenError();
+  return db.practiceSet.findMany({
+    where: { classId, forStudentId: { not: null } },
+    orderBy: { updatedAt: "desc" },
+    take: 200,
+    select: { id: true, title: true, topic: true, difficulty: true, isActive: true, forStudent: { select: { id: true, fullName: true } }, _count: { select: { questions: true, attempts: true } } },
   });
 }

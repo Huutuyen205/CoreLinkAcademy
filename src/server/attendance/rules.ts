@@ -28,6 +28,25 @@ export function checkAttendanceEdit(input: {
   return { error: "FORBIDDEN" };
 }
 
+export type SessionEvaluationError = "SESSION_CANCELLED" | "NOT_STARTED" | "OUTSIDE_WINDOW" | "FORBIDDEN";
+
+/**
+ * Đánh giá học sinh (thái độ + nhận xét) ghi riêng sau điểm danh: từ lúc buổi bắt đầu — thường là cuối buổi —
+ * đến hết khung điểm danh của giáo viên; quản lý sửa được về sau. Không cần lý do vì không đổi chuyên cần.
+ */
+export function checkSessionEvaluation(input: {
+  role: Role;
+  sessionStatus: "SCHEDULED" | "COMPLETED" | "CANCELLED";
+  session: { startsAt: Date; endsAt: Date };
+  now: Date;
+}): SessionEvaluationError | null {
+  if (input.sessionStatus === "CANCELLED") return "SESSION_CANCELLED";
+  if (input.now.getTime() < input.session.startsAt.getTime()) return "NOT_STARTED";
+  if (input.role === "ADMIN" || input.role === "STAFF") return null;
+  if (input.role !== "TEACHER") return "FORBIDDEN";
+  return isInAttendanceWindow(input.session, input.now) ? null : "OUTSIDE_WINDOW";
+}
+
 /** BR-032: (PRESENT + LATE) / số bản ghi của các buổi không bị hủy. null khi chưa có bản ghi. */
 export function attendanceRate(records: { status: AttendanceStatus; sessionCancelled?: boolean }[]): number | null {
   const counted = records.filter((r) => !r.sessionCancelled);
@@ -40,8 +59,8 @@ export function formatRate(rate: number | null): string {
   return rate === null ? "Chưa có dữ liệu" : `${Math.round(rate * 100)}%`;
 }
 
-/** `attitude`: thái độ học tập GOOD | NORMAL | NEEDS_WORK (GV §6, giả định) — không bắt buộc. */
-export type AttendanceWrite = { studentId: string; status: AttendanceStatus; note: string | null; attitude?: string | null };
+/** Điểm danh đầu giờ chỉ ghi trạng thái + ghi chú; thái độ/nhận xét ghi riêng cuối buổi (`saveEvaluations`). */
+export type AttendanceWrite = { studentId: string; status: AttendanceStatus; note: string | null };
 
 /**
  * Kế hoạch ghi điểm danh theo lô: bản ghi mới → `toCreate`; bản ghi đã có → `updateGroups` gộp theo (trạng thái, ghi chú)
@@ -51,14 +70,14 @@ export function planAttendanceWrites(entries: AttendanceWrite[], existingStudent
   const existing = new Set(existingStudentIds);
   const latest = new Map(entries.map((e) => [e.studentId, e]));
   const toCreate: AttendanceWrite[] = [];
-  const groups = new Map<string, { status: AttendanceStatus; note: string | null; attitude: string | null; studentIds: string[] }>();
+  const groups = new Map<string, { status: AttendanceStatus; note: string | null; studentIds: string[] }>();
   for (const e of latest.values()) {
     if (!existing.has(e.studentId)) {
       toCreate.push(e);
       continue;
     }
-    const key = JSON.stringify([e.status, e.note, e.attitude ?? null]);
-    const group = groups.get(key) ?? { status: e.status, note: e.note, attitude: e.attitude ?? null, studentIds: [] };
+    const key = JSON.stringify([e.status, e.note]);
+    const group = groups.get(key) ?? { status: e.status, note: e.note, studentIds: [] };
     group.studentIds.push(e.studentId);
     groups.set(key, group);
   }
