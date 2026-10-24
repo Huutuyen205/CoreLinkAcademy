@@ -13,8 +13,10 @@ export type AiConfig = {
   timeoutMs: number;
 };
 
+// Tên model không phải bí mật nên ghim sẵn ở đây, không cần đặt `AI_MODEL`. Gemini dùng bí danh `-latest` vì Google
+// ngừng cấp model cũ cho khóa mới (gemini-2.5-flash trả 404) — bí danh tự theo model mới.
 const DEFAULT_MODELS: Record<Exclude<ProviderId, "mock">, string> = {
-  gemini: "gemini-2.5-flash",
+  gemini: "gemini-flash-lite-latest",
   openai: "gpt-4o-mini",
   anthropic: "claude-haiku-5-5",
 };
