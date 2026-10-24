@@ -87,8 +87,8 @@ export function Card({
       )}
     >
       {(title || action) && (
-        <header className="mb-4 flex items-center justify-between gap-3">
-          {title && <h2 className="text-lg font-semibold">{title}</h2>}
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          {title && <h2 className="min-w-0 text-lg font-semibold">{title}</h2>}
           {action}
         </header>
       )}

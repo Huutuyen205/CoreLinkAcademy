@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { WeekSchedule } from "@/components/schedule/week-schedule";
 import { ButtonLink } from "@/components/ui/button";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { ActionButton, ActionLink, RowActions } from "@/components/ui/row-actions";
 import { sendRemindersNowAction } from "@/server/notifications/actions";
@@ -60,15 +60,15 @@ export default async function ManagerSchedulePage({ searchParams }: { searchPara
       />
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
         <input type="hidden" name="tuan" value={weekStart} />
-        <FilterSelect name="gv" label="Giáo viên" placeholder="Tất cả" defaultValue={teacherId ?? ""} options={options.teachers.map((t) => ({ value: t.id, label: t.fullName }))} />
-        <FilterSelect
+        <SearchSelect name="gv" label="Giáo viên" emptyLabel="Tất cả" defaultValue={teacherId ?? ""} options={options.teachers.map((t) => ({ value: t.id, label: t.fullName }))} />
+        <SearchSelect
           name="phong"
           label="Phòng"
-          placeholder="Tất cả"
+          emptyLabel="Tất cả"
           defaultValue={roomId ?? ""}
           options={options.rooms.map((r) => ({ value: r.id, label: `${r.name}${r.isActive ? "" : " (ngừng)"}` }))}
         />
-        <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
+        <SearchSelect name="lop" label="Lớp" emptyLabel="Tất cả" defaultValue={classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
         <div className="flex gap-2">
           {(teacherId || roomId || classId) && (
             <ButtonLink href={`/quan-ly/lich?tuan=${weekStart}`} variant="ghost">

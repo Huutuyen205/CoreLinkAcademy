@@ -1,43 +1,58 @@
 import type { Metadata } from "next";
-import { Generator } from "@/components/ai/generator";
-import { Alert, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { BookOpen, ClipboardList, FileText, ListChecks, PencilLine, Presentation, UserRound, type LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { Alert, PageHeader } from "@/components/ui/feedback";
+import { COMPOSE_KINDS, composeHrefFor, pickSessionId } from "@/lib/ai-compose";
 import { aiStatus } from "@/server/ai/client";
 import { listTeachableSessions } from "@/server/ai/generate/context";
 import { requireRole } from "@/server/auth/guard";
-import { formatDate } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Soạn bài với AI" };
 
-// Gọi AI có thể mất vài chục giây (Vercel: giới hạn thời gian chạy hàm).
-export const maxDuration = 60;
+const ICONS: Record<string, LucideIcon> = {
+  "giao-an": FileText,
+  slide: Presentation,
+  "giao-trinh": BookOpen,
+  "trac-nghiem": ListChecks,
+  "bai-tap": ClipboardList,
+  "bo-sung": UserRound,
+  "tu-luan": PencilLine,
+};
 
-// DECISION-D34 — giáo án, slide, giáo trình, đề trắc nghiệm/bài tập/tự luận cho một buổi học.
-export default async function ComposePage({ searchParams }: { searchParams: Promise<{ buoi?: string; lop?: string }> }) {
+// DECISION-D34/D40 — chọn loại nội dung; mỗi loại có trang và form riêng, soạn xong tự lưu nháp.
+export default async function ComposeHubPage({ searchParams }: { searchParams: Promise<{ buoi?: string; lop?: string }> }) {
   const actor = await requireRole("TEACHER");
   const sp = await searchParams;
   const sessions = await listTeachableSessions(actor);
   const status = aiStatus();
-  // `?buoi=` chọn đúng buổi; `?lop=` chọn buổi gần nhất chưa diễn ra của lớp (hoặc buổi cuối trong khoảng chọn được).
-  const now = Date.now();
-  const ofClass = sp.lop ? sessions.filter((s) => s.classId === sp.lop) : [];
-  const picked = sessions.some((s) => s.id === sp.buoi) ? sp.buoi : (ofClass.find((s) => s.startsAt.getTime() >= now) ?? ofClass.at(-1))?.id;
+  // Sang form với đúng buổi đang xem (đang xem lớp → buổi gần nhất của lớp).
+  const buoi = pickSessionId(sessions, sp);
 
   return (
     <>
-      <PageHeader title="Soạn bài với AI" />
+      <PageHeader title="Soạn bài với AI" description="Chọn loại nội dung cần soạn. Soạn xong hệ thống tự lưu bản nháp và mở trang chi tiết." />
       {status.mock && (
         <Alert tone="warning" title="Đang ở chế độ mẫu (chưa kết nối AI)" className="mb-6">
           Nội dung trả về là dữ liệu mẫu cố định để thử luồng. Quản trị viên đặt biến môi trường <code>AI_PROVIDER</code> và <code>AI_API_KEY</code> để dùng AI thật.
         </Alert>
       )}
-      {sessions.length === 0 ? (
-        <EmptyState message="Bạn chưa có buổi dạy nào trong 14 ngày qua hoặc 45 ngày tới." />
-      ) : (
-        <Generator
-          initialSessionId={picked ?? null}
-          sessions={sessions.map((s) => ({ id: s.id, label: `${s.class.code} · buổi ${s.index} · ${formatDate(s.startsAt)} · ${s.class.course.title}` }))}
-        />
-      )}
+      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {COMPOSE_KINDS.map((k) => {
+          const Icon = ICONS[k.slug] ?? FileText;
+          return (
+            <li key={k.slug}>
+              <Link href={composeHrefFor(k.slug, { buoi })} className="card-interactive block h-full rounded-block border border-line bg-surface p-4 no-underline">
+                <span className="flex items-center gap-2 font-semibold text-primary">
+                  <Icon className="size-5 shrink-0" aria-hidden="true" />
+                  {k.title}
+                </span>
+                <span className="mt-1.5 block text-sm text-muted">{k.description}</span>
+                <span className="mt-2 inline-block rounded-control bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">{k.preview ? "Xem trước rồi lưu" : k.forStudent ? "Lưu đề bổ sung nháp" : k.exam ? "Lưu bài tập nháp" : "Lưu vào Tài liệu"}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
     </>
   );
 }

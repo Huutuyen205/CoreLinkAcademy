@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { FormMessage } from "@/components/forms/config-form";
 import { SelectField, TextareaField, TextField } from "@/components/ui/field";
+import { SearchSelect } from "@/components/ui/search-select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { foldVietnamese } from "@/lib/search";
 import { createAnnouncementAction } from "@/server/notifications/actions";
@@ -48,7 +49,7 @@ export function AnnouncementForm({ audiences, classes, people, defaultAudience, 
       <FormMessage state={state} />
       <SelectField name="audience" label="Đối tượng nhận" required options={audiences} value={audience} onChange={(ev) => setAudience(ev.target.value)} error={e.audience} />
       {audience === "CLASS" && (
-        <SelectField name="classId" label="Lớp" required placeholder="Chọn lớp" options={classes} defaultValue={v.classId ?? defaultClassId} error={e.classId} />
+        <SearchSelect name="classId" label="Lớp" required placeholder="Chọn lớp" options={classes} defaultValue={v.classId ?? defaultClassId} error={e.classId} />
       )}
       {audience === "USERS" && (
         <fieldset className="space-y-3 rounded-control border border-line p-3">

@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfigForm, type FieldConfig } from "@/components/forms/config-form";
+import { ButtonLink } from "@/components/ui/button";
 import { Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { composeHrefFor } from "@/lib/ai-compose";
 import { getClassForTeacher, listClasses } from "@/server/academic/service";
 import { createAssignmentAction } from "@/server/assessment/actions";
 import { requireRole } from "@/server/auth/guard";
@@ -23,6 +25,8 @@ const KINDS = [
   { key: "bo-sung", label: "Bài bổ sung cá nhân" },
 ] as const;
 type Kind = (typeof KINDS)[number]["key"];
+/** Mỗi loại có form soạn bằng AI tương ứng (`/giao-vien/soan-bai/<slug>`). */
+const AI_SLUG: Record<Kind, string> = { btvn: "bai-tap", "kiem-tra": "trac-nghiem", "bo-sung": "bo-sung" };
 
 const DIFFICULTIES = (Object.keys(PRACTICE_DIFFICULTY) as PracticeDifficulty[]).map((d) => ({ value: d, label: PRACTICE_DIFFICULTY[d].label }));
 
@@ -54,7 +58,15 @@ export default async function NewAssignmentPage({ searchParams }: { searchParams
       <p className="mb-2 text-sm">
         <Link href={`/giao-vien/lop/${klass.id}?tab=bai-tap`}>← Lớp {klass.code}</Link>
       </p>
-      <PageHeader title="Tạo bài tập, đề" description={`Lớp ${klass.code}`} />
+      <PageHeader
+        title="Tạo bài tập, đề"
+        description={`Lớp ${klass.code}`}
+        action={
+          <ButtonLink href={composeHrefFor(AI_SLUG[kind], { lop: klass.id })} variant="secondary" size="sm">
+            Tạo bằng AI
+          </ButtonLink>
+        }
+      />
       <nav aria-label="Loại bài" className="mb-4 flex flex-wrap gap-2">
         {KINDS.map((k) => (
           <Link
@@ -75,12 +87,13 @@ export default async function NewAssignmentPage({ searchParams }: { searchParams
             <ConfigForm
               action={createSupplementalSetAction}
               hidden={{ classId: klass.id, subjectId: klass.course.subjectId }}
-              submitLabel="Tạo đề (nháp)"
+              submitLabel="Tạo bài (nháp)"
               columns={2}
               fields={[
-                { type: "select", name: "studentId", label: "Học sinh", required: true, placeholder: "Chọn học sinh", wide: true, options: students.map((e) => ({ value: e.student.id, label: `${e.student.fullName}${e.student.studentCode ? ` (${e.student.studentCode})` : ""}` })) },
-                { type: "text", name: "title", label: "Tên đề", required: true, maxLength: 200, wide: true },
-                { type: "text", name: "topic", label: "Chuyên đề", required: true, maxLength: 100 },
+                { type: "combobox", name: "studentId", label: "Học sinh nhận bài", required: true, placeholder: "Gõ tên học sinh để tìm…", wide: true, options: students.map((e) => ({ value: e.student.id, label: `${e.student.fullName}${e.student.studentCode ? ` (${e.student.studentCode})` : ""}` })) },
+                { type: "text", name: "title", label: "Tên bài", required: true, maxLength: 200, wide: true },
+                { type: "textarea", name: "description", label: "Hướng dẫn", maxLength: 3000, rows: 3, wide: true },
+                { type: "text", name: "topic", label: "Chuyên đề", maxLength: 100, hint: "Bỏ trống: lấy theo tên bài." },
                 { type: "text", name: "format", label: "Dạng bài", required: true, maxLength: 60, defaultValue: "Trắc nghiệm" },
                 { type: "select", name: "difficulty", label: "Mức độ", required: true, options: DIFFICULTIES, defaultValue: "MEDIUM" },
               ]}
@@ -107,7 +120,7 @@ async function PickClass() {
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href="/giao-vien/bai-tap">← Bài tập</Link>
+        <Link href="/giao-vien/lop">← Lớp của tôi</Link>
       </p>
       <PageHeader title="Chọn lớp" />
       <ul className="grid gap-3 sm:grid-cols-2">

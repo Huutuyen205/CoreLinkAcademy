@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { EmptyState } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { requireActor } from "@/server/auth/guard";
@@ -39,10 +39,10 @@ export default async function SearchMessagesPage({ searchParams }: { searchParam
       </div>
       <FilterForm className="grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr] md:items-end">
         <TextField name="q" label="Từ khóa trong nội dung" defaultValue={q} maxLength={80} />
-        <FilterSelect
+        <SearchSelect
           name="nguoi"
           label="Người trò chuyện"
-          placeholder="Tất cả"
+          emptyLabel="Tất cả"
           defaultValue={withUserId ?? ""}
           options={partners.map((p) => ({ value: p.id, label: `${p.fullName} · ${ROLE_LABELS[p.role]}` }))}
         />

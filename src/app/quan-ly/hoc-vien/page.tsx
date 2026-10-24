@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { ButtonLink } from "@/components/ui/button";
 import { Pagination, parsePage } from "@/components/ui/data-table";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { ActionButton } from "@/components/ui/row-actions";
@@ -74,8 +74,8 @@ export default async function LearnersPage({ searchParams }: { searchParams: Pro
 
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.6fr_1fr_1fr_auto] md:items-end">
         <TextField name="q" label="Tìm theo tên hoặc mã học sinh" defaultValue={q} maxLength={80} />
-        <FilterSelect name="trangthai" label="Tài khoản" placeholder="Tất cả" defaultValue={status ?? ""} options={Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
-        <FilterSelect name="loc" label="Cần xử lý" placeholder="Tất cả" defaultValue={extra ?? ""} options={Object.entries(EXTRA_FILTERS).map(([value, label]) => ({ value, label }))} />
+        <SearchSelect name="trangthai" label="Tài khoản" emptyLabel="Tất cả" defaultValue={status ?? ""} options={Object.entries(USER_STATUS).map(([value, s]) => ({ value, label: s.label }))} />
+        <SearchSelect name="loc" label="Cần xử lý" emptyLabel="Tất cả" defaultValue={extra ?? ""} options={Object.entries(EXTRA_FILTERS).map(([value, label]) => ({ value, label }))} />
         <div className="flex min-h-11 items-center">
           {filtered && (
             <ButtonLink href="/quan-ly/hoc-vien" variant="ghost">

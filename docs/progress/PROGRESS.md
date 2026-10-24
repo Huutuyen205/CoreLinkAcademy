@@ -1,5 +1,32 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-24 (tiếp) — Gọn trang lớp trên điện thoại, xem trước PowerPoint, đề bổ sung bằng AI (DECISION-D40)
+
+PO: xóa trang giáo viên thừa; slide phải xem trước như PowerPoint trước khi lưu; trang chi tiết lớp quá dài trên điện thoại; bỏ số 1-2-3-4 ở tab; tạo đề bổ sung chưa có AI và form khác form đề thường.
+
+- **Xóa** 3 trang chỉ chuyển hướng của giáo viên: `/giao-vien/bai-tap`, `/giao-vien/de-xuat`, `/giao-vien/don-nghi` (+ biểu tượng menu thừa). Giữ `/giao-vien` (đích đăng nhập, chuyển tới Lịch) và `/tai-lieu` (dùng chung với quản trị/HS/PH).
+- **Chi tiết lớp** (điện thoại): bỏ tiêu đề "Thông tin lớp"; dòng đầu "mã lớp - phòng", dòng dưới tên giáo viên (chỉ giá trị); Khóa học, Lịch học; Sĩ số + Tiến độ cùng hàng; 3 nút (Đánh giá định kỳ, Gửi thông báo, Nhóm trao đổi) cùng hàng ở đáy thẻ. Bỏ số thứ tự ở thanh tab. `Card` cho phép nút xuống dòng riêng để tiêu đề không bị bẻ. Giáo án/tài liệu/bài tập: tên một dòng cắt "…", bỏ nhãn loại thừa, số tệp, tên người tạo, dòng chú thích quyền xem.
+- **Xem trước PowerPoint**: bố cục slide tách ra `slide-layout.ts` (thuần) — `render-pptx.ts` và `PptxPreview` cùng dùng `layoutDeck` nên khớp. Slide: soạn → khung giống PowerPoint (thanh tiêu đề, dải thu nhỏ, slide lớn, ghi chú, phím ← →) → **Lưu file PowerPoint** (`saveSlidesAction`) → tài liệu. Các loại khác vẫn tự lưu nháp.
+- **Đề bổ sung bằng AI**: `/giao-vien/soan-bai/bo-sung` (buổi + học sinh) → `PracticeSet` nháp `forStudentId` (câu hỏi MCQ/SHORT, có lời giải) → `/on-luyen/[id]`. Form tạo tay đề bổ sung dùng cùng trường như bài tập (Học sinh, Tên bài, Hướng dẫn, …); nút **Tạo bằng AI** ở trang `/giao-vien/bai-tap/moi` cho cả 3 loại.
+- Kiểm thử: `tsc` ✓ · `eslint src` ✓ · `vitest` 31 file / 238 test ✓ (mới: `slide-layout.test.ts`, `ai-compose.test.ts` +2) · tích hợp Postgres local 67/67 ✓ (mới: đề bổ sung AI; `cleanup` xóa thêm `practice_sets`) · dev (`AI_PROVIDER=mock`): bổ sung → `/on-luyen/…?thongbao=tao-de-bo-sung-ai-mau`, thiếu học sinh → lỗi ô, slide → trả bản xem trước. **Chưa xem bằng mắt trên trình duyệt** (trang lớp 360px, khung PowerPoint) — PO kiểm tra giúp.
+
+## 2026-10-24 — Ô chọn dùng chung `SearchSelect` + mỗi loại AI một form, tự lưu nháp (DECISION-D40, FR-055)
+
+PO: form "Soạn bài với AI" có ô chọn buổi quá dài, tràn khung; muốn một UI lọc chung vừa gõ vừa xổ, viền xanh, thay cho các phần tương tự toàn hệ thống; mỗi loại AI một form riêng, soạn xong tự lưu nháp và về trang chi tiết.
+
+- **`SearchSelect`** (`src/components/ui/search-select.tsx`): ô viền primary, gõ để tìm (bỏ dấu) + bấm xổ danh sách đầy đủ, ↑ ↓ Enter Esc, nhãn dài cắt trong ô / xuống dòng trong danh sách, `title` hiện nhãn đầy đủ, tự đồng bộ khi trang lọc dựng lại (`defaultValue` đổi, "Bỏ lọc"). Thay `FilterSelect` và `ComboboxField` (đã xóa); 14 trang lọc + `schedule-request-form`, `inline-pick-form`, `ConfigForm` (`select` > 6 mục), thông báo (chọn lớp), chuyển lead (lớp), tạo lead tay (môn, khóa) đã dùng. `FilterForm` cấp context để tự lọc khi chọn và bỏ qua ô gõ tìm (`data-no-filter`). Enum ngắn giữ `SelectField`; form công khai giữ `<select>` gốc.
+- **Soạn bài AI**: `/giao-vien/soan-bai` thành trang chọn loại; 6 trang `/giao-vien/soan-bai/[loai]` (giáo án, slide, giáo trình, trắc nghiệm, bài tập, tự luận) mỗi trang một form chỉ gồm ô liên quan. `composeWithAiAction` → `composeAndSave` (soạn + lưu nháp một bước) → chuyển tới `/giao-vien/bai-tap/[id]` hoặc `/tai-lieu/[id]` kèm `Flash` (6 mã mới, ghi rõ bản mẫu). Xóa `Generator`, `generateContentAction`, `saveGeneratedAction`; cấu hình các loại ở `src/lib/ai-compose.ts`. Lỗi "tự luận môn khác" giờ hiện ở ô Buổi học.
+- Kiểm thử: `tsc` ✓ · `eslint src` ✓ · `vitest` unit mới `ai-compose.test.ts` (5) ✓ · `ai.int.test.ts` 47/47 ✓ (mới +1: soạn một bước, trên Postgres local `corelink_local_test`) · dev server (`AI_PROVIDER=mock`, phiên GV demo): hub + 6 form 200, POST form giáo án → `/tai-lieu/…?thongbao=tao-tai-lieu-ai-mau`, trắc nghiệm → `/giao-vien/bai-tap/…?thongbao=tao-bai-ai-mau`, số câu 99 → lỗi ô. **Chưa xem bằng mắt trên trình duyệt** (mở danh sách, bàn phím, 360px) — PO kiểm tra giúp.
+
+## 2026-10-24 — Gộp hẳn bài tập/tài liệu vào trang lớp của giáo viên (sửa D36)
+
+PO: vẫn còn trang danh sách riêng (`/giao-vien/bai-tap`, `/tai-lieu`); bấm lớp phải vào chi tiết lớp luôn; chi tiết lớp hiện buổi đang học/sắp tới lên đầu.
+
+- `/giao-vien/bai-tap` và `/tai-lieu` (với giáo viên) chuyển thẳng sang `/giao-vien/lop`; nút "← quay lại" ở trang tạo/chi tiết bài tập, tài liệu trỏ về lớp; link chatbot chấm bài trỏ `/giao-vien/lop`. Admin/HS/PH vẫn dùng `/tai-lieu`.
+- Danh sách lớp: cả thẻ lớp là liên kết vào chi tiết lớp; bỏ 3 lối tắt (Giao bài / Giáo án / Học sinh).
+- Tab Chi tiết: thẻ "Buổi đang học" hoặc "Buổi học sắp tới" đặt trên cùng, bấm vào buổi.
+- Kiểm thử: `tsc` ✓ · `eslint src/app` ✓. Chưa xem trên trình duyệt thật.
+
 ## 2026-10-24 — Tách đánh giá cuối buổi khỏi điểm danh đầu giờ (sửa D36, FR-059)
 
 PO chỉ ra: điểm danh đầu giờ thì chưa có nhận xét. Trước đây thái độ + nhận xét nằm chung form điểm danh.

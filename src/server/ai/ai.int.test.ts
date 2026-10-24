@@ -17,7 +17,7 @@ vi.mock("next/cache", () => ({ unstable_cache: <T,>(fn: T) => fn, revalidateTag:
 const { askAssistant } = await import("./chat/service");
 const { runIntent } = await import("./chat/handlers");
 const { dayRange } = await import("./chat/dates");
-const { generateContent, saveGenerated } = await import("./generate/service");
+const { composeAndSave, generateContent, saveGenerated } = await import("./generate/service");
 const { suggestEssayGrades, readAnswerSheet, saveSheetResult, listSheetCandidates } = await import("./grading/service");
 const { listAssignmentsOfStudent } = await import("@/server/assessment/service");
 
@@ -452,6 +452,32 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("AI — chatbot, soạn bài, ch
     it("giáo viên dạy thay không tạo được bài tập cho lớp của người khác", async () => {
       const r = await generateContent(t2, { ...input, sessionId: sessions.A3! });
       await expect(saveGenerated(t2, { sessionId: sessions.A3!, kind: "quiz", data: r.content.data, mode: "assignment" })).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("soạn một bước: đề → bài tập NHÁP, giáo án → tài liệu riêng; người ngoài buổi → 404", async () => {
+      const exam = await composeAndSave(t1, { ...input, kind: "quiz", sessionId: sessions.A2!, count: 4 });
+      expect(exam).toMatchObject({ mode: "assignment", kind: "quiz", mock: true });
+      const a = await db.assignment.findUniqueOrThrow({ where: { id: exam.id }, include: { _count: { select: { questions: true } } } });
+      expect(a).toMatchObject({ status: "DRAFT", classId: classA, createdById: t1.id });
+      expect(a._count.questions).toBe(4);
+
+      const plan = await composeAndSave(t1, { ...input, kind: "lesson_plan", sessionId: sessions.A2! });
+      expect(plan).toMatchObject({ mode: "document", kind: "lesson_plan" });
+      const doc = await db.document.findUniqueOrThrow({ where: { id: plan.id } });
+      expect(doc).toMatchObject({ kind: "LESSON_PLAN", ownerId: t1.id, visibleToStudents: false, visibleToParents: false });
+
+      await expect(composeAndSave(t3, { ...input, sessionId: sessions.A2! })).rejects.toBeInstanceOf(ForbiddenError);
+    });
+
+    it("đề bổ sung bằng AI: lưu đề luyện tập NHÁP riêng một học sinh; chỉ GV phụ trách lớp", async () => {
+      const r = await composeAndSave(t1, { ...input, kind: "exercises", sessionId: sessions.A2!, count: 4, studentId: s1.id });
+      expect(r).toMatchObject({ mode: "practice", kind: "exercises", mock: true });
+      const set = await db.practiceSet.findUniqueOrThrow({ where: { id: r.id }, include: { _count: { select: { questions: true } } } });
+      expect(set).toMatchObject({ isActive: false, forStudentId: s1.id, classId: classA, createdById: t1.id });
+      expect(set._count.questions).toBe(4);
+      // HS khác không thấy; người không phụ trách / HS không thuộc lớp bị từ chối.
+      await expect(composeAndSave(t2, { ...input, sessionId: sessions.A3!, studentId: s1.id })).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(composeAndSave(t1, { ...input, sessionId: sessions.A2!, studentId: s3.id })).rejects.toMatchObject({ code: "NOT_ENROLLED" });
     });
 
     it("lưu giáo án thành tệp Word gắn buổi; học sinh không tải được", async () => {

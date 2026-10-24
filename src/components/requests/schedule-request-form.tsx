@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { FormMessage } from "@/components/forms/config-form";
 import { SelectField, TextareaField, TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { SCHEDULE_REQUEST_TYPE } from "@/lib/labels";
 import { createScheduleRequestAction } from "@/server/requests/actions";
@@ -26,16 +26,16 @@ export function ScheduleRequestForm({ classes, sessions }: Props) {
   return (
     <form action={action} noValidate className="space-y-4">
       <FormMessage state={state} />
-      <FilterSelect name="_class" label="Lớp" required placeholder="Chọn lớp" options={classes} autoSubmit={false} onChange={setClassId} />
-      <FilterSelect
+      <SearchSelect name="_class" label="Lớp" required emptyLabel="Chọn lớp" options={classes} onChange={setClassId} />
+      <SearchSelect
         key={classId}
         name="sessionId"
         label="Buổi"
         required
-        placeholder={classId ? "Chọn buổi" : "Chọn lớp trước"}
+        emptyLabel={classId ? "Chọn buổi" : "Chọn lớp trước"}
         options={options}
         disabled={!classId}
-        autoSubmit={false}
+       
         defaultValue={v.sessionId && options.some((o) => o.value === v.sessionId) ? v.sessionId : ""}
         error={e.sessionId}
       />

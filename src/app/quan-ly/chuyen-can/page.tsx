@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { listAbsenceAlerts } from "@/server/attendance/service";
@@ -51,10 +51,10 @@ export default async function AttendanceTrackingPage({ searchParams }: { searchP
         </Card>
       )}
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.5fr_1fr_1fr] md:items-end">
-        <FilterSelect
+        <SearchSelect
           name="lop"
           label="Lớp"
-          placeholder="Chọn lớp"
+          emptyLabel="Chọn lớp"
           defaultValue={classId ?? ""}
           options={classes.map((c) => ({ value: c.id, label: `${c.code} · ${c.course.title} (${CLASS_STATUS[c.status].label.toLowerCase()})` }))}
         />

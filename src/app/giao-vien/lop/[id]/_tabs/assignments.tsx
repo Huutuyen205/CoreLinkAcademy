@@ -46,11 +46,11 @@ export function AssignmentsTab({
           <ul className="divide-y divide-line">
             {assignments.map((a) => (
               <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                <span>
-                  <Link href={`/giao-vien/bai-tap/${a.id}`} className="font-medium">
+                <span className="min-w-0 flex-1">
+                  <Link href={`/giao-vien/bai-tap/${a.id}`} title={a.title} className="block truncate font-medium">
                     {a.title}
                   </Link>
-                  <span className="block text-sm text-muted">
+                  <span className="block truncate text-sm text-muted">
                     Hạn {formatDateTime(a.dueAt)} · {a._count.questions} câu
                     {a._count.submissions > 0 ? ` · ${a._count.submissions} bài chờ chấm` : ""}
                   </span>

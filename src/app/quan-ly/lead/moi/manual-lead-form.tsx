@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { FormMessage } from "@/components/forms/config-form";
 import { SelectField, TextareaField, TextField } from "@/components/ui/field";
+import { SearchSelect } from "@/components/ui/search-select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { GRADE_OPTIONS, LEAD_SOURCE_LABELS, MANUAL_LEAD_SOURCES } from "@/lib/labels";
 import { createLeadAction, type CreateLeadState } from "@/server/leads/actions";
@@ -48,8 +49,8 @@ export function ManualLeadForm({ subjects, courses }: { subjects: Option[]; cour
           <SelectField name="gradeLevel" label="Khối lớp" placeholder="Chưa rõ" options={GRADE_OPTIONS} defaultValue={v.gradeLevel ?? ""} error={e.gradeLevel} />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField name="subjectId" label="Môn quan tâm" placeholder="Chưa rõ" options={subjects} defaultValue={v.subjectId ?? ""} error={e.subjectId} />
-          <SelectField name="courseSlug" label="Khóa học" placeholder="Chưa chọn" options={courses} defaultValue={v.courseSlug ?? ""} error={e.courseSlug} hint="Chọn khóa thì môn lấy theo khóa." />
+          <SearchSelect name="subjectId" label="Môn quan tâm" emptyLabel="Chưa rõ" options={subjects} defaultValue={v.subjectId ?? ""} error={e.subjectId} />
+          <SearchSelect name="courseSlug" label="Khóa học" emptyLabel="Chưa chọn" options={courses} defaultValue={v.courseSlug ?? ""} error={e.courseSlug} hint="Chọn khóa thì môn lấy theo khóa." />
         </div>
         <TextareaField name="note" label="Ghi chú" maxLength={1000} rows={3} defaultValue={v.note} error={e.note} />
       </fieldset>

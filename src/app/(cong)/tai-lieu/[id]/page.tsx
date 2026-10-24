@@ -37,7 +37,7 @@ export default async function DocumentPage({ params, searchParams }: { params: P
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href="/tai-lieu">← Tài liệu</Link>
+        <Link href={actor.role === "TEACHER" ? "/giao-vien/lop" : "/tai-lieu"}>{actor.role === "TEACHER" ? "← Lớp của tôi" : "← Tài liệu"}</Link>
       </p>
       <Flash code={(await searchParams).thongbao} />
       <PageHeader

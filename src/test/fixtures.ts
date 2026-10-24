@@ -62,6 +62,7 @@ export async function cleanup(tag: string): Promise<void> {
 
   await db.auditLog.deleteMany({ where: { OR: [{ actorId: { in: userIds } }, { entityId: { in: [...leads.map((l) => l.id), ...sessionIds, ...userIds] } }] } });
   await db.enrollment.deleteMany({ where: { OR: [{ classId: { in: classIds } }, { studentId: { in: userIds } }] } });
+  await db.practiceSet.deleteMany({ where: { OR: [{ createdById: { in: userIds } }, { classId: { in: classIds } }] } });
   await db.class.deleteMany({ where: { id: { in: classIds } } });
   await db.lead.deleteMany({ where: { id: { in: leads.map((l) => l.id) } } });
   await db.course.deleteMany({ where: { slug: { contains: tag } } });

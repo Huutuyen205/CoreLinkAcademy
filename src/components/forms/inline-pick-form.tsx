@@ -2,7 +2,7 @@
 
 import { Link2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
-import { ComboboxField } from "@/components/ui/combobox";
+import { SearchSelect } from "@/components/ui/search-select";
 import { toast } from "@/components/ui/toast";
 import { cn } from "@/lib/format";
 import { initialActionState, type ActionState } from "@/server/errors";
@@ -35,7 +35,7 @@ export function InlinePickForm({ action, hidden, name, label, placeholder, optio
         <input key={k} type="hidden" name={k} value={v} />
       ))}
       <div className="flex items-start gap-2">
-        <ComboboxField name={name} label={label} hideLabel placeholder={placeholder} options={options} className="min-w-0 flex-1" resetKey={resetKey} />
+        <SearchSelect name={name} label={label} hideLabel placeholder={placeholder} options={options} className="min-w-0 flex-1" resetKey={resetKey} />
         <button
           type="submit"
           disabled={pending}

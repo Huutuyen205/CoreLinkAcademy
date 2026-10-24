@@ -2,7 +2,7 @@
 
 import { useActionState, useId } from "react";
 import { CameraFileField } from "@/components/forms/camera-file-field";
-import { ComboboxField } from "@/components/ui/combobox";
+import { SearchSelect } from "@/components/ui/search-select";
 import { CheckboxField, FileField, SelectField, TextareaField, TextField } from "@/components/ui/field";
 import { Alert } from "@/components/ui/feedback";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -79,12 +79,18 @@ export function ConfigForm({ action, fields, hidden, submitLabel, columns = 1, c
                 <TextareaField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} maxLength={f.maxLength} rows={f.rows} defaultValue={value} error={e[f.name]} />
               );
             case "select":
+              // Danh sách dài (> 6 mục) dùng ô gõ-để-tìm viền xanh dùng chung; enum ngắn giữ <select> gốc.
+              if (f.options.length > 6) {
+                return (
+                  <SearchSelect key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} emptyLabel={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
+                );
+              }
               return (
                 <SelectField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
               );
             case "combobox":
               return (
-                <ComboboxField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
+                <SearchSelect key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} options={f.options} placeholder={f.placeholder} defaultValue={value ?? ""} error={e[f.name]} />
               );
             case "file":
               if (f.camera) return <CameraFileField key={f.name} id={fid} className={span} name={f.name} label={f.label} hint={f.hint} required={f.required} accept={f.accept} error={e[f.name]} />;

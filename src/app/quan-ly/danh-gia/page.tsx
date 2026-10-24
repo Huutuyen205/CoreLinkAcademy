@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { EmptyState, PageHeader } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { trackingClassOptions } from "@/server/attendance/tracking";
@@ -25,7 +25,7 @@ export default async function ManagerEvaluationsPage({ searchParams }: { searchP
     <>
       <PageHeader title="Đánh giá của giáo viên" description="Nhận xét định kỳ giáo viên đã gửi cho học sinh và phụ huynh." />
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-3 md:items-end">
-        <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={classId ?? ""} options={classes.map((c) => ({ value: c.id, label: `${c.code} · ${c.course.title}` }))} />
+        <SearchSelect name="lop" label="Lớp" emptyLabel="Tất cả" defaultValue={classId ?? ""} options={classes.map((c) => ({ value: c.id, label: `${c.code} · ${c.course.title}` }))} />
         <TextField name="q" label="Học sinh (tên hoặc mã)" defaultValue={q} maxLength={80} />
         <TextField name="ky" label="Kỳ (vd. Tháng 10)" defaultValue={period} maxLength={40} />
       </FilterForm>

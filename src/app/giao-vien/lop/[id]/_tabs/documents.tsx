@@ -7,22 +7,22 @@ import { formatDate } from "@/lib/time";
 
 type Doc = Awaited<ReturnType<typeof listClassLessonPlans>>[number];
 
-function DocList({ docs, empty }: { docs: Doc[]; empty: string }) {
+function DocList({ docs, empty, showKind }: { docs: Doc[]; empty: string; showKind?: boolean }) {
   if (docs.length === 0) return <EmptyState message={empty} />;
   return (
     <ul className="divide-y divide-line">
       {docs.map((d) => (
         <li key={d.id} className="py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link href={`/tai-lieu/${d.id}`} className="font-medium">
-              {d.title}
-            </Link>
-            <Badge tone={d.kind === "CURRICULUM" ? "primary" : d.kind === "LESSON_PLAN" ? "warning" : "success"}>{DOCUMENT_KIND[d.kind]}</Badge>
+          <Link href={`/tai-lieu/${d.id}`} title={d.title} className="block truncate font-medium">
+            {d.title}
+          </Link>
+          <p className="flex items-center gap-2 truncate text-sm text-muted">
+            <span className="truncate">
+              {d.session ? `Buổi ${d.session.index} · ` : ""}
+              {formatDate(d.updatedAt)}
+            </span>
+            {showKind && <Badge tone={d.kind === "CURRICULUM" ? "primary" : "success"}>{DOCUMENT_KIND[d.kind]}</Badge>}
             {d.kind === "LESSON_PLAN" && d.reviewStatus && <Badge tone={REQUEST_STATUS[d.reviewStatus].tone}>{REQUEST_STATUS[d.reviewStatus].label}</Badge>}
-          </div>
-          <p className="text-sm text-muted">
-            {d.session ? `Buổi ${d.session.index} · ` : ""}
-            {d.files.length} tệp · {d.owner.fullName} · {formatDate(d.updatedAt)}
           </p>
         </li>
       ))}
@@ -42,12 +42,11 @@ export function PlansAndMaterialsTab({ classId, plans, materials, aiSessionId }:
               Tạo giáo án
             </ButtonLink>
             <ButtonLink href={aiSessionId ? `/giao-vien/soan-bai?buoi=${aiSessionId}` : "/giao-vien/soan-bai"} variant="secondary" size="sm">
-              Tạo giáo án, slide bằng AI
+              Soạn bằng AI
             </ButtonLink>
           </span>
         }
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Chỉ giáo viên và quản lý xem được</p>
         <DocList docs={plans} empty="Chưa có giáo án nào." />
       </Card>
       <Card
@@ -58,8 +57,7 @@ export function PlansAndMaterialsTab({ classId, plans, materials, aiSessionId }:
           </ButtonLink>
         }
       >
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted">Học sinh của lớp xem được</p>
-        <DocList docs={materials} empty="Chưa có tài liệu nào." />
+        <DocList docs={materials} empty="Chưa có tài liệu nào." showKind />
       </Card>
     </div>
   );

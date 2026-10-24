@@ -99,6 +99,19 @@ export async function loadSessionContext(actor: Actor, sessionId: string): Promi
 }
 
 /** Buổi dạy gần đây/sắp tới của giáo viên để chọn trong form (14 ngày qua, 45 ngày tới). */
+/** Học sinh đang học của các lớp mà giáo viên PHỤ TRÁCH (không tính lớp dạy thay) — để chọn người nhận đề bổ sung. */
+export async function listStudentOptionsByClass(actor: Actor, classIds: string[]): Promise<Record<string, { value: string; label: string }[]>> {
+  if (actor.role !== "TEACHER" || classIds.length === 0) return {};
+  const rows = await db.enrollment.findMany({
+    where: { classId: { in: classIds }, status: "ACTIVE", class: { teacherId: actor.id } },
+    select: { classId: true, student: { select: { id: true, fullName: true, studentCode: true } } },
+    orderBy: { student: { fullName: "asc" } },
+  });
+  const out: Record<string, { value: string; label: string }[]> = {};
+  for (const r of rows) (out[r.classId] ??= []).push({ value: r.student.id, label: `${r.student.fullName}${r.student.studentCode ? ` (${r.student.studentCode})` : ""}` });
+  return out;
+}
+
 export async function listTeachableSessions(actor: Actor) {
   if (actor.role !== "TEACHER") throw new ForbiddenError();
   const day = 86_400_000;

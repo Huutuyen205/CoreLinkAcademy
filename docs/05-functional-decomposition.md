@@ -126,7 +126,7 @@ CoreLink Academy v3
 | FEAT-043 | Điểm danh | 2 buổi gần nhất cùng ABSENT | Staff, GV | Cổng | BR-033 | attendances | SCREEN-008, 024, 027 / Q-017 | UC-018 | FR-026 | P1 | Code; Unit (TC-022) |
 | FEAT-044 | Nền tảng UI | AppShell, skip link, 404 có link tổng quan, error, loading | Mọi người | Web | — | — | SCREEN-039 | — | NFR-002, 003, 007 | P0 | Code; skip link + 404: Bổ sung P3 |
 | FEAT-045 | Trợ lý AI | Chatbot hỏi đáp dữ liệu thật theo vai trò (nút gợi ý, luật từ khóa, AI chọn ý định khi cần), chế độ mẫu | Mọi người đăng nhập | Cổng | BR-046, BR-047 | audit_logs, rate_limit_buckets | Nút nổi `ChatWidget` | — | FR-054 | P2 | Code; Unit; Integration (DB thật) |
-| FEAT-046 | Trợ lý AI | Soạn giáo án, slide, giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh cho một buổi → khuôn Word/PowerPoint hoặc bài tập nháp | GV | GV | BR-040..045 | assignments, questions, documents, stored_files | `/giao-vien/soan-bai` | — | FR-055 | P2 | Code; Unit; Integration; HTTP |
+| FEAT-046 | Trợ lý AI | Soạn giáo án, slide, giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh cho một buổi → khuôn Word/PowerPoint hoặc bài tập nháp | GV | GV | BR-040..045 | assignments, questions, documents, stored_files | `/giao-vien/soan-bai`, `/giao-vien/soan-bai/[loai]` (mỗi loại một form, tự lưu nháp — D40) | — | FR-055 | P2 | Code; Unit; Integration; HTTP |
 | FEAT-047 | Trợ lý AI | Gợi ý điểm tự luận (kể cả ảnh viết tay); chấm phiếu trắc nghiệm giấy (AI đọc, GV xác nhận) | GV | GV | BR-042, BR-043, BR-046 | submissions, answers, stored_files | Trang chấm bài, `/giao-vien/bai-tap/[id]/phieu-giay` | — | FR-056 | P2 | Code; Unit; Integration; HTTP |
 
 ## 4. Ngoài phạm vi và trùng lặp

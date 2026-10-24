@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { FilterForm } from "@/components/ui/filter-form";
 import { requireActor } from "@/server/auth/guard";
@@ -59,10 +59,10 @@ export default async function PracticeListPage({ searchParams }: { searchParams:
       />
       <FilterForm className="mb-6 grid gap-4 rounded-block border border-line bg-surface p-4 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr] md:items-end">
         <TextField name="q" label="Tìm đề" defaultValue={filter.q} maxLength={80} />
-        <FilterSelect name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-        <FilterSelect name="chuyende" label="Chuyên đề" placeholder="Tất cả" defaultValue={filter.topic ?? ""} options={options.topics.map((t) => ({ value: t, label: t }))} />
-        <FilterSelect name="dang" label="Dạng bài" placeholder="Tất cả" defaultValue={filter.format ?? ""} options={options.formats.map((f) => ({ value: f, label: f }))} />
-        <FilterSelect name="mucdo" label="Mức độ" placeholder="Tất cả" defaultValue={filter.difficulty ?? ""} options={DIFFICULTIES.map((d) => ({ value: d, label: PRACTICE_DIFFICULTY[d].label }))} />
+        <SearchSelect name="mon" label="Môn" emptyLabel="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
+        <SearchSelect name="chuyende" label="Chuyên đề" emptyLabel="Tất cả" defaultValue={filter.topic ?? ""} options={options.topics.map((t) => ({ value: t, label: t }))} />
+        <SearchSelect name="dang" label="Dạng bài" emptyLabel="Tất cả" defaultValue={filter.format ?? ""} options={options.formats.map((f) => ({ value: f, label: f }))} />
+        <SearchSelect name="mucdo" label="Mức độ" emptyLabel="Tất cả" defaultValue={filter.difficulty ?? ""} options={DIFFICULTIES.map((d) => ({ value: d, label: PRACTICE_DIFFICULTY[d].label }))} />
       </FilterForm>
       {sets.length === 0 ? (
         <EmptyState message={learner ? "Chưa có đề luyện tập phù hợp." : "Chưa có đề nào. Bấm \"Soạn đề mới\" để bắt đầu."} />

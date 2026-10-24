@@ -47,8 +47,9 @@ export async function createPracticeSetAction(_prev: ActionState, formData: Form
 }
 
 const supplementalSchema = z.object({
-  title: z.string().trim().min(3, "Nhập tên đề (ít nhất 3 ký tự).").max(200),
-  topic: z.string().trim().min(1, "Nhập chuyên đề.").max(100),
+  title: z.string().trim().min(3, "Nhập tên bài (ít nhất 3 ký tự).").max(200),
+  description: optional(3000),
+  topic: z.string().trim().max(100, "Tối đa 100 ký tự."),
   format: z.string().trim().min(1, "Nhập dạng bài.").max(60),
   difficulty: z.enum(["EASY", "MEDIUM", "HARD"], { errorMap: () => ({ message: "Chọn mức độ." }) }),
   classId: id,
@@ -59,11 +60,12 @@ const supplementalSchema = z.object({
 /** Đề bổ sung cho một học sinh của lớp (nháp; thêm câu hỏi ở trang đề rồi mở cho học sinh). */
 export async function createSupplementalSetAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const actor = await requireRole("ADMIN", "STAFF", "TEACHER");
-  const fields = formFields(formData, ["title", "topic", "format", "difficulty", "classId", "studentId", "subjectId"]);
+  const fields = formFields(formData, ["title", "description", "topic", "format", "difficulty", "classId", "studentId", "subjectId"]);
   const parsed = parseForm(supplementalSchema, fields);
   if (!parsed.ok) return parsed.state;
-  const { studentId, ...rest } = parsed.data;
-  const result = await runAction(() => createPracticeSet(actor, { ...rest, description: null, levelId: null, forStudentId: studentId }), fields);
+  const { studentId, topic, ...rest } = parsed.data;
+  // Chuyên đề bỏ trống → lấy theo tên bài (chuyên đề chỉ để phân loại đề luyện tập).
+  const result = await runAction(() => createPracticeSet(actor, { ...rest, topic: topic || rest.title.slice(0, 100), levelId: null, forStudentId: studentId }), fields);
   if (!result.ok) return result.state;
   redirect(`/on-luyen/${result.value}?thongbao=tao-de`);
 }

@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { FormMessage } from "@/components/forms/config-form";
 import { CredentialsNotice } from "@/components/forms/credentials-notice";
 import { SelectField, TextField } from "@/components/ui/field";
+import { SearchSelect } from "@/components/ui/search-select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { GRADE_OPTIONS } from "@/lib/labels";
 import { convertLeadAction, type ConvertState } from "@/server/leads/actions";
@@ -65,7 +66,7 @@ export function ConvertLeadForm({ lead, classes }: Props) {
         error={e.parentPhone}
       />
       <TextField name="parentEmail" type="email" label="Email phụ huynh" maxLength={191} defaultValue={v.parentEmail ?? lead.email ?? ""} error={e.parentEmail} />
-      <SelectField name="classId" label="Ghi danh vào lớp (tùy chọn)" placeholder="Chưa ghi danh" options={classes} defaultValue={v.classId ?? ""} error={e.classId} />
+      <SearchSelect name="classId" label="Ghi danh vào lớp (tùy chọn)" emptyLabel="Chưa ghi danh" options={classes} defaultValue={v.classId ?? ""} error={e.classId} />
       <SubmitButton className="w-full" pendingLabel="Đang chuyển…">
         Chuyển thành học viên
       </SubmitButton>

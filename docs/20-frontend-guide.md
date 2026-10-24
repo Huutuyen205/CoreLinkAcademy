@@ -67,6 +67,8 @@ Quy tắc: không import `db` trong page; không tin `searchParams` — kiểm t
   ]}
 />
 ```
+Ô `select` có > 6 mục được `ConfigForm` tự hiển thị bằng `SearchSelect` (gõ để tìm, viền xanh). Ngoài `ConfigForm`, dùng `<SearchSelect name label options emptyLabel="Tất cả" />` — nằm trong `FilterForm` thì chọn xong lọc ngay; ở form thường thì chỉ điền ô ẩn `name`.
+
 `ConfigForm` lo: lỗi chung (`FormMessage` + `details`), lỗi từng ô, giữ giá trị khi lỗi (kể cả checkbox khi action trả `values[name] = "on" | ""`), `useId` để nhiều form một trang không trùng id, nút pending.
 
 ### 5.2 Form riêng (client component)

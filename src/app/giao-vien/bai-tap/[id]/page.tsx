@@ -37,7 +37,7 @@ export default async function TeacherAssignmentPage({ params, searchParams }: { 
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href={`/giao-vien/lop/${a.class.id}?tab=bai-tap`}>← Lớp {a.class.code}</Link> · <Link href="/giao-vien/bai-tap">Tất cả bài tập</Link>
+        <Link href={`/giao-vien/lop/${a.class.id}?tab=bai-tap`}>← Lớp {a.class.code}</Link>
       </p>
       <Flash code={(await searchParams).thongbao} />
       <PageHeader

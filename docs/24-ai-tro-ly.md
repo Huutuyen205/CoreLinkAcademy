@@ -87,14 +87,14 @@ Các trường hợp biên đã xử lý (có test):
 
 ## 5. Soạn bài với AI (FR-055)
 
-Trang `/giao-vien/soan-bai` (giáo viên dạy buổi đó — phụ trách hoặc dạy thay; sai buổi → 404).
+Trang `/giao-vien/soan-bai` chỉ để chọn loại; **mỗi loại một trang + form riêng** `/giao-vien/soan-bai/<giao-an|slide|giao-trinh|trac-nghiem|bai-tap|tu-luan>` (DECISION-D40), mở sẵn đúng buổi đang xem (`?buoi=` / `?lop=`). Bấm **Soạn và lưu nháp**: AI soạn → hệ thống **tự lưu nháp** → chuyển thẳng tới trang chi tiết (đề → `/giao-vien/bai-tap/[id]`, còn lại → `/tai-lieu/[id]`) kèm thông báo (có ghi rõ nếu là bản mẫu). Riêng **slide**: soạn xong hiện bản xem trước như PowerPoint (cùng bố cục với file) rồi bấm lưu mới tạo file. Thêm trang `/giao-vien/soan-bai/bo-sung`: đề trắc nghiệm + trả lời ngắn giao riêng một học sinh (đề luyện tập nháp `forStudentId`, chỉ giáo viên phụ trách lớp). Giáo viên dạy buổi đó — phụ trách hoặc dạy thay; sai buổi → 404.
 
 | Loại | Kết quả lưu |
 |---|---|
 | Giáo án | `.docx` — Tài liệu loại *Giáo án* gắn buổi (chỉ giáo viên thấy) |
 | Slide bài giảng | `.pptx` 16:9 màu thương hiệu, ghi chú trình bày cho giáo viên |
 | Tóm tắt giáo trình buổi | `.docx` — lưu như *Tài liệu* riêng tư của giáo viên |
-| Đề trắc nghiệm / Bài tập (trắc nghiệm + trả lời ngắn) | **Bài tập NHÁP** (câu hỏi + đáp án + điểm, tổng 10) hoặc `.docx` đề + trang đáp án riêng |
+| Đề trắc nghiệm / Bài tập (trắc nghiệm + trả lời ngắn) | **Bài tập NHÁP** (câu hỏi + đáp án + điểm, tổng 10); sửa từng câu ở trang bài tập rồi mới giao |
 | Đề tự luận có đáp án mẫu + thang điểm (**Toán, Tiếng Anh**) | Bài tập nháp (câu tự luận) **và** `.docx` có đáp án mẫu/thang điểm (đáp án tự luận chưa có chỗ lưu trong bài tập — P2-50) |
 
 - **Đầu vào ("giáo trình của buổi")** (DECISION-D37): khóa, môn, khối, **mục lộ trình của buổi** (nội dung, mục tiêu, kiến thức trọng tâm, ví dụ — chỉ khi số mục đúng bằng số buổi), nhật ký nội dung/ghi chú buổi, chủ đề và yêu cầu thêm của giáo viên, và **tối đa 4 trích đoạn × 700 ký tự** từ tài liệu liên quan. Chuẩn đầu ra cả khóa chỉ gửi khi buổi chưa có mục tiêu riêng.

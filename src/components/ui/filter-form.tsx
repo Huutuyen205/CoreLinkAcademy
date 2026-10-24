@@ -1,8 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useTransition, type ReactNode } from "react";
+import { createContext, useEffect, useRef, useTransition, type ReactNode } from "react";
 import { cn } from "@/lib/format";
+
+/** `SearchSelect` đọc cờ này để tự gửi form lọc ngay khi chọn xong. */
+export const InFilterForm = createContext(false);
 
 // Giữ con trỏ ở ô tìm kiếm sau khi trang tải lại kết quả (kể cả khi form được dựng lại).
 let restoreFocus: { path: string; name: string } | null = null;
@@ -41,7 +44,9 @@ export function FilterForm({ className, children }: { className?: string; childr
     start(() => router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false }));
   };
 
-  const isTyping = (el: EventTarget) => el instanceof HTMLInputElement && (el.type === "text" || el.type === "search");
+  // Ô tìm trong `SearchSelect` (data-no-filter) không có `name`: chọn xong ô ẩn mới gửi form, gõ chữ chưa phải là lọc.
+  const isTyping = (el: EventTarget) => el instanceof HTMLInputElement && (el.type === "text" || el.type === "search") && !("noFilter" in el.dataset);
+  const ignored = (el: EventTarget) => el instanceof HTMLElement && "noFilter" in el.dataset;
 
   return (
     <form
@@ -55,7 +60,7 @@ export function FilterForm({ className, children }: { className?: string; childr
         apply(e.currentTarget);
       }}
       onChange={(e) => {
-        if (!isTyping(e.target)) apply(e.currentTarget);
+        if (!isTyping(e.target) && !ignored(e.target)) apply(e.currentTarget);
       }}
       onInput={(e) => {
         if (!isTyping(e.target)) return;
@@ -64,7 +69,7 @@ export function FilterForm({ className, children }: { className?: string; childr
         timer.current = window.setTimeout(() => apply(form), 500);
       }}
     >
-      {children}
+      <InFilterForm.Provider value>{children}</InFilterForm.Provider>
     </form>
   );
 }

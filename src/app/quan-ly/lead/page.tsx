@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { DataTable, Pagination, parsePage } from "@/components/ui/data-table";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { ActionLink, RowActions } from "@/components/ui/row-actions";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
@@ -67,15 +67,15 @@ export default async function LeadListPage({ searchParams }: { searchParams: Pro
         {board && <input type="hidden" name="xem" value="bang" />}
         <TextField name="q" label="Tìm theo tên hoặc SĐT" defaultValue={q} maxLength={100} />
         {!board && (
-          <FilterSelect
+          <SearchSelect
             name="status"
             label="Trạng thái"
-            placeholder="Tất cả"
+            emptyLabel="Tất cả"
             defaultValue={status ?? ""}
             options={Object.entries(LEAD_STATUS).map(([value, l]) => ({ value, label: l.label }))}
           />
         )}
-        <FilterSelect name="mon" label="Môn" placeholder="Tất cả" defaultValue={subjectId ?? ""} options={subjects.map((s) => ({ value: s.id, label: s.name }))} />
+        <SearchSelect name="mon" label="Môn" emptyLabel="Tất cả" defaultValue={subjectId ?? ""} options={subjects.map((s) => ({ value: s.id, label: s.name }))} />
         <div className="flex gap-2">
           {filtered && (
             <ButtonLink href={board ? "/quan-ly/lead?xem=bang" : "/quan-ly/lead"} variant="ghost">

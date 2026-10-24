@@ -350,7 +350,7 @@ async function teacherGrading(ctx: Ctx): Promise<Reply> {
   if (total === 0) return reply("teacher_grading", "Không có bài nộp nào đang chờ chấm.");
   return reply("teacher_grading", `Có ${total} bài nộp đang chờ bạn chấm:`, {
     lines: items.slice(0, 6).map((i) => `${i.student.fullName} · ${i.assignment.title} (${i.assignment.class.code})${i.submittedAt ? ` · nộp ${formatDateTime(i.submittedAt)}` : ""}`),
-    links: [{ label: "Mở danh sách chấm bài", href: "/giao-vien/bai-tap" }],
+    links: [{ label: "Mở danh sách chấm bài", href: "/giao-vien/lop" }],
   });
 }
 

@@ -1,10 +1,11 @@
 import type { DocumentKind } from "@prisma/client";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Flash } from "@/components/layout/flash";
 import { ButtonLink } from "@/components/ui/button";
 import { TextField } from "@/components/ui/field";
-import { FilterSelect } from "@/components/ui/filter-select";
+import { SearchSelect } from "@/components/ui/search-select";
 import { FilterForm } from "@/components/ui/filter-form";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireActor } from "@/server/auth/guard";
@@ -21,6 +22,8 @@ type SP = { loai?: string; q?: string; mon?: string; cap?: string; lop?: string;
 // FR-042 — Admin §9–§10, GV §3–§5, HS §tài liệu, PH §6. Danh sách chỉ gồm tài liệu actor được xem (documentVisibilityWhere).
 export default async function DocumentsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const actor = await requireActor();
+  // Giáo viên xem tài liệu/giáo án trong trang lớp (DECISION-D36), không có danh sách riêng.
+  if (actor.role === "TEACHER") redirect("/giao-vien/lop");
   const sp = await searchParams;
   const learner = actor.role === "STUDENT" || actor.role === "PARENT";
   const kinds: DocumentKind[] = learner ? ["MATERIAL", "CURRICULUM"] : ["CURRICULUM", "MATERIAL", "LESSON_PLAN"];
@@ -47,9 +50,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
         description={
           learner
             ? "Tài liệu, bài giảng giáo viên chia sẻ cho lớp."
-            : actor.role === "TEACHER"
-              ? "Giáo trình của trung tâm, tài liệu bạn chia sẻ cho lớp và giáo án của bạn."
-              : "Giáo trình chuẩn, tài liệu học tập và giáo án giáo viên tải lên."
+            : "Giáo trình chuẩn, tài liệu học tập và giáo án giáo viên tải lên."
         }
       />
       <div className="mb-4 flex flex-wrap gap-2">
@@ -93,9 +94,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
           {kind && <input type="hidden" name="loai" value={kind} />}
           {filter.pendingReview && <input type="hidden" name="duyet" value="cho" />}
           <TextField name="q" label="Tìm theo tên" defaultValue={filter.q} maxLength={80} />
-          <FilterSelect name="mon" label="Môn" placeholder="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
-          {!learner && <FilterSelect name="cap" label="Cấp học" placeholder="Tất cả" defaultValue={filter.levelId ?? ""} options={options.levels.map((l) => ({ value: l.id, label: l.name }))} />}
-          <FilterSelect name="lop" label="Lớp" placeholder="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
+          <SearchSelect name="mon" label="Môn" emptyLabel="Tất cả" defaultValue={filter.subjectId ?? ""} options={options.subjects.map((s) => ({ value: s.id, label: s.name }))} />
+          {!learner && <SearchSelect name="cap" label="Cấp học" emptyLabel="Tất cả" defaultValue={filter.levelId ?? ""} options={options.levels.map((l) => ({ value: l.id, label: l.name }))} />}
+          <SearchSelect name="lop" label="Lớp" emptyLabel="Tất cả" defaultValue={filter.classId ?? ""} options={options.classes.map((c) => ({ value: c.id, label: c.code }))} />
           {!learner && <div className="flex flex-wrap gap-2">
             {isManager(actor) && (
               <label className="inline-flex min-h-11 items-center gap-2 text-sm">
