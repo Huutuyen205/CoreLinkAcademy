@@ -12,11 +12,11 @@ Phụ huynh tự xem lịch học, chuyên cần và điểm đã công bố c�
 Tài khoản PARENT đã đổi mật khẩu tạm; có ≥ 1 liên kết với HS ACTIVE.
 
 ## 3. Trigger
-Đăng nhập → `/phu-huynh`.
+Đăng nhập → `/phu-huynh` (chuyển sang `/phu-huynh/lich`). DECISION-D42: cổng phụ huynh dùng chung giao diện học sinh cho con đang chọn — xem [P-05](../portals/P-05-phu-huynh.md); các bước dưới đây áp dụng cho từng trang của cổng đó.
 
 ## 4. Main success flow
 1. "Xin chào, <tên>" + mô tả "Lịch học, chuyên cần và điểm đã công bố của con.".
-2. Nếu > 1 con: thanh chọn con (nút dạng viên thuốc, con đang chọn đánh dấu `aria-current`); mặc định con đầu tiên theo tên.
+2. Ô chọn con ở thanh trên (rê chuột xổ danh sách con, con đang chọn đánh dấu ✓); mặc định con đầu tiên theo tên.
 3. Tên con + khối.
 4. Lịch tuần của con (tuần hiện tại, chuyển tuần), hiện GV từng buổi.
 5. Thẻ "Chuyên cần: X%" (tỷ lệ từng lớp nếu nhiều lớp, 10 buổi gần nhất).
@@ -24,7 +24,7 @@ Tài khoản PARENT đã đổi mật khẩu tạm; có ≥ 1 liên kết với 
 
 ## 5. Alternate flows
 ### A1 — Chọn con khác
-1. Bấm tên con → `/phu-huynh?con=<id>`; giữ được khi chuyển tuần (`?con=&tuan=`).
+1. Chọn con ở thanh trên → `/phu-huynh/chon-con?con=<id>&den=…` lưu cookie rồi mở lại mục đang xem (trang chi tiết về danh sách cùng mục).
 ### A2 — Chưa có dữ liệu
 1. Không buổi trong tuần → "Không có buổi học nào trong tuần này."; chưa điểm danh → "Chưa có buổi nào được điểm danh."; chưa công bố → "Chưa có kết quả nào được công bố.".
 

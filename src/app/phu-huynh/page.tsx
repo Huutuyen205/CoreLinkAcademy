@@ -1,200 +1,29 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { BookOpen, Clock, MessageSquare, User } from "lucide-react";
-import Link from "next/link";
-import { ChildPicker } from "@/components/learner/child-picker";
-import { BannerLink, WelcomeBanner } from "@/components/layout/welcome-banner";
-import { EvaluationList } from "@/components/learner/evaluation-list";
-import { AttendanceSummary } from "@/components/learner/learner-progress";
-import { CourseProgress, resultFilterHref, ResultsSummary } from "@/components/learner/results-summary";
-import { ProgressCharts } from "@/components/learner/progress-charts";
+import { redirect } from "next/navigation";
 import { Flash } from "@/components/layout/flash";
-import { WeekSchedule } from "@/components/schedule/week-schedule";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
-import { learnerProgress, listStudentClasses } from "@/server/academic/learner";
-import { listSessionsInRange } from "@/server/academic/service";
-import { listPublishedResults } from "@/server/assessment/service";
-import { getStudentAttendance } from "@/server/attendance/service";
-import { listEvaluationsOfStudent } from "@/server/evaluations/service";
+import { EmptyState, PageHeader } from "@/components/ui/feedback";
 import { requireRole } from "@/server/auth/guard";
-import { orNotFound } from "@/server/page";
-import { listMyChildren } from "@/server/users/service";
-import { ENROLLMENT_STATUS } from "@/lib/labels";
-import { formatSchedule } from "@/lib/schedule";
-import { formatDate, parseWeekParam, vnWeekRange } from "@/lib/time";
+import { parentChildren } from "@/server/auth/learner";
+import { switchChildHref } from "@/lib/child";
 
-export const metadata: Metadata = { title: "Theo dõi con" };
+export const metadata: Metadata = { title: "Phụ huynh" };
 
-type SP = { con?: string; tuan?: string; thongbao?: string; mon?: string; lop?: string; ky?: string };
-const str = (v: unknown) => (typeof v === "string" && v.length <= 80 ? v : undefined);
-
-// UC-011 — FR-022, FR-025, FR-033, FR-034. Con không liên kết → 404 (TC-034).
-export default async function ParentDashboard({ searchParams }: { searchParams: Promise<SP> }) {
+// DECISION-D42: cổng phụ huynh dùng chung giao diện với học sinh (Lịch · Lớp học · Bài tập · Đơn xin nghỉ · Tin nhắn) cho con đang chọn;
+// vào thẳng Lịch học. `?con=` (liên kết cũ) đổi sang đúng con. Chưa liên kết con thì giải thích ở đây.
+export default async function ParentHome({ searchParams }: { searchParams: Promise<{ con?: string; thongbao?: string }> }) {
   const actor = await requireRole("PARENT");
   const sp = await searchParams;
-  const children = await listMyChildren(actor);
+  const { children } = await parentChildren(actor);
 
-  if (children.length === 0) {
-    return (
-      <div className="space-y-6">
-        <Flash code={sp.thongbao} />
-        <PageHeader title={`Xin chào, ${actor.fullName}`} />
-        <EmptyState message="Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con." />
-      </div>
-    );
+  if (children.length > 0) {
+    if (sp.con && children.some((c) => c.id === sp.con)) redirect(switchChildHref(sp.con, "/phu-huynh/lich"));
+    redirect("/phu-huynh/lich");
   }
-
-  const childId = sp.con ?? children[0]!.id;
-  const child = children.find((c) => c.id === childId);
-  if (!child) notFound();
-
-  const weekStart = parseWeekParam(sp.tuan);
-  const { from, to } = vnWeekRange(weekStart);
-  const [sessions, attendance, results, classes, evaluations, progress] = await Promise.all([
-    orNotFound(listSessionsInRange(actor, from, to, child.id)),
-    orNotFound(getStudentAttendance(actor, child.id)),
-    orNotFound(listPublishedResults(actor, child.id)),
-    orNotFound(listStudentClasses(actor, child.id)),
-    orNotFound(listEvaluationsOfStudent(actor, child.id)),
-    orNotFound(learnerProgress(actor, child.id)),
-  ]);
-  const resultFilter = { subject: str(sp.mon), classCode: str(sp.lop), period: str(sp.ky) };
-
   return (
     <div className="space-y-6">
       <Flash code={sp.thongbao} />
-
-      <WelcomeBanner
-        name={actor.fullName}
-        roleLabel="Phụ huynh"
-        summary={`Đồng hành và theo dõi lịch học, chuyên cần, bài tập và kết quả của con ${child.fullName} tại CoreLink Academy.`}
-      >
-        <BannerLink href={`/phu-huynh/bai-tap?con=${child.id}`}>
-          <BookOpen className="size-4" />
-          <span>Bài tập của con</span>
-        </BannerLink>
-        <BannerLink href="/phu-huynh/don-nghi">
-          <span>Gửi đơn xin nghỉ phép</span>
-        </BannerLink>
-        <BannerLink href="/tin-nhan">
-          <MessageSquare className="size-4" />
-          <span>Nhắn giáo viên / trung tâm</span>
-        </BannerLink>
-      </WelcomeBanner>
-
-      {/* Child Switcher if multiple children */}
-      <ChildPicker items={children} currentId={child.id} basePath="/phu-huynh" />
-
-      {/* Student Badge Card */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface p-4 shadow-2xs sm:p-5">
-        <div className="flex items-center gap-3.5">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary-soft text-primary font-heading font-extrabold text-lg shadow-2xs">
-            {child.fullName.trim().split(" ").slice(-1)[0]?.[0] ?? "C"}
-          </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-ink leading-tight">
-              {child.fullName}
-            </h2>
-            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted">
-              {child.gradeLevel && (
-                <span className="rounded-md bg-brand-tint px-2 py-0.5 font-bold text-primary">
-                  Khối Lớp {child.gradeLevel}
-                </span>
-              )}
-              {child.studentCode && (
-                <span className="font-mono text-muted">Mã: {child.studentCode}</span>
-              )}
-              <span className="text-subtle">• Đang theo học tại cơ sở</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/phu-huynh/bai-tap?con=${child.id}`}
-            className="rounded-full bg-primary-soft hover:bg-primary hover:text-white px-3.5 py-1.5 text-xs font-bold text-primary transition-colors no-underline"
-          >
-            Xem bài tập của con →
-          </Link>
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        {/* Lớp đang học */}
-        <Card title={`Khóa & Lớp đang theo học (${classes.length})`}>
-          {classes.length === 0 ? (
-            <EmptyState message="Con chưa ghi danh lớp nào trong học kỳ này." />
-          ) : (
-            <ul className="grid gap-4 sm:grid-cols-2">
-              {classes.map(({ class: c, status }) => (
-                <li
-                  key={c.id}
-                  className="rounded-2xl border border-line bg-paper/60 p-4 transition-all duration-200 hover:border-primary/40 hover:bg-surface hover:shadow-xs"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-extrabold text-primary bg-primary-soft px-2.5 py-0.5 rounded-md">
-                      {c.code}
-                    </span>
-                    {status !== "ACTIVE" && (
-                      <Badge tone={ENROLLMENT_STATUS[status].tone}>
-                        {ENROLLMENT_STATUS[status].label}
-                      </Badge>
-                    )}
-                  </div>
-                  <h3 className="mt-2 text-base font-bold text-ink">{c.course.title}</h3>
-                  <div className="mt-2.5 space-y-1 text-xs text-muted">
-                    <p className="flex items-center gap-1.5 font-medium text-ink">
-                      <Clock className="size-3.5 text-primary" />
-                      {formatSchedule(c.weekdays, c.startTime, c.endTime)}
-                      {c.room?.name && <span>· {c.room.name}</span>}
-                    </p>
-                    <p className="flex items-center gap-1.5">
-                      <User className="size-3.5 text-muted" />
-                      Giáo viên phụ trách: <span className="font-semibold text-ink">{c.teacher.fullName}</span>
-                    </p>
-                    {c.teacher.introPublished && (
-                      <details>
-                        <summary className="cursor-pointer text-primary">Giới thiệu giáo viên</summary>
-                        <p className="mt-1 whitespace-pre-line text-ink">{c.teacher.introPublished}</p>
-                      </details>
-                    )}
-                    <p className="text-subtle">
-                      Khai giảng: {formatDate(c.startDate)}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        {/* Lịch học tuần */}
-        <p className="-mb-3 flex justify-end">
-          <a href={`/lich/xuat?con=${child.id}`} className="inline-flex min-h-9 items-center gap-1.5 rounded-control border border-primary/30 bg-surface px-3 text-sm font-semibold text-primary no-underline hover:bg-primary-soft">
-            📅 Thêm lịch học của con vào lịch điện thoại
-          </a>
-        </p>
-        <WeekSchedule
-          weekStart={weekStart}
-          sessions={sessions}
-          weekHref={(w) => `/phu-huynh?con=${child.id}&tuan=${w}`}
-          sessionHref={(s) => `/phu-huynh/buoi/${s.id}?con=${child.id}`}
-          showTeacher
-        />
-
-        {/* Tiến độ (biểu đồ) + Chuyên cần & Kết quả */}
-        <CourseProgress rows={progress} />
-        <div className="scroll-mt-24" id="tong-hop">
-          <ResultsSummary results={results} filter={resultFilter} baseHref={(f) => resultFilterHref("/phu-huynh", f, { con: child.id })} />
-        </div>
-        <ProgressCharts results={results} attendance={attendance.records} />
-        <AttendanceSummary data={attendance} />
-
-        {/* Nhận xét giáo viên */}
-        {evaluations && evaluations.length > 0 && (
-          <EvaluationList evaluations={evaluations} />
-        )}
-      </div>
+      <PageHeader title={`Xin chào, ${actor.fullName}`} />
+      <EmptyState message="Tài khoản chưa được liên kết với học sinh nào. Vui lòng liên hệ trung tâm để được hỗ trợ ghép hồ sơ con." />
     </div>
   );
 }

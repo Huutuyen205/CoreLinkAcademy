@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Alert, Badge, PageHeader } from "@/components/ui/feedback";
-import { requireRole } from "@/server/auth/guard";
+import { requireLearner } from "@/server/auth/learner";
 import { orNotFound } from "@/server/page";
 import { getPracticeAttempt } from "@/server/practice/service";
 import { cn } from "@/lib/format";
@@ -12,8 +12,8 @@ export const metadata: Metadata = { title: "Kết quả luyện tập" };
 
 // Học sinh §5: xem kết quả bài luyện, đáp án và lời giải.
 export default async function PracticeResultPage({ params }: { params: Promise<{ id: string }> }) {
-  const actor = await requireRole("STUDENT");
-  const { attempt, set, items } = await orNotFound(getPracticeAttempt(actor, (await params).id));
+  const { student } = await requireLearner();
+  const { attempt, set, items } = await orNotFound(getPracticeAttempt(student, (await params).id));
   const percent = attempt.maxScore > 0 ? Math.round((attempt.score / attempt.maxScore) * 100) : 0;
 
   return (

@@ -46,7 +46,7 @@ export async function saveEvaluation(actor: Actor, input: EvaluationInput): Prom
       await tx.evaluation.update({ where: { id: existing.id }, data });
       await writeAudit({ actorId: actor.id, action: "evaluation.update_after_send", entity: "Evaluation", entityId: existing.id, detail: { period: input.period } }, tx);
       const title = `Đánh giá ${input.period} được cập nhật — lớp ${klass.code}`;
-      await notifyUsers(tx, [input.studentId], { kind: "evaluation", title, body: "Giáo viên vừa cập nhật đánh giá định kỳ.", link: "/hoc-sinh/ket-qua" });
+      await notifyUsers(tx, [input.studentId], { kind: "evaluation", title, body: "Giáo viên vừa cập nhật đánh giá định kỳ.", link: `/hoc-sinh/lop/${input.classId}` });
       await notifyUsers(tx, parents.map((p) => p.parentId), { kind: "evaluation", title, body: "Giáo viên vừa cập nhật đánh giá định kỳ của con.", link: "/phu-huynh" });
     });
     return;
@@ -69,7 +69,7 @@ export async function sendEvaluation(actor: Actor, evaluationId: string): Promis
   await db.$transaction(async (tx) => {
     const { count } = await tx.evaluation.updateMany({ where: { id: evaluationId, status: "DRAFT" }, data: { status: "SENT", sentAt: new Date() } });
     if (count === 0) throw new DomainError("ALREADY_SENT", "Đánh giá đã gửi.");
-    await notifyUsers(tx, [ev.studentId], { kind: "evaluation", title: `Đánh giá ${ev.period} — lớp ${ev.class.code}`, body: "Giáo viên đã gửi đánh giá định kỳ.", link: "/hoc-sinh/ket-qua" });
+    await notifyUsers(tx, [ev.studentId], { kind: "evaluation", title: `Đánh giá ${ev.period} — lớp ${ev.class.code}`, body: "Giáo viên đã gửi đánh giá định kỳ.", link: `/hoc-sinh/lop/${ev.classId}` });
     await notifyUsers(tx, parents.map((p) => p.parentId), { kind: "evaluation", title: `Đánh giá ${ev.period} — lớp ${ev.class.code}`, body: "Giáo viên đã gửi đánh giá định kỳ của con.", link: "/phu-huynh" });
   });
   return ev.classId;

@@ -86,6 +86,7 @@ Khả năng (L) / Tác động (I): T = thấp, TB = trung bình, C = cao. Trạ
 | Câu hỏi chatbot; nội dung buổi học; bài làm tự luận/ảnh phiếu (khi GV bấm AI) | Trả lời hỏi đáp, soạn bài, gợi ý chấm | Có — chatbot chỉ gửi chữ câu hỏi; soạn bài chỉ gửi dữ liệu giảng dạy (không dữ liệu HS); chấm bài gửi một câu + bài làm **không kèm tên** | Hợp đồng học + GV chủ động bấm; **cần PO xác nhận và thông báo phụ huynh trước khi bật AI thật** (Q10) | Nhà cung cấp AI theo `AI_PROVIDER` (mặc định không gọi ai: chế độ mẫu) | Theo chính sách nhà cung cấp; gói miễn phí có thể dùng để huấn luyện — **kiểm tra điều khoản** |
 | Audit | Truy vết thao tác | Không chứa mật khẩu/token | Lợi ích hợp pháp | Admin | TBD (QUESTION-Q11) |
 
+- **Phụ huynh làm bài thay con (D42):** quyền chỉ qua `requireLearner()` — con lấy từ `guardianships` mỗi request, cookie `cl_child` sai/không liên kết bị bỏ qua hoặc 404; `GET /phu-huynh/chon-con` chỉ đặt cookie (không đổi dữ liệu) và chặn chuyển hướng ra ngoài (`safeInternalPath`); nộp bài thay con có audit.
 - **Trẻ em:** dữ liệu học sinh vị thành niên do phụ huynh/học viện cung cấp; HS nhỏ có thể không có email/SĐT (DECISION-D12).
 - **Quyền của chủ thể dữ liệu** (xem, sửa, xóa): chưa có chức năng tự phục vụ; Admin xử lý thủ công. Cần tư vấn pháp lý trước production về quy định bảo vệ dữ liệu cá nhân tại Việt Nam — **không khẳng định đã tuân thủ** (QUESTION-Q10).
 - **Disclosure:** footer chưa có chính sách quyền riêng tư (QUESTION-Q02/Q10).

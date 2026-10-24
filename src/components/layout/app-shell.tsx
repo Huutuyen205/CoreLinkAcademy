@@ -1,15 +1,13 @@
-import { Download, KeyRound, LogOut, User } from "lucide-react";
-import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import type { ReactNode } from "react";
-import { logout } from "@/server/auth/actions";
 import { ROLE_LABELS } from "@/server/auth/policy";
 import type { Actor } from "@/server/auth/session";
 import { Assistant } from "@/components/ai/assistant";
 import { ComposeShortcut } from "@/components/ai/compose-shortcut";
 import { NotificationBell, NotificationProvider } from "@/components/notifications/notification-center";
-import { Avatar } from "@/components/ui/avatar";
 import { canGlobalSearch } from "@/server/search/service";
 import { Brand, BridgeArc } from "./brand";
+import { ChildSwitcher, type SwitcherChild } from "./child-switcher";
 import { CommandSearch } from "./command-search";
 import { UserMenu } from "./user-menu";
 import { BottomNav, MobileMenu, SideNav, type NavItem } from "./nav-links";
@@ -22,6 +20,8 @@ type Props = {
   bottomNav?: NavItem[];
   /** Số thông báo chưa đọc — chuông ở thanh đầu/sidebar. */
   unread?: number;
+  /** Phụ huynh: các con liên kết + con đang chọn → ô chọn con trên thanh đầu. */
+  childSwitcher?: { items: SwitcherChild[]; selectedId: string };
   children: ReactNode;
 };
 
@@ -29,60 +29,13 @@ type Props = {
  * Vỏ khu nội bộ v3.3 WOW: sidebar gradient xanh sâu với glow shadow trên ≥1024px;
  * dưới đó là thanh trên xanh + ngăn kéo menu (docs/08 §5).
  */
-export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children }: Props) {
-  const account = (
-    <div className="space-y-3 rounded-2xl border border-white/12 bg-white/6 p-3.5 backdrop-blur-xs">
-      <div className="flex items-center gap-3">
-        <Link href="/tai-khoan" title="Đổi ảnh đại diện" className="relative shrink-0 rounded-full ring-2 ring-white/20">
-          <Avatar name={actor.fullName} fileId={actor.avatarFileId} />
-          <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-400 ring-2 ring-primary-strong" />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-bold text-white leading-tight">{actor.fullName}</p>
-          <span className="inline-block mt-0.5 rounded-full bg-white/15 px-2 py-0.2 text-[10px] font-semibold text-brand-tint">
-            {ROLE_LABELS[actor.role]}
-          </span>
-        </div>
-      </div>
-
-      <Link
-        href="/cai-ung-dung"
-        className="flex items-center justify-center gap-1.5 rounded-xl bg-white/10 py-1.5 text-xs font-semibold text-white no-underline transition-colors hover:bg-white/20"
-      >
-        <Download className="size-3.5" aria-hidden="true" />
-        Cài ứng dụng
-      </Link>
-
-      <div className="flex items-center justify-between border-t border-white/10 pt-2.5 text-xs">
-        <Link
-          href="/tai-khoan"
-          className="inline-flex items-center gap-1.5 text-on-brand-muted no-underline transition-colors hover:text-white"
-          title="Thông tin tài khoản"
-        >
-          <User className="size-3.5" />
-          <span>Hồ sơ</span>
-        </Link>
-        <Link
-          href="/doi-mat-khau"
-          className="inline-flex items-center gap-1.5 text-on-brand-muted no-underline transition-colors hover:text-white"
-          title="Đổi mật khẩu"
-        >
-          <KeyRound className="size-3.5" />
-          <span>Mật khẩu</span>
-        </Link>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="inline-flex items-center gap-1.5 text-on-brand-muted no-underline transition-colors hover:text-danger-soft cursor-pointer"
-            title="Đăng xuất"
-          >
-            <LogOut className="size-3.5" />
-            <span>Thoát</span>
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, childSwitcher, children }: Props) {
+  const hasBottomNav = Boolean(bottomNav && bottomNav.length > 0);
+  // Mục không có trên thanh đáy: thông báo đã có chuông, hồ sơ đã có trong menu avatar.
+  const extraNav = hasBottomNav
+    ? nav.filter((i) => !bottomNav!.some((b) => b.href === i.href) && i.href !== "/thong-bao" && i.href !== "/tai-khoan")
+    : [];
+  const roleLabel = ROLE_LABELS[actor.role];
 
   return (
     <NotificationProvider userId={actor.id} initialUnread={unread}>
@@ -119,37 +72,45 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
 
       </aside>
 
-      {/* ─── Header mobile (<1024px) ─── */}
+      {/* ─── Header mobile (<1024px): avatar mở menu cá nhân; điều hướng chính nằm ở thanh đáy ─── */}
       <header className="on-brand sticky top-0 z-30 bg-primary-strong/95 backdrop-blur-sm lg:hidden">
-        <MobileMenu
-          summary={
-            <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between px-4 [&::-webkit-details-marker]:hidden">
-              <Brand href={rootHref} tone="light" />
-              <span className="ml-auto mr-2 flex items-center gap-1.5">
-                {canGlobalSearch(actor.role) && <CommandSearch placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />}
-                <NotificationBell />
-              </span>
-              <span className="inline-flex min-h-10 items-center rounded-xl border border-white/30 bg-white/8 px-3.5 text-sm font-medium">
-                <span className="group-open:hidden">Menu</span>
-                <span className="hidden group-open:inline">Đóng</span>
-              </span>
-            </summary>
-          }
-        >
-          <div className="max-h-[calc(100dvh-4rem)] space-y-4 overflow-y-auto overscroll-contain border-t border-white/12 px-4 pb-5 pt-3">
-            <nav aria-label="Điều hướng nội bộ">
-              <SideNav items={nav} rootHref={rootHref} />
-            </nav>
-            {account}
-          </div>
-        </MobileMenu>
+        <div className="flex min-h-16 items-center gap-2 px-4">
+          <Brand href={rootHref} tone="light" />
+          <span className="ml-auto flex items-center gap-1.5">
+            {canGlobalSearch(actor.role) && <CommandSearch placeholder={actor.role === "TEACHER" ? "Tìm lớp hoặc học sinh của tôi…" : undefined} />}
+            {childSwitcher && <ChildSwitcher {...childSwitcher} tone="dark" />}
+            <NotificationBell />
+            <UserMenu compact fullName={actor.fullName} roleLabel={roleLabel} avatarFileId={actor.avatarFileId} extraNav={extraNav} />
+            {/* Khu quản lý chưa có thanh đáy: giữ ngăn kéo điều hướng. */}
+            {!hasBottomNav && (
+              <MobileMenu
+                summary={
+                  <summary
+                    aria-label="Menu điều hướng"
+                    className="flex size-10 cursor-pointer list-none items-center justify-center rounded-xl border border-white/30 bg-white/8 [&::-webkit-details-marker]:hidden"
+                  >
+                    <Menu className="size-5 group-open:hidden" aria-hidden="true" />
+                    <X className="hidden size-5 group-open:block" aria-hidden="true" />
+                  </summary>
+                }
+              >
+                <div className="absolute inset-x-0 top-full max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-white/12 bg-primary-strong px-4 pb-5 pt-3">
+                  <nav aria-label="Điều hướng nội bộ">
+                    <SideNav items={nav} rootHref={rootHref} />
+                  </nav>
+                </div>
+              </MobileMenu>
+            )}
+          </span>
+        </div>
       </header>
 
       {/* ─── Cột nội dung: thanh trên (desktop) chứa chuông + người dùng ở góc phải ─── */}
       <div className="min-w-0">
         <div className="sticky top-0 z-30 hidden items-center justify-end gap-3 border-b border-line bg-paper/85 px-8 py-2.5 backdrop-blur-md lg:flex">
+          {childSwitcher && <ChildSwitcher {...childSwitcher} tone="light" />}
           <NotificationBell tone="light" />
-          <UserMenu fullName={actor.fullName} roleLabel={ROLE_LABELS[actor.role]} avatarFileId={actor.avatarFileId} />
+          <UserMenu fullName={actor.fullName} roleLabel={roleLabel} avatarFileId={actor.avatarFileId} />
         </div>
         {/* min-w-0: cột nội dung không bị bảng/email dài kéo rộng hơn màn hình (gây kéo ngang trang). */}
         <main
@@ -160,9 +121,9 @@ export function AppShell({ actor, rootHref, nav, bottomNav, unread = 0, children
         </main>
       </div>
 
-      {bottomNav && bottomNav.length > 0 && <BottomNav items={bottomNav} rootHref={rootHref} />}
-      <Assistant actor={actor} hasBottomNav={Boolean(bottomNav && bottomNav.length > 0)} />
-      {actor.role === "TEACHER" && <ComposeShortcut hasBottomNav={Boolean(bottomNav && bottomNav.length > 0)} />}
+      {hasBottomNav && <BottomNav items={bottomNav!} rootHref={rootHref} />}
+      <Assistant actor={actor} hasBottomNav={hasBottomNav} />
+      {actor.role === "TEACHER" && <ComposeShortcut hasBottomNav={hasBottomNav} />}
     </div>
     </NotificationProvider>
   );

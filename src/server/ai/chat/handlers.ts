@@ -21,6 +21,7 @@ import { unreadNotificationCount } from "@/server/notifications/service";
 import { countPendingLeaveRequests, listLeaveRequestsForParent } from "@/server/requests/leave";
 import { countPendingScheduleRequests } from "@/server/requests/schedule";
 import { listMyChildren } from "@/server/users/service";
+import { switchChildHref } from "@/lib/child";
 import { dayRange, DAY_MS } from "./dates";
 import { intentById, intentLabel, intentsForRole, suggestionsForRole } from "./intents";
 import { dayLabel } from "./matcher";
@@ -139,7 +140,7 @@ async function learnerScore(ctx: Ctx): Promise<Reply> {
   const waitLine = waiting > 0 ? [`Có ${waiting} bài đã nộp đang chờ giáo viên chấm hoặc công bố điểm.`] : [];
   const who = whoOf(actor, child);
   const dl = dayLabel(ctx.day.offset).toLowerCase();
-  const links = [{ label: actor.role === "STUDENT" ? "Xem kết quả" : "Xem tiến độ của con", href: actor.role === "STUDENT" ? "/hoc-sinh/ket-qua" : `/phu-huynh?con=${child.id}` }];
+  const links = [{ label: actor.role === "STUDENT" ? "Xem bài tập và kết quả" : "Xem bài tập của con", href: actor.role === "STUDENT" ? "/hoc-sinh/bai-tap" : `/phu-huynh/bai-tap?con=${child.id}` }];
 
   if (onDay.length > 0) return reply("learner_score", `Điểm các bài của ${who} được công bố ${dl}:`, { lines: [...onDay.map(fmt), ...waitLine], links });
   if (results.length === 0) return reply("learner_score", `${who[0]!.toUpperCase()}${who.slice(1)} chưa có bài nào được công bố điểm.`, { lines: waitLine, links });
@@ -171,7 +172,7 @@ async function learnerProgress(ctx: Ctx): Promise<Reply> {
     if (next) out.push(`Buổi tiếp theo: ${formatDateTime(next.startsAt)}`);
     return out.join("\n");
   });
-  return reply("learner_progress", `Tiến độ học của ${who}:`, { lines, links: actor.role === "STUDENT" ? [{ label: "Xem lịch học", href: "/hoc-sinh/lich" }] : [{ label: "Xem tiến độ chi tiết", href: `/phu-huynh?con=${child.id}` }] });
+  return reply("learner_progress", `Tiến độ học của ${who}:`, { lines, links: actor.role === "STUDENT" ? [{ label: "Xem lịch học", href: "/hoc-sinh/lich" }] : [{ label: "Xem lớp học của con", href: switchChildHref(child.id, "/phu-huynh/lop") }] });
 }
 
 async function learnerHomework(ctx: Ctx): Promise<Reply> {
@@ -202,7 +203,7 @@ async function learnerSchedule(ctx: Ctx): Promise<Reply> {
   if (list.length === 0) return reply("learner_schedule", `${who[0]!.toUpperCase()}${who.slice(1)} chưa có buổi học nào trong 14 ngày tới.`);
   return reply("learner_schedule", `Các buổi học sắp tới của ${who}:`, {
     lines: list.slice(0, 6).map((s) => sessionLine(s, { date: true, teacher: true })),
-    links: [{ label: "Xem lịch cả tuần", href: actor.role === "STUDENT" ? "/hoc-sinh/lich" : `/phu-huynh?con=${child.id}` }],
+    links: [{ label: "Xem lịch cả tuần", href: actor.role === "STUDENT" ? "/hoc-sinh/lich" : `/phu-huynh/lich?con=${child.id}` }],
   });
 }
 

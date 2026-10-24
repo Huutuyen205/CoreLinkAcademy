@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
+import { auditParentActing, requireLearner } from "@/server/auth/learner";
 import type { ActionState } from "@/server/errors";
 import { vnToUtc } from "@/lib/time";
 import { readUploads } from "@/server/files/storage";
@@ -254,9 +255,16 @@ function answersFrom(formData: FormData): Record<string, string> {
   return out;
 }
 
+/** Trang bài làm dùng chung cổng học sinh và phụ huynh (phụ huynh làm thay con — DECISION-D42). */
+function revalidateLearner(path: string) {
+  revalidatePath(`/hoc-sinh${path}`);
+  revalidatePath(`/phu-huynh${path}`);
+}
+
 /** API-018: lưu nháp hoặc nộp, tùy nút bấm (`intent`). */
 export async function studentAnswerAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("STUDENT");
+  const learner = await requireLearner();
+  const actor = learner.student;
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!id.safeParse(assignmentId).success) return { ok: false, message: "Bài tập không hợp lệ." };
   const answers = answersFrom(formData);
@@ -265,8 +273,9 @@ export async function studentAnswerAction(_prev: ActionState, formData: FormData
   if (formData.get("intent") === "submit") {
     const result = await runAction(() => submitAssignment(actor, assignmentId, answers), values);
     if (!result.ok) return result.state;
-    revalidatePath(`/hoc-sinh/bai-tap/${assignmentId}`);
-    revalidatePath("/hoc-sinh/bai-tap");
+    await auditParentActing(learner, "submission.parent_submit", "Assignment", assignmentId);
+    revalidateLearner(`/bai-tap/${assignmentId}`);
+    revalidateLearner("/bai-tap");
     return { ok: true, message: result.value.isLate ? "Đã nộp bài (nộp muộn)." : "Đã nộp bài. Điểm sẽ hiển thị khi giáo viên công bố kết quả." };
   }
   const result = await runAction(() => saveDraftAnswers(actor, assignmentId, answers), values);
@@ -276,33 +285,33 @@ export async function studentAnswerAction(_prev: ActionState, formData: FormData
 
 /** FR-040: học sinh tải ảnh/tệp bài làm (trước khi nộp). */
 export async function uploadSubmissionFilesAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("STUDENT");
+  const { student: actor } = await requireLearner();
   const assignmentId = String(formData.get("assignmentId") ?? "");
   if (!id.safeParse(assignmentId).success) return { ok: false, message: "Bài tập không hợp lệ." };
   const result = await runAction(async () => uploadSubmissionFiles(actor, assignmentId, await readUploads(formData, "files")));
   if (!result.ok) return result.state;
-  revalidatePath(`/hoc-sinh/bai-tap/${assignmentId}`);
+  revalidateLearner(`/bai-tap/${assignmentId}`);
   return { ok: true, message: "Đã tải bài làm lên. Nhớ bấm \"Nộp bài\" khi hoàn thành." };
 }
 
 /** Ảnh bài làm cho một câu tự luận (chụp bằng điện thoại hoặc chọn từ máy) — gửi ngay, không cần lưu nháp. */
 export async function uploadEssayPhotosAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("STUDENT");
+  const { student: actor } = await requireLearner();
   const parsed = parseForm(z.object({ assignmentId: id, questionId: id }), formFields(formData, ["assignmentId", "questionId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(async () => uploadEssayPhotos(actor, parsed.data.assignmentId, parsed.data.questionId, await readUploads(formData, "files")));
   if (!result.ok) return result.state;
-  revalidatePath(`/hoc-sinh/bai-tap/${parsed.data.assignmentId}`);
+  revalidateLearner(`/bai-tap/${parsed.data.assignmentId}`);
   return { ok: true, message: "Đã gửi ảnh bài làm." };
 }
 
 export async function deleteSubmissionFileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("STUDENT");
+  const { student: actor } = await requireLearner();
   const parsed = parseForm(z.object({ assignmentId: id, fileId: id }), formFields(formData, ["assignmentId", "fileId"]));
   if (!parsed.ok) return parsed.state;
   const result = await runAction(() => deleteSubmissionFile(actor, parsed.data.assignmentId, parsed.data.fileId));
   if (!result.ok) return result.state;
-  revalidatePath(`/hoc-sinh/bai-tap/${parsed.data.assignmentId}`);
+  revalidateLearner(`/bai-tap/${parsed.data.assignmentId}`);
   return { ok: true, message: "Đã xóa tệp." };
 }
 

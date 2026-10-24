@@ -48,13 +48,16 @@ Giáo viên — TEACHER (sidebar ≥1024px, thanh đáy < 1024px)
   /giao-vien/bai-tap/[id]/bai-nop SCREEN-031 Danh sách bài nộp
   /giao-vien/bai-nop/[id]         SCREEN-032 Chấm bài (FR-031)
 Học sinh — STUDENT
-  /hoc-sinh?tuan=                 SCREEN-033 Tổng quan
-  /hoc-sinh/lich?tuan=            SCREEN-034 Lịch học
-  /hoc-sinh/bai-tap               SCREEN-035 Bài tập
+  /hoc-sinh                       SCREEN-033 → chuyển tới Lịch học (D41)
+  /hoc-sinh/lich?tuan=            SCREEN-034 Lịch học (tuần / tháng)
+  /hoc-sinh/lop                   SCREEN-040 Lớp học (thẻ lớp + tiến độ)
+  /hoc-sinh/lop/[id]?tab=         SCREEN-041 Chi tiết lớp · Tài liệu học tập
+  /hoc-sinh/bai-tap?loai=         SCREEN-035 Bài tập · Kiểm tra · Bổ sung · Tự ôn luyện
   /hoc-sinh/bai-tap/[id]          SCREEN-036 Làm bài / xem kết quả (FR-029..032)
-  /hoc-sinh/ket-qua               SCREEN-037 Kết quả + chuyên cần (FR-025, 033)
 Phụ huynh — PARENT
-  /phu-huynh?con=&tuan=           SCREEN-038 Theo dõi con (FR-034)
+  /phu-huynh                      → /phu-huynh/lich (D42); ô chọn con ở thanh trên (/phu-huynh/chon-con)
+  /phu-huynh/lich | lop | lop/[id] | bai-tap | bai-tap/[id] | buoi/[id]   SCREEN-038 = như cổng học sinh cho con đang chọn
+  /phu-huynh/don-nghi             Đơn xin nghỉ (FR-044)
 Hệ thống
   404 · lỗi · loading             SCREEN-039
 ```
@@ -147,8 +150,9 @@ sequenceDiagram
 
 ### 4.3 Học sinh — làm bài
 
-1. `/hoc-sinh` → "Bài cần làm" → mở bài → làm → "Lưu nháp" (tùy) → "Nộp bài" (xác nhận).
-2. Sau khi GV công bố: `/hoc-sinh/ket-qua` → bấm tên bài → xem điểm, đáp án, nhận xét.
+1. `/hoc-sinh/bai-tap` → "Cần làm" (tab Bài tập / Kiểm tra / Bổ sung) → mở bài → làm → "Lưu nháp" (tùy) → "Nộp bài" (xác nhận).
+2. Sau khi GV công bố: vẫn ở `/hoc-sinh/bai-tap`, mục "Đã xong và đã đóng" hiện "Đã chấm: x/y" (hoặc "Đang chờ chấm") → bấm tên bài → xem điểm, đáp án, nhận xét.
+3. Chuyên cần, thái độ, nhận xét từng buổi và đánh giá định kỳ: `/hoc-sinh/lop/[id]`.
 
 ### 4.4 Quản trị viên (Admin) — một ngày (vai trò giáo vụ đã bỏ theo DECISION-D35)
 

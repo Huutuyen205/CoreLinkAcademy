@@ -118,10 +118,10 @@ CoreLink Academy v3
 | FEAT-035 | Lớp | Hủy/dời buổi, lý do, audit | Staff | Quản lý | BR-021, 028 | class_sessions, audit_logs | SCREEN-014 / API-014 | UC-015 | FR-021 | P1 | Code; audit hủy: Bổ sung P3 |
 | FEAT-036 | Kết quả | Điểm đã công bố + đã chấm | HS, PH | Cổng | BR-046, 047 | submissions | SCREEN-037, 038 / Q-027 | UC-017, 011 | FR-033 | P0 | Code; BR-047: Bổ sung P3 |
 | FEAT-037 | Điểm danh | Tỷ lệ tổng/từng lớp, lịch sử | HS, PH | Cổng | BR-032 | attendances | SCREEN-037, 038 / Q-018 | UC-017, 011 | FR-025 | P0 | Code; Unit (TC-021) |
-| FEAT-038 | Cổng PH | Chọn con, lịch, chuyên cần, điểm | PH | PH | — | guardianships + trên | SCREEN-038 | UC-011 | FR-034 | P0 | Code; Unit (TC-034) |
+| FEAT-038 | Cổng PH | Ô chọn con; dùng chung giao diện HS: lịch, lớp, bài tập (làm thay con), đơn xin nghỉ (D42) | PH | PH | — | guardianships + trên | SCREEN-038 | UC-011 | FR-034 | P0 | Code; Unit (TC-034, `child.test.ts`) |
 | FEAT-039 | Cổng | 4 ô số liệu + cảnh báo vắng | Admin, Staff | Quản lý | BR-003 | nhiều | SCREEN-008 | UC-018 | FR-034 | P0 | Code |
 | FEAT-040 | Cổng | (Đã bỏ cho GV ở D39: vào thẳng Lịch) Buổi hôm nay, bài chờ chấm, cảnh báo | GV | GV | — | nhiều | SCREEN-024 | UC-018 | FR-034 | P0 | Code; đếm tổng: Bổ sung P3 |
-| FEAT-041 | Cổng | Bài cần làm, lịch, điểm mới | HS | HS | — | nhiều | SCREEN-033 | UC-018 | FR-034 | P0 | Code |
+| FEAT-041 | Cổng | Vào thẳng Lịch học; Lớp học (tiến độ, chi tiết, tài liệu); Bài tập theo dạng (D41) | HS | HS | — | nhiều | SCREEN-033..035, 040, 041 | UC-018 | FR-034 | P0 | Code |
 | FEAT-042 | Audit | Ghi append-only, xem, lọc | Admin | Quản lý | — | audit_logs | SCREEN-023 / Q-034 | UC-019 | FR-035 | P1 | Code |
 | FEAT-043 | Điểm danh | 2 buổi gần nhất cùng ABSENT | Staff, GV | Cổng | BR-033 | attendances | SCREEN-008, 024, 027 / Q-017 | UC-018 | FR-026 | P1 | Code; Unit (TC-022) |
 | FEAT-044 | Nền tảng UI | AppShell, skip link, 404 có link tổng quan, error, loading | Mọi người | Web | — | — | SCREEN-039 | — | NFR-002, 003, 007 | P0 | Code; skip link + 404: Bổ sung P3 |

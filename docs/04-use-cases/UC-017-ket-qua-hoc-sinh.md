@@ -12,18 +12,18 @@ HS tự theo dõi điểm đã công bố và tỷ lệ đi học của mình.
 STUDENT đã đăng nhập.
 
 ## 3. Trigger
-Menu "Kết quả" → `/hoc-sinh/ket-qua`; tổng quan hiện 5 điểm mới nhất.
+DECISION-D41: trang "Kết quả" đã gộp. Điểm đã công bố: menu "Bài tập" → `/hoc-sinh/bai-tap` (mục "Đã xong và đã đóng"). Chuyên cần, thái độ, nhận xét và đánh giá định kỳ: menu "Lớp học" → `/hoc-sinh/lop/[id]`.
 
 ## 4. Main success flow
-1. Thẻ "Điểm đã công bố": bài đã công bố **và** đã chấm, mới công bố trước; mỗi dòng: tên bài (liên kết tới bài), lớp, "công bố HH:mm dd/MM/yyyy", "· nộp muộn", "điểm/tối đa", nhận xét chung.
-2. Thẻ "Chuyên cần: X%": tỷ lệ từng lớp (nếu > 1 lớp), chú thích công thức, 30 bản ghi gần nhất.
+1. **Điểm** — `/hoc-sinh/bai-tap` (tab Bài tập / Kiểm tra), mục "Đã xong và đã đóng": bài đã nộp hiện "Đã chấm: điểm/tối đa" khi đã công bố **và** đã chấm, "Đang chờ chấm" khi đã công bố nhưng chưa chấm, "Đã nộp — chờ kết quả" khi chưa công bố (BR-046, 047).
+2. **Chuyên cần và đánh giá** — `/hoc-sinh/lop/[id]`: "Chuyên cần: X%" của lớp (BR-032), danh sách buổi, mỗi buổi có nhãn điểm danh, thái độ và nhận xét của giáo viên; thẻ "Đánh giá định kỳ" (đã gửi).
 
 ## 5. Alternate flows
 - **A1** Bấm tên bài → UC-009 A2 (chi tiết từng câu).
 
 ## 6. Exception / failure flows
-- **E1** Chưa có kết quả → "Chưa có kết quả nào được công bố.".
-- **E2** Chưa có điểm danh → "Chưa có buổi nào được điểm danh."; tỷ lệ "Chưa có dữ liệu".
+- **E1** Chưa có bài → "Chưa có bài tập nào được giao."; bài đã nộp chưa công bố → hiện "chờ kết quả", không điểm.
+- **E2** Chưa có điểm danh → buổi hiện "Chưa điểm danh" / "Chưa diễn ra"; tỷ lệ "Chưa có dữ liệu".
 
 ## 7. Business rules and validations
 BR-032, BR-046, BR-047.
@@ -35,10 +35,10 @@ Chính mình. Đọc: submissions, assignments, attendances.
 Không đổi dữ liệu.
 
 ## 10. Non-functional constraints
-Hai cột ≥ 1024px, một cột dưới đó.
+Một cột, dùng được ở 360px.
 
 ## 11. UI/API/data references
-SCREEN-033, 037 · Q-018, Q-027 · ENT-010, ENT-013, ENT-015.
+SCREEN-035, 040, 041 (SCREEN-037 đã bỏ, D41) · Q-018, Q-027 · ENT-010, ENT-013, ENT-015.
 
 ## 12. Acceptance criteria / test scenarios
 TC-021, TC-033, TC-042.

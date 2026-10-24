@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { formFields, parseForm, runAction } from "@/server/action";
 import { requireRole } from "@/server/auth/guard";
+import { auditParentActing, requireLearner } from "@/server/auth/learner";
 import type { ActionState } from "@/server/errors";
 import {
   createPracticeSet,
@@ -159,7 +160,8 @@ export async function deletePracticeQuestionAction(_prev: ActionState, formData:
 
 /** HS nộp lượt làm (ô `answer:<questionId>`), chuyển sang trang kết quả. */
 export async function submitPracticeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const actor = await requireRole("STUDENT");
+  const learner = await requireLearner();
+  const actor = learner.student;
   const setId = String(formData.get("setId") ?? "");
   if (!id.safeParse(setId).success) return { ok: false, message: "Đề không hợp lệ." };
   const answers: Record<string, string> = {};
@@ -168,5 +170,6 @@ export async function submitPracticeAction(_prev: ActionState, formData: FormDat
   }
   const result = await runAction(() => submitPracticeAttempt(actor, setId, answers));
   if (!result.ok) return result.state;
+  await auditParentActing(learner, "practice.parent_submit", "PracticeAttempt", result.value);
   redirect(`/on-luyen/ket-qua/${result.value}`);
 }

@@ -71,12 +71,14 @@ Sitemap: [07 §1](07-user-flows-and-logic-diagrams.md#1-sitemap). Trạng thái 
 | SCREEN-030 | `/giao-vien/bai-tap/[id]` | GV | Soạn, giao, công bố | Tạo bài, lớp | Danh sách câu (đáp án đánh dấu), QuestionForm, Card giao bài (+ số bài chưa chấm), thông tin bài | E, V, D, S, R (đã giao) | FR-027, 028, 032 / UC-008, 010 |
 | SCREEN-031 | `/giao-vien/bai-tap/[id]/bai-nop` | GV | Ai đã nộp | Trang bài | DataTable trạng thái/điểm/thao tác | E | FR-031 |
 | SCREEN-032 | `/giao-vien/bai-nop/[id]` | GV | Chấm | Danh sách bài nộp, tổng quan | GradingForm (bài làm, đáp án, điểm, nhận xét; cảnh báo đã công bố) | V, D, S, R (chưa nộp) | FR-031, 033 / UC-010 |
-| SCREEN-033 | `/hoc-sinh` | HS | Việc hôm nay | Đăng nhập | Bài cần làm (≤ 5), WeekSchedule, 5 điểm mới | E (3) | FR-034 / UC-018 |
-| SCREEN-034 | `/hoc-sinh/lich` | HS | Xem tuần học | Menu | WeekSchedule (hiện GV) | E | FR-022 / UC-016 |
-| SCREEN-035 | `/hoc-sinh/bai-tap` | HS | Danh sách bài | Menu | "Cần làm" và "Đã nộp và đã đóng", Badge trạng thái | E | FR-029 |
+| SCREEN-033 | `/hoc-sinh` | HS | Vào thẳng lịch học (DECISION-D41, không còn trang tổng quan) | Đăng nhập | Chuyển hướng tới `/hoc-sinh/lich` | — | FR-034 / UC-018 |
+| SCREEN-034 | `/hoc-sinh/lich` | HS | Xem tuần/tháng học | Menu | WeekSchedule (hiện GV) / MonthSchedule | E | FR-022 / UC-016 |
+| SCREEN-035 | `/hoc-sinh/bai-tap?loai=` | HS | Bài được giao theo dạng: Bài tập · Kiểm tra · Bổ sung · Tự ôn luyện | Menu | TabLinks (số bài cần làm), "Cần làm" (nút Làm bài) và "Đã xong và đã đóng" (Đã chấm x/y hoặc chờ kết quả), lưới đề + bộ lọc cho tự ôn luyện | E | FR-029, 053, 060 |
+| SCREEN-040 | `/hoc-sinh/lop` | HS | Các lớp đang học kèm tiến độ | Menu | Thẻ lớp: mã, khóa, lịch, GV, ProgressBar buổi, bài đã nộp | E | FR-022, 025 / UC-017 |
+| SCREEN-041 | `/hoc-sinh/lop/[id]?tab=` | HS | Chi tiết lớp + tài liệu học tập | Thẻ lớp | TabLinks (Chi tiết lớp · Tài liệu học tập); thông tin lớp, chuyên cần, buổi sắp tới, danh sách buổi (điểm danh + thái độ + nhận xét), đánh giá định kỳ; tài liệu + FileList | E, P (404) | FR-025, 039, 042, 049 / UC-017 |
 | SCREEN-036 | `/hoc-sinh/bai-tap/[id]` | HS | Làm/nộp/xem kết quả | Danh sách, tổng quan | AnswerForm (nút dính đáy) hoặc chế độ xem + Alert điểm | V, D, S, R, P | FR-029..032 / UC-009 |
-| SCREEN-037 | `/hoc-sinh/ket-qua` | HS | Điểm + chuyên cần | Menu | ResultsList, AttendanceSummary | E (2) | FR-025, 033 / UC-017 |
-| SCREEN-038 | `/phu-huynh` | PH | Theo dõi con | Đăng nhập | Chọn con (chip), WeekSchedule, AttendanceSummary, ResultsList | E (chưa liên kết + 3), P (404) | FR-022, 025, 033, 034 / UC-011 |
+| SCREEN-037 | ~~`/hoc-sinh/ket-qua`~~ | HS | **Đã bỏ (D41)**: điểm ở Bài tập, chuyên cần + đánh giá ở Chi tiết lớp | — | — | — | FR-025, 033 / UC-017 |
+| SCREEN-038 | `/phu-huynh/*` | PH | Giống cổng học sinh cho con đang chọn (D42): Lịch học, Lớp học, Bài tập (làm thay con), Buổi học (+ xin nghỉ), Đơn xin nghỉ | Đăng nhập → Lịch học | `ChildSwitcher` ở thanh trên; dùng lại SCREEN-034, 035, 036, 040, 041 | E (chưa liên kết), P (404) | FR-022, 025, 029..033, 034, 044 / UC-009, 011 |
 | SCREEN-039 | 404 / lỗi / loading | Mọi người | Phục hồi | — | 404: "Về trang chủ" + "Về trang tổng quan" (nếu đã đăng nhập); lỗi: "Thử lại"; loading: PageSkeleton | — | NFR-007 |
 
 ## 4. Design tokens
@@ -137,7 +139,7 @@ Thang cỡ chữ: 14 / 16 / 18 / 22 / 28 / 36 / 48 (`sm`, `base`, `lg`, `xl`, `2
 |---|---|---|---|
 | Header công khai | Logo + nút menu (nút "Đăng ký học thử" nằm trong ngăn kéo menu và nút nổi) | Logo + "Đăng ký học thử" + nút menu | Logo + menu ngang + "Đăng ký học thử" |
 | Banner + truy cập nhanh | Thẻ truy cập nhanh nằm dưới banner (không đè) | Thẻ đè mép dưới banner | Như trên |
-| Khu nội bộ | Thanh trên dính (logo + "Menu"), ngăn kéo `details` (`MobileMenu`) chứa menu + tài khoản, tự đóng khi bấm liên kết/đổi trang/Esc, cuộn trong ngăn kéo nếu dài; GV/HS/PH có thanh đáy ≤ 4 mục | Như trên | Sidebar trái 240px, không có thanh đáy |
+| Khu nội bộ | Thanh trên dính (logo + tìm kiếm + chuông + **ảnh đại diện**). Bấm ảnh xổ menu cá nhân (`UserMenu compact`: hồ sơ, đổi mật khẩu, cài ứng dụng, đăng xuất; kèm mục điều hướng không nằm trên thanh đáy, nếu có). GV/HS/PH điều hướng chính qua thanh đáy ≤ 5 mục; khu quản lý chưa có thanh đáy nên giữ nút ☰ mở ngăn kéo `details` (`MobileMenu`, tự đóng khi bấm liên kết/đổi trang/Esc) | Như trên | Sidebar trái 240px, không có thanh đáy |
 | `PageHeader` / `Card` | Nhãn/nút ở `action` giữ độ rộng theo nội dung (không kéo giãn); `Card` đệm 16px | Đệm 20px | Như trên |
 | DataTable | Danh sách dòng: cột chính in đậm + `dl` các cột còn lại (không cuộn ngang) | Như < 640 tới 767px; bảng từ 768px | Bảng |
 | Form | 1 cột | 2 cột (`columns=2`, ô `wide` chiếm 2 cột) | 2 cột |

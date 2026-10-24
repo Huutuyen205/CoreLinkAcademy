@@ -6,7 +6,8 @@ import { documentVisibilityWhere } from "@/server/documents/access";
 import { ForbiddenError } from "@/server/errors";
 import { fileMeta } from "@/server/files/storage";
 
-export async function getSessionForLearner(actor: Actor, sessionId: string, studentId: string) {
+/** `viewer`: người đang đăng nhập khi phụ huynh xem thay con (quyền xem tài liệu tính theo người này); mặc định chính `actor`. */
+export async function getSessionForLearner(actor: Actor, sessionId: string, studentId: string, viewer: Actor = actor) {
   if (actor.role !== "STUDENT" && actor.role !== "PARENT") throw new ForbiddenError();
   if (actor.role === "STUDENT" && studentId !== actor.id) throw new ForbiddenError();
   await assertCanViewStudent(actor, studentId);
@@ -34,7 +35,7 @@ export async function getSessionForLearner(actor: Actor, sessionId: string, stud
   });
   if (!s) throw new ForbiddenError();
   const documents = await db.document.findMany({
-    where: { AND: [documentVisibilityWhere(actor), { OR: [{ shares: { some: { classId: s.classId } } }, { sessionId }] }] },
+    where: { AND: [documentVisibilityWhere(viewer), { OR: [{ shares: { some: { classId: s.classId } } }, { sessionId }] }] },
     orderBy: { updatedAt: "desc" },
     take: 30,
     select: { id: true, title: true, kind: true, url: true, files: { select: fileMeta } },
@@ -112,4 +113,115 @@ export async function learnerProgress(actor: Actor, studentId: string) {
       overdue,
     };
   });
+}
+
+const LEARNING_STATUSES = ["ACTIVE", "PAUSED", "COMPLETED"] as const;
+
+/**
+ * Cổng học sinh "Lớp học": các lớp em đang/đã học kèm tiến độ (buổi đã học / tổng buổi, bài đã nộp / bài đã giao).
+ * Lớp đang học xếp trước, lớp đã kết thúc xếp sau.
+ */
+export async function listMyClasses(actor: Actor) {
+  if (actor.role !== "STUDENT") throw new ForbiddenError();
+  const now = new Date();
+  const rows = await db.enrollment.findMany({
+    where: { studentId: actor.id, status: { in: [...LEARNING_STATUSES] } },
+    orderBy: { enrolledAt: "desc" },
+    select: {
+      status: true,
+      class: {
+        select: {
+          id: true,
+          code: true,
+          status: true,
+          weekdays: true,
+          startTime: true,
+          endTime: true,
+          course: { select: { title: true, subject: { select: { name: true } } } },
+          teacher: { select: { fullName: true } },
+          room: { select: { name: true } },
+          _count: { select: { sessions: { where: { status: { not: "CANCELLED" } } } } },
+          sessions: { where: { status: { not: "CANCELLED" }, startsAt: { lte: now } }, select: { id: true } },
+          assignments: {
+            where: { status: { in: ["PUBLISHED", "CLOSED"] } },
+            select: { id: true, submissions: { where: { studentId: actor.id, status: { not: "IN_PROGRESS" } }, select: { id: true } } },
+          },
+        },
+      },
+    },
+  });
+  const cards = rows.map(({ status, class: c }) => ({
+    id: c.id,
+    code: c.code,
+    classStatus: c.status,
+    enrollmentStatus: status,
+    courseTitle: c.course.title,
+    subjectName: c.course.subject.name,
+    teacherName: c.teacher.fullName,
+    roomName: c.room?.name ?? null,
+    weekdays: c.weekdays,
+    startTime: c.startTime,
+    endTime: c.endTime,
+    sessionsDone: c.sessions.length,
+    sessionsTotal: c._count.sessions,
+    assigned: c.assignments.length,
+    submitted: c.assignments.filter((a) => a.submissions.length > 0).length,
+  }));
+  const running = (c: (typeof cards)[number]) => (c.enrollmentStatus === "COMPLETED" || c.classStatus === "COMPLETED" || c.classStatus === "CANCELLED" ? 1 : 0);
+  return cards.sort((a, b) => running(a) - running(b));
+}
+
+/**
+ * Chi tiết một lớp của học sinh: thông tin lớp, các buổi học kèm điểm danh + đánh giá của riêng em,
+ * đánh giá định kỳ đã gửi và tài liệu chia sẻ cho lớp. Lớp không có ghi danh (hoặc đã nghỉ học) → ForbiddenError (404).
+ */
+export async function getClassForStudent(actor: Actor, classId: string) {
+  if (actor.role !== "STUDENT") throw new ForbiddenError();
+  const enrollment = await db.enrollment.findFirst({
+    where: { classId, studentId: actor.id, status: { in: [...LEARNING_STATUSES] } },
+    select: { status: true },
+  });
+  if (!enrollment) throw new ForbiddenError();
+  const klass = await db.class.findUniqueOrThrow({
+    where: { id: classId },
+    select: {
+      id: true,
+      code: true,
+      status: true,
+      weekdays: true,
+      startTime: true,
+      endTime: true,
+      startDate: true,
+      totalSessions: true,
+      course: { select: { title: true, subject: { select: { name: true } } } },
+      teacher: { select: { fullName: true } },
+      room: { select: { name: true } },
+      sessions: {
+        orderBy: { index: "asc" },
+        select: {
+          id: true,
+          index: true,
+          startsAt: true,
+          endsAt: true,
+          status: true,
+          isMakeup: true,
+          teacherId: true,
+          teacher: { select: { fullName: true } },
+          attendances: { where: { studentId: actor.id }, select: { status: true, attitude: true, comment: true } },
+        },
+      },
+      evaluations: {
+        where: { studentId: actor.id, status: "SENT" },
+        orderBy: [{ sentAt: "desc" }, { createdAt: "desc" }],
+        select: { id: true, period: true, content: true, strengths: true, improvements: true, status: true, sentAt: true, class: { select: { code: true, course: { select: { title: true } } } }, teacher: { select: { fullName: true } } },
+      },
+    },
+  });
+  const { sessions, evaluations, ...info } = klass;
+  return {
+    ...info,
+    enrollmentStatus: enrollment.status,
+    sessions: sessions.map(({ attendances, ...s }) => ({ ...s, attendance: attendances[0] ?? null })),
+    evaluations,
+  };
 }

@@ -7,11 +7,11 @@ export type TabLink = { key: string; label: string; href: string; count?: number
 export function TabLinks({ tabs, active, label }: { tabs: TabLink[]; active: string; label: string }) {
   return (
     <nav aria-label={label} className="mb-6 border-b border-line">
-      <ul className="-mb-px flex">
+      <ul className="no-scrollbar -mb-px flex overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {tabs.map((t) => {
           const on = t.key === active;
           return (
-            <li key={t.key} className="min-w-0 flex-1 sm:flex-none">
+            <li key={t.key} className="min-w-fit flex-1 sm:flex-none">
               <Link
                 href={t.href}
                 aria-current={on ? "page" : undefined}

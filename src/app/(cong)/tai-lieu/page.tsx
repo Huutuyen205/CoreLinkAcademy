@@ -24,8 +24,10 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   const actor = await requireActor();
   // Giáo viên xem tài liệu/giáo án trong trang lớp (DECISION-D36), không có danh sách riêng.
   if (actor.role === "TEACHER") redirect("/giao-vien/lop");
+  // Học sinh xem tài liệu ở mục "Tài liệu học tập" của từng lớp (DECISION-D41).
+  if (actor.role === "STUDENT") redirect("/hoc-sinh/lop");
   const sp = await searchParams;
-  const learner = actor.role === "STUDENT" || actor.role === "PARENT";
+  const learner = actor.role === "PARENT";
   const kinds: DocumentKind[] = learner ? ["MATERIAL", "CURRICULUM"] : ["CURRICULUM", "MATERIAL", "LESSON_PLAN"];
   const kind = kinds.includes(sp.loai as DocumentKind) ? (sp.loai as DocumentKind) : undefined;
   const options = await documentFormOptions(actor);

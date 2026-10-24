@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { QuestionForm } from "@/components/assessment/question-form";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Flash } from "@/components/layout/flash";
@@ -8,6 +7,7 @@ import { PracticeForm } from "@/components/practice/practice-form";
 import { Alert, Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { ActionButton, RowActions } from "@/components/ui/row-actions";
 import { requireActor } from "@/server/auth/guard";
+import { requireLearner } from "@/server/auth/learner";
 import type { Actor } from "@/server/auth/session";
 import { orNotFound } from "@/server/page";
 import {
@@ -31,17 +31,20 @@ export default async function PracticeSetPage({ params, searchParams }: Props) {
   const actor = await requireActor();
   const { id } = await params;
   const { thongbao } = await searchParams;
-  if (actor.role === "STUDENT") return <StudentView id={id} actor={actor} />;
-  if (actor.role === "PARENT") notFound();
+  if (actor.role === "STUDENT" || actor.role === "PARENT") {
+    // Phụ huynh làm thay con đang chọn (DECISION-D42).
+    const learner = await requireLearner();
+    return <StudentView id={id} actor={learner.student} base={learner.base} />;
+  }
   return <AuthorView id={id} actor={actor} thongbao={thongbao} />;
 }
 
-async function StudentView({ id, actor }: { id: string; actor: Actor }) {
+async function StudentView({ id, actor, base }: { id: string; actor: Actor; base: string }) {
   const { set, questions, attempts } = await orNotFound(openPracticeSet(actor, id));
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href="/on-luyen">← Tự ôn luyện</Link>
+        <Link href={`${base}/bai-tap?loai=on-luyen`}>← Tự ôn luyện</Link>
       </p>
       <PageHeader
         title={set.title}

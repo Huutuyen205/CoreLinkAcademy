@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
-import { requireRole } from "@/server/auth/guard";
+import { requireLearner } from "@/server/auth/learner";
 import { Flash } from "@/components/layout/flash";
 import { cancelLeaveRequestAction, createLeaveFromListAction } from "@/server/requests/actions";
 import { listLeaveRequestsForParent, upcomingLeaveTargets } from "@/server/requests/leave";
@@ -11,16 +11,17 @@ import { formatDateTime, formatVn } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Đơn xin nghỉ" };
 
-// Phụ huynh §2 — FR-044: gửi đơn xin nghỉ cho con (chọn buổi sắp tới), xem trạng thái đơn, rút đơn đang chờ.
+// Phụ huynh §2 — FR-044: gửi đơn xin nghỉ cho con đang chọn (chọn buổi sắp tới), xem trạng thái đơn, rút đơn đang chờ.
 export default async function ParentLeavePage({ searchParams }: { searchParams: Promise<{ thongbao?: string }> }) {
-  const actor = await requireRole("PARENT");
-  const [rows, targets] = await Promise.all([listLeaveRequestsForParent(actor), upcomingLeaveTargets(actor)]);
-  const multiChild = new Set(targets.map((t) => t.studentId)).size > 1;
+  const { viewer, student } = await requireLearner();
+  const [allRows, allTargets] = await Promise.all([listLeaveRequestsForParent(viewer), upcomingLeaveTargets(viewer)]);
+  const rows = allRows.filter((r) => r.student.id === student.id);
+  const targets = allTargets.filter((t) => t.studentId === student.id);
 
   return (
     <>
       <Flash code={(await searchParams).thongbao} />
-      <PageHeader title="Đơn xin nghỉ" description="Chọn buổi học sắp tới của con và ghi lý do. Giáo viên/trung tâm duyệt thì buổi đó được ghi &ldquo;Có phép&rdquo;." />
+      <PageHeader title="Đơn xin nghỉ" description={`Đơn của ${student.fullName}: chọn buổi học sắp tới và ghi lý do. Giáo viên/trung tâm duyệt thì buổi đó được ghi "Có phép".`} />
       <Card title="Gửi đơn xin nghỉ" className="mb-6">
         {targets.length === 0 ? (
           <p className="text-sm text-muted">Con không có buổi học nào trong 30 ngày tới có thể xin nghỉ.</p>
@@ -36,7 +37,7 @@ export default async function ParentLeavePage({ searchParams }: { searchParams: 
                 label: "Buổi học xin nghỉ",
                 required: true,
                 placeholder: "Chọn buổi",
-                options: targets.map((t) => ({ value: `${t.studentId}|${t.sessionId}`, label: `${multiChild ? `${t.studentName} · ` : ""}${t.classCode} · ${formatVn(t.startsAt, "EEEE dd/MM HH:mm")}` })),
+                options: targets.map((t) => ({ value: `${t.studentId}|${t.sessionId}`, label: `${t.classCode} · ${formatVn(t.startsAt, "EEEE dd/MM HH:mm")}` })),
               },
               { type: "text", name: "reason", label: "Lý do", required: true, maxLength: 500 },
             ]}
@@ -45,7 +46,7 @@ export default async function ParentLeavePage({ searchParams }: { searchParams: 
       </Card>
       <h2 className="mb-3 text-xl">Đơn đã gửi ({rows.length})</h2>
       {rows.length === 0 ? (
-        <EmptyState message="Chưa có đơn xin nghỉ nào." action={<Link href="/phu-huynh">Mở lịch học của con</Link>} />
+        <EmptyState message="Chưa có đơn xin nghỉ nào." action={<Link href="/phu-huynh/lich">Mở lịch học của con</Link>} />
       ) : (
         <ul className="space-y-4">
           {rows.map((r) => (
@@ -57,7 +58,7 @@ export default async function ParentLeavePage({ searchParams }: { searchParams: 
                       {r.student.fullName} · lớp {r.session.class.code}
                     </p>
                     <p className="text-sm text-muted">
-                      Buổi <Link href={`/phu-huynh/buoi/${r.session.id}?con=${r.student.id}`}>{formatDateTime(r.session.startsAt)}</Link> · gửi {formatDateTime(r.createdAt)}
+                      Buổi <Link href={`/phu-huynh/buoi/${r.session.id}`}>{formatDateTime(r.session.startsAt)}</Link> · gửi {formatDateTime(r.createdAt)}
                     </p>
                   </div>
                   <Badge tone={REQUEST_STATUS[r.status].tone}>{REQUEST_STATUS[r.status].label}</Badge>

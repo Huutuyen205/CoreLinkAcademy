@@ -19,7 +19,7 @@
 | ROLE-002 | ~~Giáo vụ / Tư vấn~~ **Đã bỏ (DECISION-D35, 2026-10-24)** | `STAFF` | — | Không còn quyền nào; không đăng nhập được, phiên cũ vô hiệu; không tạo / đổi sang vai trò này. Mọi việc vận hành (lead, lớp, lịch, điểm danh ngoài khung, duyệt đơn/đề xuất, báo cáo, tài liệu, thông báo) do **Admin** làm. Cột "Staff" trong các bảng dưới chỉ còn giá trị lịch sử. Giá trị enum giữ trong DB cho dữ liệu cũ |
 | ROLE-003 | Giáo viên | `TEACHER` | `/giao-vien` | |
 | ROLE-004 | Học sinh | `STUDENT` | `/hoc-sinh` | |
-| ROLE-005 | Phụ huynh | `PARENT` | `/phu-huynh` | Chỉ đọc |
+| ROLE-005 | Phụ huynh | `PARENT` | `/phu-huynh` (→ Lịch học) | Xem dữ liệu của con; **làm bài, nộp bài, làm đề luyện thay con** (D42); gửi/rút đơn xin nghỉ; nhắn tin |
 
 ## 2. Ma trận quyền theo tài nguyên
 
@@ -85,7 +85,7 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | STAFF | Tất cả dữ liệu tuyển sinh và đào tạo; không quản lý vai trò, không xem audit, không quản trị danh mục/phòng | `isManager` + `assertCan` |
 | TEACHER | Lớp có `classes.teacherId = me` (GV chính) — xem, điểm danh, soạn bài, chấm, bảng điểm; buổi có `class_sessions.teacherId = me` (dạy thay) — xem lớp ở mức buổi của mình, điểm danh buổi đó; học sinh ghi danh vào lớp mình (chuyên cần, điểm của lớp mình) | `canTeacherAccessClass`, `assertCanViewClass`, `assertTeacherOwnsClass`, `assertCanViewStudent` |
 | STUDENT | Chính mình; lớp có ghi danh của mình (ACTIVE để làm bài; mọi trạng thái để xem lịch sử/bài đã giao) | `assertCanViewStudent`, kiểm tra enrollment trong service |
-| PARENT | Học sinh có liên kết trong `guardianships`; chỉ đọc | `linkedStudentIds`, `canParentViewStudent` |
+| PARENT | Học sinh có liên kết trong `guardianships` (kiểm tra ở mỗi request, con đang chọn lưu cookie `cl_child`); xem + làm bài thay con (D42) | `linkedStudentIds`, `canParentViewStudent` |
 
 ## 4. Ma trận theo thao tác (permission key → kiểm tra server)
 
@@ -105,7 +105,7 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | `assignment.author` — soạn/giao/đóng/chấm/công bố | TEACHER | `classes.teacherId = me` (GV dạy thay không được) | lớp khác | 404 | `grade.update_after_publish` | TC-035 |
 | `submission.work` — làm/lưu nháp/nộp | STUDENT | có ghi danh lớp; ACTIVE để làm | không ghi danh / bài DRAFT | 404; `NOT_ACTIVE`, `CLOSED`, `PAST_DUE` | — | TC-028, TC-UAT-13 |
 | Xem kết quả, chuyên cần | STUDENT (self), PARENT (con), TEACHER (HS lớp mình, chỉ dữ liệu lớp mình), ADMIN/STAFF | `assertCanViewStudent` | con người khác | 404 | — | TC-034 |
-| Xem lịch tuần | TEACHER (buổi mình), STUDENT (lớp mình), PARENT (`?con` phải là con) | `listSessionsInRange` | con không liên kết | 404 | — | TC-034 |
+| Xem lịch tuần | TEACHER (buổi mình), STUDENT (lớp mình), PARENT (con đang chọn phải là con liên kết) | `listSessionsInRange` | con không liên kết | 404 | — | TC-034 |
 | `audit.read` | ADMIN | — | STAFF | chuyển về tổng quan | — | TC-036 |
 | `staff.view` — danh sách/hồ sơ GV, lịch tổng | ADMIN, STAFF (sửa hồ sơ GV: ADMIN) | — | vai trò khác | chuyển về tổng quan | `user.member_status` | E2E 2026-10-21 |
 | `document.manage` — giáo trình, phân phối | ADMIN, STAFF | GV: `canManageDocument` (tài liệu/giáo án của mình), chia sẻ chỉ lớp mình phụ trách | tài liệu người khác, giáo án chia sẻ | 404 / `NOT_SHAREABLE` | `document.delete` | E2E: hs lớp khác → 404 |

@@ -12,7 +12,7 @@ Mỗi người thấy đúng các buổi của mình trong tuần theo giờ Vi�
 Đã đăng nhập đúng vai trò.
 
 ## 3. Trigger
-GV: "Lịch dạy" (`/giao-vien/lich`). HS: "Lịch học" (`/hoc-sinh/lich`) và tổng quan. PH: `/phu-huynh` (theo con).
+GV: "Lịch dạy" (`/giao-vien/lich`). HS: "Lịch học" (`/hoc-sinh/lich`, cũng là trang đăng nhập vào). PH: `/phu-huynh` (theo con).
 
 ## 4. Main success flow
 1. Hệ thống xác định tuần (Thứ Hai 00:00 → Thứ Hai tuần sau 00:00 giờ VN) từ `?tuan=` hoặc hôm nay.

@@ -4,7 +4,7 @@ import { BookCheck, Layers, Target } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge, EmptyState, PageHeader } from "@/components/ui/feedback";
 import { StatCard } from "@/components/ui/stat-card";
-import { requireRole } from "@/server/auth/guard";
+import { requireLearner } from "@/server/auth/learner";
 import { listMyPracticeHistory } from "@/server/practice/service";
 import { PRACTICE_DIFFICULTY } from "@/lib/labels";
 import { formatDateTime } from "@/lib/time";
@@ -13,15 +13,15 @@ export const metadata: Metadata = { title: "Lịch sử luyện tập" };
 
 // Học sinh §5: xem lịch sử luyện tập.
 export default async function PracticeHistoryPage() {
-  const actor = await requireRole("STUDENT");
-  const rows = await listMyPracticeHistory(actor);
+  const { student, base } = await requireLearner();
+  const rows = await listMyPracticeHistory(student);
   const sets = new Set(rows.map((r) => r.set.id)).size;
   const avg = rows.length ? Math.round((rows.reduce((s, r) => s + (r.maxScore ? r.score / r.maxScore : 0), 0) / rows.length) * 100) : 0;
 
   return (
     <>
       <p className="mb-2 text-sm">
-        <Link href="/on-luyen">← Tự ôn luyện</Link>
+        <Link href={`${base}/bai-tap?loai=on-luyen`}>← Tự ôn luyện</Link>
       </p>
       <PageHeader title="Lịch sử luyện tập" />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
@@ -30,7 +30,7 @@ export default async function PracticeHistoryPage() {
         <StatCard icon={Target} label="Điểm trung bình" value={`${avg}%`} tone="success" index={2} />
       </div>
       {rows.length === 0 ? (
-        <EmptyState message="Bạn chưa làm đề luyện tập nào." action={<Link href="/on-luyen">Chọn đề để luyện</Link>} />
+        <EmptyState message="Bạn chưa làm đề luyện tập nào." action={<Link href={`${base}/bai-tap?loai=on-luyen`}>Chọn đề để luyện</Link>} />
       ) : (
         <DataTable
           caption="Lịch sử luyện tập"

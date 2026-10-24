@@ -1,5 +1,37 @@
 # Tiến độ — CoreLink Academy v3
 
+## 2026-10-24 (thêm 3) — Cổng phụ huynh = cổng học sinh của con đang chọn + ô chọn con (DECISION-D42)
+
+PO: phụ huynh y hệt học sinh (kế thừa), khác ở Tin nhắn và thêm Đơn xin nghỉ; ô chọn con ở thanh trên, rê chuột là xổ danh sách con; con làm bài ngay trên máy bố mẹ, bố mẹ xem tiến độ con trên tài khoản mình.
+
+- **Dùng chung mã**: các trang học sinh chuyển vào `src/components/learner-portal/` (lịch, lớp, chi tiết lớp, bài tập, làm bài, buổi học); `src/app/hoc-sinh/*` và `src/app/phu-huynh/*` chỉ còn file route mỏng (khác nhau ở tiền tố liên kết `base`). Xóa trang Theo dõi con cũ (`/phu-huynh`, `/phu-huynh/bai-tap` cũ, `ChildPicker`); `/phu-huynh` chuyển sang Lịch học.
+- **Học sinh hiệu lực**: `requireLearner()` (`src/server/auth/learner.ts`) — học sinh là chính mình; phụ huynh → dựng `Actor` role `STUDENT` từ con đang chọn **sau khi lấy danh sách con từ `guardianships` mỗi request** (cookie `cl_child` chỉ là lựa chọn). Nhờ vậy mọi service/Server Action của học sinh dùng nguyên, không thêm đường tắt quyền. Làm bài, lưu nháp, tải ảnh, nộp bài và nộp đề luyện thay con đều chạy qua đây; nộp bài/đề thay con ghi audit `submission.parent_submit` / `practice.parent_submit`.
+- **Ô chọn con** `ChildSwitcher` trong `AppShell` (thanh trên desktop và thanh đầu điện thoại; `RoleShell` lấy con cho phụ huynh): rê chuột/bấm/Tab mở bảng các con; mỗi con là liên kết `<a href="/phu-huynh/chon-con?con=&den=">` (route handler đặt cookie, kiểm liên kết, chặn `den` ra ngoài — `safeInternalPath`). Đổi con từ trang chi tiết thì về danh sách cùng mục (`pathAfterSwitch`). Liên kết cũ `?con=` (thông báo, chatbot) vẫn dùng được.
+- **Menu phụ huynh** 5 mục: Lịch học · Lớp học · Bài tập · Đơn xin nghỉ · Tin nhắn (thanh đáy cũng 5). `/phu-huynh/don-nghi` lọc theo con đang chọn. Phụ huynh không thấy "Hỏi giáo viên về bài này"; tài liệu theo quyền phụ huynh (`getSessionForLearner` nhận thêm `viewer`). Trang đề luyện (`/on-luyen/*`) cho phụ huynh làm thay con. Chatbot trỏ liên kết mới.
+- Không đổi schema. Cập nhật docs 03, 04 (UC-011), 05, 07, 08, 12, 17 (D42), portals/P-04, P-05.
+- **Kiểm chứng**: `tsc` ✓ · `eslint .` ✓ · `vitest` 254/254 (thêm `src/lib/child.test.ts`) · phiên phụ huynh demo `ph1` (con HS1, HS3) trên Postgres local :55432: lịch/lớp/chi tiết lớp/bài tập/đơn nghỉ đúng con đang chọn; đổi con → danh sách lớp đổi; mở lớp của HS1 khi chọn HS3 → 404; `con` không liên kết → 404; `den=//evil.com` → về Lịch; `/hoc-sinh/lop` bằng tài khoản phụ huynh → chuyển về `/phu-huynh`; trang làm bài của phụ huynh có form "Lưu nháp/Nộp bài", không có "Hỏi giáo viên". **Chưa kiểm**: bấm "Nộp bài" thật bằng phụ huynh qua Server Action (không dựng được request form mã hóa bằng curl) và xem bằng mắt ô chọn con ở 360px — PO thử giúp (sau khi nộp, kiểm tra Nhật ký có dòng `submission.parent_submit`).
+- Mã không còn dùng: `ResultsSummary`/`CourseProgress` (`components/learner/results-summary.tsx`) — chưa xóa phòng khi PO muốn đưa bảng điểm tổng hợp về Chi tiết lớp.
+
+## 2026-10-24 (thêm 2) — Cổng học sinh theo mẫu giáo viên: Lịch · Lớp học · Bài tập · Tin nhắn (DECISION-D41)
+
+PO: "bắt chước phần giáo viên", học sinh giữ Lịch học, Lớp học (thẻ lớp có tiến độ → chi tiết lớp + tài liệu), Bài tập (chia tab theo dạng, gồm tự ôn luyện), Tin nhắn; bỏ phần còn lại.
+
+- **Menu**: `studentNav` = 4 mục, thanh đáy cũng 4 mục (nên menu avatar không còn mục thừa). `/hoc-sinh` chuyển sang `/hoc-sinh/lich`; **xóa** `/hoc-sinh/ket-qua`; migration dữ liệu `20261030090000_student_results_link` (chỉ `UPDATE notifications`, không đổi schema) đổi link thông báo cũ sang `/hoc-sinh/lop`. Đã chạy trên Postgres local; **Supabase do PO tự `db:migrate`**.
+- **Lớp học** `/hoc-sinh/lop` (mới): thẻ lớp + `ProgressBar` (buổi đã học / tổng, bài đã nộp / đã giao). `/hoc-sinh/lop/[id]` (mới) 2 tab: **Chi tiết lớp** (thông tin, chuyên cần, buổi sắp tới, danh sách buổi kèm điểm danh + thái độ + nhận xét, đánh giá định kỳ) và **Tài liệu học tập**. Service mới `listMyClasses`, `getClassForStudent` trong `src/server/academic/learner.ts`: ghi danh ACTIVE/PAUSED/COMPLETED, ngoài ra 404.
+- **Bài tập** `/hoc-sinh/bai-tap?loai=` viết lại: tab Bài tập · Kiểm tra · Bổ sung · Tự ôn luyện (số bài cần làm trên tab); "Cần làm" có nút Làm bài, "Đã xong và đã đóng" hiện "Đã chấm: x/y" hoặc chờ kết quả. Tự ôn luyện dùng lại bộ lọc cũ qua `PracticeSetGrid` (tách từ `/on-luyen`).
+- `/on-luyen` và `/tai-lieu` (danh sách) của học sinh **chuyển hướng** về hai mục trên; liên kết "← Tự ôn luyện/Tài liệu" ở trang chi tiết, thông báo đánh giá định kỳ, gợi ý chatbot đã trỏ lại. `TabLinks` cuộn ngang được khi hẹp.
+- Không đổi schema. Cập nhật docs 04 (UC-016/017), 05, 07, 08, 17 (D41), 23, portals/P-04.
+- **Kiểm chứng**: `tsc` ✓ · `eslint` (src/app, src/components, src/server/academic) ✓ · `vitest` 237/238 (1 lỗi là test `docx` ở `extract.test.ts` quá thời gian khi chạy cả bộ; chạy riêng 8/8 ✓) · gọi các trang bằng phiên học sinh demo trên Postgres local :55432: `/hoc-sinh/lop`, chi tiết lớp (2 tab), 4 tab Bài tập đều 200 đúng nội dung; `hs3` mở lớp của `hs1` → 404; `/on-luyen`, `/tai-lieu` → 307; `/hoc-sinh/ket-qua` → 404. **Chưa xem bằng mắt trên trình duyệt** (360px) — PO kiểm tra giúp.
+- Ghi chú: biểu đồ tiến độ điểm và bảng điểm theo môn/kỳ không còn ở cổng học sinh (cổng phụ huynh giữ nguyên).
+
+## 2026-10-24 (thêm) — Thanh trên điện thoại: nút "Menu" thành ảnh đại diện
+
+PO: thay "Menu" ở góc phải trên bằng ảnh đại diện, bấm chỉ xổ điều hướng cá nhân; phần còn lại đã nằm ở thanh đáy.
+
+- `UserMenu` có `compact` (chỉ ảnh, vòng trắng) và `extraNav`; header mobile của `AppShell` dùng nó thay ngăn kéo `Menu`/`Đóng`. Menu xổ: Hồ sơ & ảnh, Đổi mật khẩu, Cài ứng dụng, Đăng xuất. Đã bỏ khối `account` cũ trong ngăn kéo.
+- **Giáo viên**: thanh đáy đã đủ 5 mục nên menu avatar chỉ còn mục cá nhân. **Học sinh/phụ huynh**: thanh đáy chỉ 4 mục nên mục còn lại (Tự ôn luyện, Tài liệu, Đơn xin nghỉ…) được liệt kê thêm trong menu avatar để không mất lối vào. **Quản lý/admin**: chưa có thanh đáy nên giữ nút ☰ (icon) mở ngăn kéo điều hướng cạnh avatar.
+- Không đổi schema. Cập nhật docs/08 §5. `tsc` ✓ · `eslint src/components/layout` ✓. **Chưa xem bằng mắt trên trình duyệt** (360px) — PO kiểm tra giúp.
+
 ## 2026-10-24 (tiếp) — Gọn trang lớp trên điện thoại, xem trước PowerPoint, đề bổ sung bằng AI (DECISION-D40)
 
 PO: xóa trang giáo viên thừa; slide phải xem trước như PowerPoint trước khi lưu; trang chi tiết lớp quá dài trên điện thoại; bỏ số 1-2-3-4 ở tab; tạo đề bổ sung chưa có AI và form khác form đề thường.

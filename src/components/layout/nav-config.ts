@@ -47,33 +47,24 @@ export const teacherBottomNav: NavItem[] = [
   { href: "/giao-vien/ho-so", label: "Hồ sơ" },
 ];
 
+// DECISION-D41: học sinh có 4 mục; kết quả, tự ôn luyện, tài liệu gộp vào Lớp học / Bài tập; thông báo ở chuông.
 export const studentNav: NavItem[] = [
-  { href: "/hoc-sinh", label: "Tổng quan" },
   { href: "/hoc-sinh/lich", label: "Lịch học" },
+  { href: "/hoc-sinh/lop", label: "Lớp học" },
   { href: "/hoc-sinh/bai-tap", label: "Bài tập" },
-  { href: "/hoc-sinh/ket-qua", label: "Kết quả" },
-  { href: "/on-luyen", label: "Tự ôn luyện" },
-  { href: "/tai-lieu", label: "Tài liệu" },
-  { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },
 ];
-export const studentBottomNav: NavItem[] = studentNav.slice(0, 4);
+export const studentBottomNav: NavItem[] = studentNav;
 
+// DECISION-D42: phụ huynh dùng y hệt giao diện học sinh cho con đang chọn (ô chọn con ở thanh trên), thêm Đơn xin nghỉ.
 export const parentNav: NavItem[] = [
-  { href: "/phu-huynh", label: "Theo dõi con" },
+  { href: "/phu-huynh/lich", label: "Lịch học" },
+  { href: "/phu-huynh/lop", label: "Lớp học" },
   { href: "/phu-huynh/bai-tap", label: "Bài tập" },
   { href: "/phu-huynh/don-nghi", label: "Đơn xin nghỉ" },
-  { href: "/tai-lieu", label: "Tài liệu" },
-  { href: "/thong-bao", label: "Thông báo" },
-  { href: "/tin-nhan", label: "Tin nhắn" },
-  { href: "/tai-khoan", label: "Tài khoản" },
-];
-export const parentBottomNav: NavItem[] = [
-  { href: "/phu-huynh", label: "Con" },
-  { href: "/phu-huynh/bai-tap", label: "Bài tập" },
-  { href: "/thong-bao", label: "Thông báo" },
   { href: "/tin-nhan", label: "Tin nhắn" },
 ];
+export const parentBottomNav: NavItem[] = parentNav;
 
 /** Menu cho các trang dùng chung mọi vai trò (tài liệu, thông báo, tin nhắn, tài khoản). */
 export function navForRole(role: Role): { nav: NavItem[]; bottomNav?: NavItem[] } {
