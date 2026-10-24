@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/button";
 import { Alert, Badge, PageHeader } from "@/components/ui/feedback";
+import { QuestionFigure } from "@/components/ui/question-figure";
 import { requireLearner } from "@/server/auth/learner";
 import { orNotFound } from "@/server/page";
 import { getPracticeAttempt } from "@/server/practice/service";
@@ -36,7 +37,7 @@ export default async function PracticeResultPage({ params }: { params: Promise<{
         Đúng {attempt.correctCount}/{attempt.total} câu. {percent >= 80 ? "Rất tốt!" : percent >= 50 ? "Khá — xem lời giải các câu sai rồi làm lại nhé." : "Hãy đọc kỹ lời giải và thử lại."}
       </Alert>
       <ol className="space-y-5">
-        {items.map(({ question: q, explanation, response, correct }) => {
+        {items.map(({ question: q, figure, explanation, response, correct }) => {
           const shown = q.type === "MCQ" && response !== "" ? q.options?.[Number(response)] : response;
           return (
             <li key={q.id} className={cn("rounded-block border bg-surface p-4", correct ? "border-success/40" : "border-danger/30")}>
@@ -47,6 +48,7 @@ export default async function PracticeResultPage({ params }: { params: Promise<{
                 <Badge tone={correct ? "success" : "danger"}>{correct ? "Đúng" : response ? "Sai" : "Bỏ trống"}</Badge>
               </div>
               <p className="mt-1 whitespace-pre-line font-medium">{q.prompt}</p>
+              <QuestionFigure figure={figure} />
               <p className="mt-2">
                 <span className="text-sm text-muted">Bạn trả lời: </span>
                 {shown || <span className="text-muted">(Bỏ trống)</span>}

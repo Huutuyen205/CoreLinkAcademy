@@ -17,17 +17,17 @@ GV là `classes.teacherId` (GV dạy thay không tạo bài).
 ## 4. Main success flow
 1. Form: Tên bài*, Hướng dẫn, Hạn nộp (giờ VN)* — mặc định 7 ngày sau lúc 21:00, "Cho phép nộp muộn".
 2. "Tạo bài (nháp)" → DRAFT → chuyển trang soạn "Đã tạo bài tập. Thêm câu hỏi rồi giao cho lớp.".
-3. Thẻ "Thêm câu hỏi": Dạng (Trắc nghiệm 1 đáp án / Trả lời ngắn tự chấm / Tự luận GV chấm), Điểm (mặc định 1, bước 0,25), Nội dung; MCQ: các lựa chọn mỗi dòng + đáp án đúng "Lựa chọn n"; SHORT: đáp án chấp nhận mỗi dòng.
+3. Thẻ "Thêm câu hỏi": Dạng (Trắc nghiệm 1 đáp án / Trả lời ngắn tự chấm / Tự luận GV chấm), Điểm (mặc định 1, bước 0,25), Nội dung; MCQ: các đáp án A–F mỗi đáp án một ô nhập (2–6), ô tròn trống bên trái để tích đáp án đúng, "Thêm đáp án" / "×" để thêm bớt; SHORT: đáp án chấp nhận mỗi dòng.
 4. "Thêm câu hỏi" → câu mới cuối danh sách; tiêu đề trang cập nhật số câu và tổng điểm.
-5. "Giao bài cho lớp" (xác nhận "Sau khi giao sẽ không sửa được câu hỏi. Tiếp tục?") → PUBLISHED, "Đã giao bài cho lớp.".
+5. Nút "Quản lý bài" (đầu trang) → hộp thoại, tab "Quản lý bài" → "Giao bài cho lớp" (xác nhận "Sau khi giao sẽ không sửa được câu hỏi. Tiếp tục?") → PUBLISHED, "Đã giao bài cho lớp.".
 
 ## 5. Alternate flows
 ### A1 — Sửa/xóa câu (chỉ DRAFT)
 1. "Sửa hoặc xóa" ở từng câu → form sửa; "Xóa câu này" (xác nhận) → đánh lại thứ tự.
 ### A2 — Đóng / mở lại
-1. PUBLISHED → "Đóng bài" → CLOSED (HS không làm/nộp nữa). CLOSED → "Mở lại bài" → PUBLISHED.
+1. Hộp thoại "Quản lý bài" → công tắc mở/đóng: PUBLISHED → tắt → CLOSED (HS không làm/nộp nữa); CLOSED → bật → PUBLISHED.
 ### A3 — Sửa thông tin bài
-1. Thẻ "Thông tin bài" sửa tên, hướng dẫn, hạn, cho nộp muộn ở mọi trạng thái; bài đã giao mà đổi hạn thì hạn mới phải ở tương lai.
+1. Hộp thoại "Quản lý bài" → tab "Chi tiết" sửa tên, hướng dẫn, hạn, cho nộp muộn ở mọi trạng thái; bài đã giao mà đổi hạn thì hạn mới phải ở tương lai.
 
 ## 6. Exception / failure flows
 | ID | Điều kiện | Thông điệp | Mã |

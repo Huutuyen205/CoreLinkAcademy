@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireRole } from "@/server/auth/guard";
-import { runAction } from "@/server/action";
-import { DomainError } from "@/server/errors";
+import { formFields, parseForm, runAction } from "@/server/action";
+import { DomainError, type ActionState } from "@/server/errors";
 import { readUploads } from "@/server/files/storage";
-import { readAnswerSheet, saveSheetResult, suggestEssayGrades, type SheetReadResult, type SuggestResult } from "./service";
+import { gradeUngradedWithAi, readAnswerSheet, saveSheetResult, suggestEssayGrades, type SheetReadResult, type SuggestResult } from "./service";
 
 const id = z.string().min(1).max(40);
 
@@ -68,4 +68,20 @@ export async function saveSheetAction(formData: FormData): Promise<SheetSaveStat
   revalidatePath(`/giao-vien/bai-tap/${assignmentId.data}`, "layout");
   const score = result.value.score.toString().replace(".", ",");
   return { ok: true, message: `Đã chấm xong: ${score} điểm. Kết quả hiện cho học sinh sau khi bạn công bố điểm.` };
+}
+
+/** Nút "AI chấm" (DECISION-D44): AI chấm mọi bài đã nộp nhưng chưa chấm của bài tập; giáo viên xem lại ở mục Bài nộp. */
+export async function aiGradeUngradedAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const actor = await requireRole("TEACHER");
+  const parsed = parseForm(z.object({ assignmentId: id }), formFields(formData, ["assignmentId"]));
+  if (!parsed.ok) return parsed.state;
+  const result = await runAction(() => gradeUngradedWithAi(actor, parsed.data.assignmentId));
+  if (!result.ok) return result.state;
+  revalidatePath(`/giao-vien/bai-tap/${parsed.data.assignmentId}`, "layout");
+  const r = result.value;
+  const parts = [`AI đã chấm ${r.graded} bài${r.mock ? " (chế độ mẫu, điểm giả lập)" : ""}.`];
+  if (r.needTeacher > 0) parts.push(`${r.needTeacher} bài AI không đọc được, hãy chấm ở mục Bài nộp.`);
+  if (r.remaining > 0) parts.push(`Còn ${r.remaining} bài chưa chấm${r.stoppedReason ? ` (${r.stoppedReason})` : ""} — bấm lại để chấm tiếp.`);
+  else if (r.graded > 0) parts.push("Vào mục Bài nộp để xem lại và sửa điểm trước khi công bố.");
+  return { ok: r.graded > 0 || r.remaining === 0, message: parts.join(" ") };
 }

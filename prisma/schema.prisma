@@ -496,6 +496,7 @@ model Question {
   options         Json? // string[] cho MCQ
   correctOption   Int?         @db.SmallInt // chỉ số 0-based cho MCQ
   acceptedAnswers Json? // string[] cho SHORT
+  figure          Json? // đặc tả hình minh họa (src/server/figures/schema.ts), hệ thống tự vẽ — DECISION-D43
   points          Float
   assignment      Assignment   @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   answers         Answer[]
@@ -519,6 +520,7 @@ model Submission {
   gradedById     String?
   returnedAt     DateTime? // GV yêu cầu nộp lại: bài trở về "đang làm", HS sửa và nộp lại
   returnNote     String?          @db.VarChar(500)
+  aiGradedAt     DateTime? // AI chấm hàng loạt, giáo viên chưa duyệt (GV lưu điểm → xóa) — DECISION-D44
   assignment     Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   student        User             @relation("SubmissionStudent", fields: [studentId], references: [id])
   gradedBy       User?            @relation("SubmissionGrader", fields: [gradedById], references: [id])
@@ -898,6 +900,7 @@ model PracticeQuestion {
   correctOption   Int?         @db.SmallInt
   acceptedAnswers Json?
   explanation     String?      @db.Text // lời giải hiện sau khi nộp
+  figure          Json? // đặc tả hình minh họa — DECISION-D43
   points          Float        @default(1)
   set             PracticeSet  @relation(fields: [setId], references: [id], onDelete: Cascade)
 

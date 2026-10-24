@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { GradingForm } from "@/components/assessment/grading-form";
 import { FileList } from "@/components/files/file-list";
-import { Badge, Card, PageHeader } from "@/components/ui/feedback";
+import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
 import { getSubmissionForGrading } from "@/server/assessment/service";
 import { requireRole } from "@/server/auth/guard";
 import { orNotFound } from "@/server/page";
@@ -39,6 +39,11 @@ export default async function GradeSubmissionPage({ params }: { params: Promise<
           <FileList files={submission.files} empty="Học sinh không gửi tệp." />
         </Card>
       )}
+      {submission.aiGradedAt && (
+        <Alert tone="warning" title="Bài này do AI chấm, bạn chưa duyệt" className="mb-6">
+          Điểm và nhận xét từng câu là do AI đề xuất. Xem lại, sửa nếu cần rồi bấm &ldquo;Lưu điểm&rdquo; để xác nhận.
+        </Alert>
+      )}
       {submission.status === "IN_PROGRESS" ? (
         <p className="text-muted">Học sinh chưa nộp bài.</p>
       ) : (
@@ -48,11 +53,12 @@ export default async function GradeSubmissionPage({ params }: { params: Promise<
           currentScore={submission.score}
           comment={submission.teacherComment}
           publishedWarning={Boolean(submission.assignment.resultsPublishedAt)}
-          items={items.map(({ question: q, answer, photos }) => ({
+          items={items.map(({ question: q, figure, answer, photos }) => ({
             answerId: answer?.id ?? null,
             order: q.order,
             type: q.type,
             prompt: q.prompt,
+            figure,
             maxPoints: q.points,
             responseText:
               q.type === "MCQ" && answer?.response != null ? `${Number(answer.response) + 1}. ${q.options?.[Number(answer.response)] ?? ""}` : (answer?.response ?? ""),

@@ -5,11 +5,13 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { FormMessage } from "@/components/forms/config-form";
 import { Button } from "@/components/ui/button";
+import { QuestionFigure } from "@/components/ui/question-figure";
 import { submitPracticeAction } from "@/server/practice/actions";
 import { initialActionState } from "@/server/errors";
+import type { FigureView } from "@/server/figures/render";
 
 // Chỉ nhận câu hỏi KHÔNG có đáp án/lời giải (openPracticeSet).
-type Item = { id: string; order: number; type: QuestionType; prompt: string; options: string[] | null; points: number };
+type Item = { id: string; order: number; type: QuestionType; prompt: string; options: string[] | null; points: number; figure?: FigureView | null };
 
 function SubmitBar({ total }: { total: number }) {
   const { pending } = useFormStatus();
@@ -50,6 +52,7 @@ export function PracticeForm({ setId, items }: { setId: string; items: Item[] })
                   </span>
                   <span className="mt-1 block whitespace-pre-line">{it.prompt}</span>
                 </legend>
+                <QuestionFigure figure={it.figure} />
                 <div className="mt-3 space-y-2">
                   {(it.options ?? []).map((o, i) => (
                     <label key={i} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft">
@@ -60,13 +63,17 @@ export function PracticeForm({ setId, items }: { setId: string; items: Item[] })
                 </div>
               </fieldset>
             ) : (
-              <label className="block">
-                <span className="text-sm text-muted">
-                  Câu {it.order} · {it.points} điểm
-                </span>
-                <span className="mt-1 block whitespace-pre-line font-medium">{it.prompt}</span>
-                <input name={`answer:${it.id}`} maxLength={500} autoComplete="off" className="mt-3 block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base" placeholder="Nhập đáp án" />
-              </label>
+              // Đề + hình nằm ngoài <label> (hình là khối <figure>); ô nhập trỏ tới đề bằng aria-labelledby.
+              <div>
+                <p id={`pq-${it.id}`}>
+                  <span className="text-sm text-muted">
+                    Câu {it.order} · {it.points} điểm
+                  </span>
+                  <span className="mt-1 block whitespace-pre-line font-medium">{it.prompt}</span>
+                </p>
+                <QuestionFigure figure={it.figure} />
+                <input name={`answer:${it.id}`} aria-labelledby={`pq-${it.id}`} maxLength={500} autoComplete="off" className="mt-3 block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3 text-base" placeholder="Nhập đáp án" />
+              </div>
             )}
           </li>
         ))}

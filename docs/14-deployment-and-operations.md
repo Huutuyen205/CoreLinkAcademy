@@ -92,6 +92,13 @@ pnpm dev
 | Migration phá hủy (xóa/đổi cột) | **Không làm trong cùng release**; tách 2 release (expand → contract). Nếu buộc phải: restore từ backup bước 2 (mất dữ liệu sau backup — cần chủ dự án phê duyệt) |
 | Dừng rollout khi | Lỗi đăng nhập, lỗi 500 lặp lại, sai phân quyền |
 
+### 4.2 Hình minh họa (FR-067, DECISION-D43)
+
+- Migration `20261031090000_question_figures` (chỉ thêm 2 cột JSONB cho phép NULL) — **PO tự chạy `pnpm db:migrate` trên Supabase**; bản build cũ vẫn chạy được với schema mới.
+- Thư viện mới: `@resvg/resvg-js` (native, có gói riêng cho `linux-x64-gnu` của Vercel — pnpm tự chọn theo nền tảng) và `mathjax-full`. Cả hai nằm trong `serverExternalPackages` (`next.config.ts`).
+- Font `src/server/figures/fonts/*.ttf` (DejaVu, giấy phép kèm theo) đọc bằng `fs` khi xuất PNG; `outputFileTracingIncludes` đóng gói kèm. **Smoke test sau deploy**: soạn slide Toán ở chế độ mẫu → lưu `.pptx` → mở file thấy hình có chữ (A, B, x, y…). Nếu ảnh thiếu chữ → font chưa được đóng gói (xem log `[figures]`).
+- Lỗi vẽ hình không làm hỏng trang/tệp: chỉ ghi `console.warn("[figures] …")` và bỏ hình.
+
 ## 5. Smoke test
 
 ```powershell

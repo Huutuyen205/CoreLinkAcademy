@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { autoGrade, totalScore, type QuestionData } from "@/lib/grading";
 import { aiStatus, auditAiUse, completeJson, consumeAiQuota, getProvider } from "@/server/ai/client";
 import { answerSheetSchema, essayGradeSchema } from "@/server/ai/generate/schemas";
-import { getAssignmentForTeacher, getSubmissionForGrading, listSubmissions } from "@/server/assessment/service";
+import { getAssignmentForTeacher, getSubmissionForGrading, gradeSubmission, listSubmissions } from "@/server/assessment/service";
 import { writeAudit } from "@/server/audit/log";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -26,7 +26,10 @@ export type EssaySuggestion = {
   photos: number;
 };
 
-export type SuggestResult = { suggestions: EssaySuggestion[]; skipped: { order: number; reason: string }[]; mock: boolean; provider: string; model: string };
+/** `blank`: câu bỏ trống hẳn (không chữ, không ảnh) — chấm hàng loạt cho 0 điểm; còn lại (ảnh HEIC/PDF…) AI không đọc được. */
+export type SkippedEssay = { answerId: string; order: number; reason: string; blank: boolean };
+
+export type SuggestResult = { suggestions: EssaySuggestion[]; skipped: SkippedEssay[]; mock: boolean; provider: string; model: string };
 
 const GRADE_SYSTEM = [
   "Bạn là trợ lý chấm bài giúp giáo viên tại Việt Nam. Bạn chỉ GỢI Ý điểm; giáo viên sẽ xem lại và quyết định.",
@@ -73,7 +76,7 @@ export async function suggestEssayGrades(actor: Actor, submissionId: string, rub
     const photoIds = item.photos.filter((p) => isVisionImage(p.mimeType)).slice(0, MAX_PHOTOS_PER_ANSWER).map((p) => p.id);
     const unreadablePhotos = item.photos.length - photoIds.length;
     if (!text && photoIds.length === 0) {
-      skipped.push({ order: q.order, reason: unreadablePhotos > 0 ? "Chỉ có ảnh HEIC/PDF, AI chưa đọc được định dạng này." : "Bỏ trống." });
+      skipped.push({ answerId: answer!.id, order: q.order, reason: unreadablePhotos > 0 ? "Chỉ có ảnh HEIC/PDF, AI chưa đọc được định dạng này." : "Bỏ trống.", blank: item.photos.length === 0 });
       continue;
     }
     const images = (await loadPhotos(photoIds)).map((base64, i) => ({ mimeType: item.photos.filter((p) => isVisionImage(p.mimeType))[i]?.mimeType ?? "image/jpeg", base64 }));
@@ -107,6 +110,76 @@ export async function suggestEssayGrades(actor: Actor, submissionId: string, rub
   }
   await auditAiUse(actor, "ai.grade_suggest", "Submission", submissionId, { ...used, inputTokens: inputTokens || undefined, outputTokens: outputTokens || undefined, extra: { answers: suggestions.length } });
   return { suggestions, skipped, ...used };
+}
+
+/* ───────── Chấm hàng loạt cả lớp (DECISION-D44) ───────── */
+
+/** Thời gian tối đa một lần bấm (Vercel giới hạn 60 giây/lần gọi); còn bài thì giáo viên bấm tiếp. */
+const BATCH_BUDGET_MS = 45_000;
+
+export type AiGradeAllResult = {
+  graded: number;
+  /** Bài AI không chấm được (ảnh định dạng lạ, AI trả lỗi…) — giáo viên chấm tay ở mục Bài nộp. */
+  needTeacher: number;
+  /** Bài chưa kịp chấm (hết thời gian/lượt AI) — bấm lại để chấm tiếp. */
+  remaining: number;
+  /** Lý do dừng sớm (hết lượt AI, AI bận), nếu có. */
+  stoppedReason: string | null;
+  mock: boolean;
+};
+
+/**
+ * Chấm tất cả bài ĐÃ NỘP nhưng CHƯA CHẤM của một bài tập (cả lớp). Điểm tự luận do AI đề xuất được ghi thẳng
+ * (`gradeSubmission` — cùng đường đi với giáo viên chấm) và bài được đánh dấu `aiGradedAt` để giáo viên xem lại.
+ * Câu bỏ trống = 0 điểm. Bài có ảnh AI không đọc được → để nguyên cho giáo viên. Chỉ giáo viên phụ trách lớp (BR-046:
+ * HS/PH vẫn chỉ thấy điểm sau khi công bố).
+ */
+export async function gradeUngradedWithAi(actor: Actor, assignmentId: string, budgetMs = BATCH_BUDGET_MS): Promise<AiGradeAllResult> {
+  const a = await getAssignmentForTeacher(actor, assignmentId);
+  if (a.status === "DRAFT") throw new DomainError("DRAFT", "Hãy giao bài trước rồi mới chấm.");
+  if (a.questions.length === 0) throw new DomainError("NO_QUESTIONS", "Bài chỉ nộp tệp/ảnh (không có câu hỏi) nên AI chưa chấm được. Hãy chấm ở mục Bài nộp.");
+  const pending = await db.submission.findMany({ where: { assignmentId: a.id, status: "SUBMITTED" }, orderBy: { submittedAt: "asc" }, select: { id: true } });
+  if (pending.length === 0) throw new DomainError("NOTHING_TO_GRADE", "Không còn bài nào chưa chấm.");
+
+  const started = Date.now();
+  let graded = 0;
+  let needTeacher = 0;
+  let stoppedReason: string | null = null;
+  const provider = getProvider();
+  let used = { mock: provider.isMock, provider: provider.id, model: provider.model };
+  for (const sub of pending) {
+    if (Date.now() - started > budgetMs) {
+      stoppedReason = "Hết thời gian cho một lần chấm.";
+      break;
+    }
+    try {
+      const { suggestions, skipped, ...info } = await suggestEssayGrades(actor, sub.id, a.solution ?? "");
+      used = { mock: info.mock, provider: info.provider, model: info.model };
+      if (skipped.some((s) => !s.blank)) {
+        needTeacher++;
+        continue;
+      }
+      const grades = [
+        ...suggestions.map((s) => ({ answerId: s.answerId, teacherPoints: s.points, feedback: s.feedback.trim().slice(0, 2000) || null })),
+        ...skipped.map((s) => ({ answerId: s.answerId, teacherPoints: 0, feedback: "Bỏ trống." })),
+      ];
+      await gradeSubmission(actor, sub.id, grades, null, null, { byAi: true });
+      graded++;
+    } catch (error) {
+      if (error instanceof DomainError && (error.code === "AI_RATE_LIMIT" || error.code === "AI_UNAVAILABLE")) {
+        stoppedReason = error.message;
+        break;
+      }
+      if (error instanceof DomainError) {
+        needTeacher++; // vd. bài không có câu tự luận nào để AI chấm
+        continue;
+      }
+      throw error;
+    }
+  }
+  const remaining = pending.length - graded - needTeacher;
+  await auditAiUse(actor, "ai.grade_batch", "Assignment", a.id, { ...used, extra: { graded, needTeacher, remaining } });
+  return { graded, needTeacher, remaining, stoppedReason, ...used };
 }
 
 /* ───────── Phiếu trắc nghiệm trên giấy ───────── */

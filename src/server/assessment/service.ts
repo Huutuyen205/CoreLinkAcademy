@@ -5,6 +5,7 @@ import { assertCanViewStudent, assertTeacherOwnsClass } from "@/server/auth/scop
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { figureView } from "@/server/figures/render";
 import { fileMeta, storeFiles, type PreparedFile } from "@/server/files/storage";
 import { notifyUsers } from "@/server/notifications/service";
 import { formatDateTime } from "@/lib/time";
@@ -141,8 +142,8 @@ export async function updateAssignment(actor: Actor, assignmentId: string, input
 
 export type QuestionInput = Omit<QuestionData, "id" | "order">;
 
-/** API-016: thêm/sửa câu hỏi, chỉ khi DRAFT (FR-028). */
-export async function saveQuestion(actor: Actor, assignmentId: string, questionId: string | null, input: QuestionInput): Promise<void> {
+/** API-016: thêm/sửa câu hỏi, chỉ khi DRAFT (FR-028). `removeFigure`: bỏ hình minh họa AI đã gắn (DECISION-D43); mặc định giữ nguyên. */
+export async function saveQuestion(actor: Actor, assignmentId: string, questionId: string | null, input: QuestionInput, opts: { removeFigure?: boolean } = {}): Promise<void> {
   const a = await ownedAssignment(actor, assignmentId);
   if (a.status !== "DRAFT") throw new DomainError("NOT_DRAFT", "Chỉ sửa câu hỏi khi bài còn ở trạng thái nháp.");
   const errors = validateQuestion(input);
@@ -159,7 +160,7 @@ export async function saveQuestion(actor: Actor, assignmentId: string, questionI
   if (questionId) {
     const q = await db.question.findFirst({ where: { id: questionId, assignmentId }, select: { id: true } });
     if (!q) throw new ForbiddenError();
-    await db.question.update({ where: { id: questionId }, data });
+    await db.question.update({ where: { id: questionId }, data: opts.removeFigure ? { ...data, figure: Prisma.DbNull } : data });
   } else {
     const count = await db.question.count({ where: { assignmentId } });
     await db.question.create({ data: { ...data, assignmentId, order: count + 1 } });
@@ -264,7 +265,7 @@ export async function returnSubmission(actor: Actor, submissionId: string, note:
   await db.$transaction(async (tx) => {
     await tx.submission.update({
       where: { id: submissionId },
-      data: { status: "IN_PROGRESS", submittedAt: null, isLate: false, score: null, gradedAt: null, gradedById: null, returnedAt: new Date(), returnNote: note },
+      data: { status: "IN_PROGRESS", submittedAt: null, isLate: false, score: null, gradedAt: null, gradedById: null, aiGradedAt: null, returnedAt: new Date(), returnNote: note },
     });
     await tx.answer.updateMany({ where: { submissionId }, data: { autoPoints: null, teacherPoints: null } });
     const { students, parents } = await learnersOf(tx, s.assignment.classId, [s.studentId]);
@@ -357,7 +358,7 @@ export async function getAssignmentForTeacher(actor: Actor, assignmentId: string
   });
   // FR-032 / DECISION-D15: báo số bài chưa chấm trước khi công bố.
   const ungradedCount = await db.submission.count({ where: { assignmentId, status: "SUBMITTED" } });
-  return { ...a, questions: a.questions.map(toQuestionData), ungradedCount };
+  return { ...a, questions: a.questions.map((q) => ({ ...toQuestionData(q), figure: figureView(q.figure) })), ungradedCount };
 }
 
 export async function listClassAssignments(actor: Actor, classId: string) {
@@ -379,7 +380,7 @@ export async function listClassAssignments(actor: Actor, classId: string) {
 /** Bài nộp của một bài tập, kèm học sinh đang học chưa nộp. */
 export async function listSubmissions(actor: Actor, assignmentId: string) {
   const a = await ownedAssignment(actor, assignmentId);
-  const [enrolled, submissions] = await Promise.all([
+  const [enrolled, submissions, questionTypes] = await Promise.all([
     db.enrollment.findMany({
       where: { classId: a.classId, status: { in: ["ACTIVE", "PAUSED", "COMPLETED"] } },
       orderBy: { student: { fullName: "asc" } },
@@ -387,11 +388,14 @@ export async function listSubmissions(actor: Actor, assignmentId: string) {
     }),
     db.submission.findMany({
       where: { assignmentId },
-      select: { id: true, studentId: true, status: true, submittedAt: true, isLate: true, score: true, returnedAt: true, _count: { select: { files: true } } },
+      select: { id: true, studentId: true, status: true, submittedAt: true, isLate: true, score: true, returnedAt: true, aiGradedAt: true, _count: { select: { files: true } } },
     }),
+    db.question.findMany({ where: { assignmentId }, select: { type: true } }),
   ]);
   const byStudent = new Map(submissions.map((s) => [s.studentId, s]));
-  return { assignment: a, rows: enrolled.map((e) => ({ student: e.student, submission: byStudent.get(e.student.id) ?? null })) };
+  // Phiếu trả lời giấy (D34) chỉ dùng cho bài gồm toàn câu trắc nghiệm.
+  const paperSheet = a.status !== "DRAFT" && questionTypes.length > 0 && questionTypes.every((q) => q.type === "MCQ");
+  return { assignment: a, paperSheet, rows: enrolled.map((e) => ({ student: e.student, submission: byStudent.get(e.student.id) ?? null })) };
 }
 
 export async function getSubmissionForGrading(actor: Actor, submissionId: string) {
@@ -410,7 +414,7 @@ export async function getSubmissionForGrading(actor: Actor, submissionId: string
     // `files`: tệp bài làm chung; ảnh câu tự luận nằm ở `items[].photos`.
     submission: { ...s, files: s.files.filter((f) => !f.questionId) },
     maxScore: assignmentMaxScore(s.assignment),
-    items: s.assignment.questions.map((q) => ({ question: toQuestionData(q), answer: answers.get(q.id) ?? null, photos: s.files.filter((f) => f.questionId === q.id) })),
+    items: s.assignment.questions.map((q) => ({ question: toQuestionData(q), figure: figureView(q.figure), answer: answers.get(q.id) ?? null, photos: s.files.filter((f) => f.questionId === q.id) })),
   };
 }
 
@@ -424,6 +428,7 @@ export async function gradeSubmission(
   grades: { answerId: string; teacherPoints: number | null; feedback: string | null }[],
   comment: string | null,
   manualScore: number | null = null,
+  opts: { byAi?: boolean } = {},
 ): Promise<string> {
   const { submission, items, maxScore } = await getSubmissionForGrading(actor, submissionId);
   if (submission.status === "IN_PROGRESS") throw new DomainError("NOT_SUBMITTED", "Học sinh chưa nộp bài.");
@@ -457,7 +462,8 @@ export async function gradeSubmission(
     const score = manualOnly ? round2(manualScore!) : totalScore(answers);
     await tx.submission.update({
       where: { id: submissionId },
-      data: { status: "GRADED", score, teacherComment: comment, gradedAt: new Date(), gradedById: actor.id },
+      // `aiGradedAt` đánh dấu bài AI chấm hàng loạt chưa duyệt (D44); giáo viên lưu điểm → bỏ dấu.
+      data: { status: "GRADED", score, teacherComment: comment, gradedAt: new Date(), gradedById: actor.id, aiGradedAt: opts.byAi ? new Date() : null },
     });
     if (submission.assignment.resultsPublishedAt) {
       await writeAudit(
@@ -652,10 +658,12 @@ export async function openAssignmentForStudent(actor: Actor, assignmentId: strin
     pastDueBlocked,
     resultsPublished: visible,
     awaitingGrade: resultsVisible(a) && submission?.status === "SUBMITTED",
-    items: questions.map((q) => {
+    items: questions.map((q, i) => {
       const ans = answers.get(q.id);
       return {
         question: toStudentQuestion(q),
+        // Hình minh họa của đề (không chứa đáp án — giáo viên duyệt khi soạn).
+        figure: figureView(a.questions[i]!.figure),
         response: ans?.response ?? null,
         photos: (submission?.files ?? []).filter((f) => f.questionId === q.id),
         result: visible

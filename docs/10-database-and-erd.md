@@ -252,6 +252,7 @@ Ký hiệu: **PK** khóa chính · **FK→** khóa ngoại (hành vi khi xóa) �
 | options | JSON | Y | | `string[]` 2–6 (MCQ) | | |
 | correctOption | TINYINT | Y | | 0-based (MCQ) | Đáp án | **Không gửi HS trước công bố** |
 | acceptedAnswers | JSON | Y | | `string[]` ≥ 1 (SHORT) | Đáp án | **Không gửi HS trước công bố** |
+| figure | JSONB | Y | | Đặc tả hình (`src/server/figures/schema.ts`); sai khuôn → không hiện | Hình minh họa AI soạn (FR-067, D43) — hệ thống vẽ khi hiển thị | Không (là đề, HS được xem) |
 | points | DOUBLE | N | | 0,25..100 bước 0,25 | | |
 
 ### ENT-015 `submissions`
@@ -344,6 +345,7 @@ Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `pr
 | Enum `AnnouncementAudience` + `USERS` | Thông báo gửi từng người | Người nhận ghi ở `notifications` như các đối tượng khác |
 | Enum mới `PracticeDifficulty` (EASY, MEDIUM, HARD) | Mức độ đề luyện | — |
 | `assignments.isTest` (bool, mặc định false), `assignments.solution` (text) | Bài kiểm tra / mock test; bài chữa | Bài chữa chỉ trả về HS/PH khi `resultsPublishedAt` có giá trị |
+| `submissions.aiGradedAt` (TIMESTAMP, NULL) | Bài do nút "AI chấm" chấm, GV chưa duyệt (DECISION-D44) | Có giá trị → hiện "AI chấm · chờ duyệt"; GV lưu điểm hoặc yêu cầu nộp lại → NULL |
 | `submissions.returnedAt`, `submissions.returnNote` | GV yêu cầu nộp lại | Có `returnedAt` → HS nộp được sau hạn |
 | `attendances.attitude` (varchar 20) | Thái độ học tập GOOD / NORMAL / NEEDS_WORK | Không bắt buộc |
 | `documents.reviewStatus` (RequestStatus), `reviewNote`, `reviewedAt`, `reviewedById` → `users` (SET NULL) | Giáo án gửi duyệt | Chỉ dùng cho `LESSON_PLAN` |
@@ -358,6 +360,8 @@ Cột mới: `users` (`memberStatus`, `dateOfBirth`, `address`, `expertise`, `pr
 | `practice_sets.classId` → `classes` (SET NULL), `practice_sets.forStudentId` → `users` (SET NULL) | Đề bổ sung cá nhân (FR-060) | `forStudentId` null = đề chung; có giá trị = chỉ học sinh đó thấy/làm. Index `(classId)`, `(forStudentId)`. Migration `20261028090000_class_tabs` |
 | `practice_questions` (`setId` CASCADE, `order`, `type` MCQ/SHORT, `prompt`, `options`, `correctOption`, `acceptedAnswers`, `explanation`, `points`) | Câu hỏi đề luyện | Đáp án + lời giải chỉ trả về sau khi nộp |
 | `practice_attempts` (`setId` CASCADE, `studentId` CASCADE, `answers` JSON, `score`, `maxScore`, `correctCount`, `total`, `submittedAt`) | Lượt làm (lịch sử luyện tập) | Index `(studentId, submittedAt)`, `(setId)` |
+| `questions.figure`, `practice_questions.figure` (JSONB, cho phép NULL) | Đặc tả hình minh họa do AI soạn, hệ thống tự vẽ (FR-067, DECISION-D43) | Migration `20261031090000_question_figures` (chỉ `ADD COLUMN`). Rollback: `ALTER TABLE "questions" DROP COLUMN "figure"; ALTER TABLE "practice_questions" DROP COLUMN "figure";` (mất hình, câu hỏi còn nguyên) |
+| `submissions.aiGradedAt` (TIMESTAMP, cho phép NULL) | Đánh dấu bài AI chấm hàng loạt chưa được GV duyệt (FR-056, DECISION-D44) | Migration `20261031100000_submission_ai_graded` (chỉ `ADD COLUMN`). Rollback: `ALTER TABLE "submissions" DROP COLUMN "aiGradedAt";` (mất dấu "chờ duyệt", điểm giữ nguyên) |
 
 ## 6. Migration and recovery
 

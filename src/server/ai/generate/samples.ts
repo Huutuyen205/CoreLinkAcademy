@@ -24,8 +24,15 @@ export function subjectGroupOf(subjectName: string): SubjectGroup {
   return "other";
 }
 
-type Mcq = { type: "MCQ"; prompt: string; options: string[]; correctOption: number; explanation: string };
-type Short = { type: "SHORT"; prompt: string; acceptedAnswers: string[]; explanation: string };
+type Mcq = { type: "MCQ"; prompt: string; options: string[]; correctOption: number; explanation: string; figure?: unknown };
+type Short = { type: "SHORT"; prompt: string; acceptedAnswers: string[]; explanation: string; figure?: unknown };
+
+// Hình minh họa mẫu (DECISION-D43) — cùng khuôn JSON AI thật phải trả.
+const FIG_QUADRATIC_GRAPH = { type: "function", expr: "x^2-4x+3", xMin: -1, xMax: 5, caption: "Đồ thị hàm số y = x² − 4x + 3" };
+const FIG_RIGHT_TRIANGLE = { type: "geometry", points: { A: [0, 0], B: [0, 3], C: [4, 0] }, segments: ["AB", "BC", "CA"], rightAngles: ["BAC"], caption: "Tam giác ABC vuông tại A" };
+const FIG_ROOT_FORMULA = { type: "formula", latex: "\\Delta = b^2 - 4ac,\\qquad x_{1,2} = \\frac{-b \\pm \\sqrt{\\Delta}}{2a}", caption: "Công thức nghiệm (khi Δ ≥ 0)" };
+const FIG_PARABOLA = { type: "function", expr: "x^2-5x+6", xMin: -1, xMax: 6, points: [{ x: 2, y: 0, label: "A" }, { x: 3, y: 0, label: "B" }], caption: "Parabol cắt Ox tại hai nghiệm x = 2 và x = 3" };
+const FIG_SOLUTION_SET = { type: "numberline", intervals: [{ from: null, to: 10, closed: [false, false] }], caption: "Tập giá trị m < 10" };
 
 const MATH_MCQ: Mcq[] = [
   { type: "MCQ", prompt: "Phương trình nào sau đây là phương trình bậc hai một ẩn?", options: ["2x + 1 = 0", "x² − 5x + 6 = 0", "x³ − 1 = 0", "1/x + 2 = 0"], correctOption: 1, explanation: "Phương trình bậc hai có dạng ax² + bx + c = 0 với a ≠ 0." },
@@ -33,9 +40,18 @@ const MATH_MCQ: Mcq[] = [
   { type: "MCQ", prompt: "Nghiệm của phương trình x² − 5x + 6 = 0 là:", options: ["x = 1 và x = 6", "x = 2 và x = 3", "x = −2 và x = −3", "x = 5 và x = 6"], correctOption: 1, explanation: "Δ = 1 nên x = (5 ± 1)/2, tức x = 3 hoặc x = 2." },
   { type: "MCQ", prompt: "Theo định lí Vi-ét, tổng hai nghiệm của phương trình x² − 7x + 10 = 0 bằng:", options: ["−7", "7", "10", "−10"], correctOption: 1, explanation: "x₁ + x₂ = −b/a = 7." },
   { type: "MCQ", prompt: "Phương trình x² + 2x + 5 = 0:", options: ["Có hai nghiệm phân biệt", "Có nghiệm kép", "Vô nghiệm", "Có vô số nghiệm"], correctOption: 2, explanation: "Δ = 4 − 20 = −16 < 0 nên phương trình vô nghiệm." },
+  {
+    type: "MCQ",
+    prompt: "Dựa vào đồ thị hàm số y = x² − 4x + 3 ở hình dưới, phương trình x² − 4x + 3 = 0 có bao nhiêu nghiệm?",
+    options: ["0", "1", "2", "3"],
+    correctOption: 2,
+    explanation: "Đồ thị cắt trục Ox tại hai điểm (x = 1 và x = 3) nên phương trình có 2 nghiệm.",
+    figure: FIG_QUADRATIC_GRAPH,
+  },
 ];
 
 const MATH_SHORT: Short[] = [
+  { type: "SHORT", prompt: "Cho tam giác ABC vuông tại A có AB = 3 cm, AC = 4 cm (hình dưới). Tính độ dài BC (đơn vị cm).", acceptedAnswers: ["5", "5 cm", "5cm"], explanation: "Theo định lí Pythagore: BC² = AB² + AC² = 9 + 16 = 25 nên BC = 5 cm.", figure: FIG_RIGHT_TRIANGLE },
   { type: "SHORT", prompt: "Giải phương trình x² − 9 = 0. Viết hai nghiệm cách nhau bằng dấu phẩy, theo thứ tự tăng dần.", acceptedAnswers: ["-3, 3", "-3,3", "−3, 3", "−3,3", "x = -3, x = 3"], explanation: "x² = 9 nên x = −3 hoặc x = 3." },
   { type: "SHORT", prompt: "Tính tích hai nghiệm của phương trình x² − 7x + 10 = 0.", acceptedAnswers: ["10"], explanation: "x₁·x₂ = c/a = 10." },
   { type: "SHORT", prompt: "Tìm m để phương trình x² − 2x + m = 0 có nghiệm kép.", acceptedAnswers: ["1", "m = 1", "m=1"], explanation: "Δ = 4 − 4m = 0 nên m = 1." },
@@ -129,18 +145,24 @@ export function sampleContent(ctx: MockGenCtx): unknown {
     }
     case "essay":
       return { title: `${tag}Đề tự luận: ${topic}`, instructions: "Trình bày rõ ràng các bước làm bài.", questions: take(essay, ctx.count) };
-    case "slides":
+    case "slides": {
+      const math = ctx.group === "math";
       return {
         title: `${tag}${topic}`,
         slides: [
           { title: topic, bullets: [ctx.courseTitle, `Buổi ${ctx.sessionIndex}`], notes: "Chào lớp, nêu mục tiêu buổi học." },
           { title: "Mục tiêu buổi học", bullets: ["Nắm được khái niệm trọng tâm của bài", "Vận dụng vào bài tập cơ bản", "Tự kiểm tra bằng câu hỏi nhanh cuối buổi"], notes: "Đọc nhanh, hỏi 1–2 học sinh nhắc lại bài cũ." },
-          { title: "Kiến thức trọng tâm", bullets: ["Định nghĩa và dấu hiệu nhận biết", "Công thức/quy tắc cần nhớ", "Lỗi thường gặp"], notes: "Ghi bảng, lấy ví dụ gần gũi." },
-          { title: "Ví dụ minh họa", bullets: ["Ví dụ 1: áp dụng trực tiếp", "Ví dụ 2: nâng cao một bước", "Cho học sinh tự làm trước khi giải"], notes: "Cho 3 phút làm riêng, sau đó chữa chung." },
+          math
+            ? { title: "Kiến thức trọng tâm", bullets: ["Phương trình ax² + bx + c = 0 (a ≠ 0)", "Tính Δ rồi xét dấu", "Δ < 0: vô nghiệm; Δ = 0: nghiệm kép"], notes: "Ghi bảng công thức nghiệm.", figure: FIG_ROOT_FORMULA }
+            : { title: "Kiến thức trọng tâm", bullets: ["Định nghĩa và dấu hiệu nhận biết", "Công thức/quy tắc cần nhớ", "Lỗi thường gặp"], notes: "Ghi bảng, lấy ví dụ gần gũi." },
+          math
+            ? { title: "Ví dụ minh họa", bullets: ["Giải x² − 5x + 6 = 0", "Δ = 1 > 0 nên có hai nghiệm", "x = 2 và x = 3 — đúng hai giao điểm với Ox"], notes: "Cho học sinh tự giải trước rồi đối chiếu với đồ thị.", figure: FIG_PARABOLA }
+            : { title: "Ví dụ minh họa", bullets: ["Ví dụ 1: áp dụng trực tiếp", "Ví dụ 2: nâng cao một bước", "Cho học sinh tự làm trước khi giải"], notes: "Cho 3 phút làm riêng, sau đó chữa chung." },
           { title: "Luyện tập", bullets: ["Làm 3 câu trắc nghiệm nhanh", "Đổi vở chấm chéo", "Giải đáp thắc mắc"], notes: "Dùng đề trắc nghiệm đã tạo." },
           { title: "Tổng kết và bài về nhà", bullets: ["Nhắc lại 3 ý chính", "Bài về nhà: làm bài tập đã giao", "Chuẩn bị nội dung buổi sau"], notes: "Nhắc hạn nộp bài." },
         ],
       };
+    }
     case "lesson_plan":
       return {
         title: `${tag}Giáo án: ${topic}`,
@@ -163,8 +185,8 @@ export function sampleContent(ctx: MockGenCtx): unknown {
         outcomes: ["Nêu được khái niệm và dấu hiệu nhận biết", "Vận dụng được công thức/quy tắc vào bài tập", "Tránh được các lỗi sai thường gặp"],
         sections: [
           { heading: "1. Kiến thức nền", content: "Nhắc lại các khái niệm cần có từ buổi trước để học sinh nối vào bài mới.", keyPoints: ["Khái niệm cơ bản", "Ký hiệu cần nhớ"] },
-          { heading: "2. Nội dung trọng tâm", content: `Trình bày "${topic}" theo ba bước: định nghĩa, ví dụ, quy tắc vận dụng.`, keyPoints: ["Định nghĩa", "Quy tắc", "Ví dụ mẫu"] },
-          { heading: "3. Luyện tập và kiểm tra", content: "Bài tập từ dễ đến khó, kết thúc bằng bài kiểm tra nhanh 10 phút.", keyPoints: ["Mức nhận biết", "Mức thông hiểu", "Mức vận dụng"] },
+          { heading: "2. Nội dung trọng tâm", content: `Trình bày "${topic}" theo ba bước: định nghĩa, ví dụ, quy tắc vận dụng.`, keyPoints: ["Định nghĩa", "Quy tắc", "Ví dụ mẫu"], ...(ctx.group === "math" ? { figure: FIG_ROOT_FORMULA } : {}) },
+          { heading: "3. Luyện tập và kiểm tra", content: "Bài tập từ dễ đến khó, kết thúc bằng bài kiểm tra nhanh 10 phút.", keyPoints: ["Mức nhận biết", "Mức thông hiểu", "Mức vận dụng"], ...(ctx.group === "math" ? { figure: FIG_SOLUTION_SET } : {}) },
         ],
       };
   }

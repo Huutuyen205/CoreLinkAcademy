@@ -119,7 +119,7 @@ Ghi chú: Admin/Staff **không** có màn hình xem bài tập/bài nộp ở Ph
 | `report.view` | ADMIN, STAFF | — | vai trò khác | 404 (route xuất Excel) | — | E2E |
 | Trợ lý hỏi đáp (chatbot) | — | X (mọi dữ liệu quản lý) | X (như Admin trừ nhật ký) | X own (lớp, buổi, bài của mình) | X self | X own (con đã liên kết) |
 | Soạn bài với AI | — | — | — | X own (buổi mình dạy; lưu bài tập nháp chỉ khi là GV phụ trách lớp) | — | — |
-| AI gợi ý chấm, chấm phiếu giấy | — | — | — | X own (bài của lớp mình phụ trách) | — | — |
+| AI gợi ý chấm, AI chấm cả bài tập, chấm phiếu giấy | — | — | — | X own (bài của lớp mình phụ trách) | — | — |
 | Đổi mật khẩu | Mọi người đã đăng nhập (kể cả `mustChangePassword`) | chính mình | — | — | — (thu hồi phiên khác) | TC-012 |
 
 ## 5. Điều cấm (không ngoại lệ)

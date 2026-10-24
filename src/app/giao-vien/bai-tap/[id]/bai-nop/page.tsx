@@ -20,7 +20,7 @@ export const metadata: Metadata = { title: "Bài nộp" };
 export default async function SubmissionsPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ thongbao?: string }> }) {
   const actor = await requireRole("TEACHER");
   const { id } = await params;
-  const { assignment, rows } = await orNotFound(listSubmissions(actor, id));
+  const { assignment, rows, paperSheet } = await orNotFound(listSubmissions(actor, id));
   const submitted = rows.filter((r) => r.submission && r.submission.status !== "IN_PROGRESS").length;
 
   return (
@@ -38,6 +38,11 @@ export default async function SubmissionsPage({ params, searchParams }: { params
               <ActionButton action={remindUnsubmittedAction} hidden={{ assignmentId: id }} icon="message" tone="primary" confirm="Gửi thông báo nhắc nộp bài cho học sinh chưa nộp và phụ huynh?">
                 Nhắc nộp bài
               </ActionButton>
+            )}
+            {paperSheet && (
+              <ActionLink href={`/giao-vien/bai-tap/${id}/phieu-giay`} icon="edit">
+                Nhập phiếu giấy (AI đọc)
+              </ActionLink>
             )}
             <ButtonLink href={`/giao-vien/lop/${assignment.class.id}?tab=bai-tap#bang-diem`} variant="secondary" size="sm">
               Bảng điểm lớp
@@ -65,6 +70,7 @@ export default async function SubmissionsPage({ params, searchParams }: { params
                       {r.submission.status === "IN_PROGRESS" && r.submission.returnedAt ? "Đang nộp lại" : SUBMISSION_STATUS[r.submission.status].label}
                     </Badge>
                     {r.submission.isLate && <Badge tone="warning">Nộp muộn</Badge>}
+                    {r.submission.aiGradedAt && <Badge tone="primary">AI chấm · chờ duyệt</Badge>}
                   </span>
                 ),
             },
@@ -80,7 +86,7 @@ export default async function SubmissionsPage({ params, searchParams }: { params
                     <RowActions>
                       {done && (
                         <ActionLink href={`/giao-vien/bai-nop/${s.id}`} icon={s.status === "SUBMITTED" ? "edit" : "view"} tone={s.status === "SUBMITTED" ? "primary" : "default"}>
-                          {s.status === "SUBMITTED" ? "Chấm bài" : "Xem / sửa điểm"}
+                          {s.status === "SUBMITTED" ? "Chấm bài" : s.aiGradedAt ? "Duyệt điểm AI" : "Xem / sửa điểm"}
                         </ActionLink>
                       )}
                       {done && assignment.status === "PUBLISHED" && (

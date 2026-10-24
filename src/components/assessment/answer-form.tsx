@@ -6,11 +6,13 @@ import { useFormStatus } from "react-dom";
 import { EssayPhotos, type PhotoItem } from "@/components/assessment/essay-photos";
 import { FormMessage } from "@/components/forms/config-form";
 import { Button } from "@/components/ui/button";
+import { QuestionFigure } from "@/components/ui/question-figure";
 import { studentAnswerAction } from "@/server/assessment/actions";
 import { initialActionState } from "@/server/errors";
+import type { FigureView } from "@/server/figures/render";
 
-// Chỉ nhận câu hỏi KHÔNG có đáp án (toStudentQuestion) — T-06.
-type Item = { id: string; order: number; type: QuestionType; prompt: string; options: string[] | null; points: number; response: string | null; photos: PhotoItem[] };
+// Chỉ nhận câu hỏi KHÔNG có đáp án (toStudentQuestion) — T-06. `figure`: hình minh họa đã vẽ sẵn phía server.
+type Item = { id: string; order: number; type: QuestionType; prompt: string; options: string[] | null; points: number; figure?: FigureView | null; response: string | null; photos: PhotoItem[] };
 
 /** Câu tự luận chưa có chữ lẫn ảnh → nhắc trước khi nộp (vẫn cho nộp). */
 function emptyEssays(form: HTMLFormElement | null, essays: { id: string; order: number; hasPhotos: boolean }[]): number[] {
@@ -62,6 +64,7 @@ export function AnswerForm({ assignmentId, items }: { assignmentId: string; item
                   </span>
                   <span className="mt-1 block whitespace-pre-line">{it.prompt}</span>
                 </legend>
+                <QuestionFigure figure={it.figure} />
                 <div className="mt-3 space-y-2">
                   {(it.options ?? []).map((o, i) => (
                     <label key={i} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-control border border-line px-3 has-[:checked]:border-primary has-[:checked]:bg-primary-soft">
@@ -72,34 +75,41 @@ export function AnswerForm({ assignmentId, items }: { assignmentId: string; item
                 </div>
               </fieldset>
             ) : it.type === "SHORT" ? (
-              <label className="block">
-                <span className="text-sm text-muted">
-                  Câu {it.order} · {it.points} điểm
-                </span>
-                <span className="mt-1 block whitespace-pre-line font-medium">{it.prompt}</span>
+              // Đề (và hình) nằm ngoài <label> vì hình là khối <figure>; ô nhập trỏ tới đề bằng aria-labelledby.
+              <div>
+                <p id={`q-${it.id}`}>
+                  <span className="text-sm text-muted">
+                    Câu {it.order} · {it.points} điểm
+                  </span>
+                  <span className="mt-1 block whitespace-pre-line font-medium">{it.prompt}</span>
+                </p>
+                <QuestionFigure figure={it.figure} />
                 <input
                   name={`answer:${it.id}`}
+                  aria-labelledby={`q-${it.id}`}
                   defaultValue={value(it)}
                   maxLength={500}
                   className="mt-3 block min-h-11 w-full rounded-control border border-line-strong bg-surface px-3"
                 />
-              </label>
+              </div>
             ) : (
               <div>
-                <label className="block">
+                <p id={`q-${it.id}`}>
                   <span className="text-sm text-muted">
                     Câu {it.order} · {it.points} điểm · tự luận
                   </span>
                   <span className="mt-1 block whitespace-pre-line font-medium">{it.prompt}</span>
-                  <textarea
-                    name={`answer:${it.id}`}
-                    defaultValue={value(it)}
-                    maxLength={20000}
-                    rows={6}
-                    placeholder="Gõ bài làm tại đây, hoặc chụp ảnh bài làm trên giấy bên dưới."
-                    className="mt-3 block w-full rounded-control border border-line-strong bg-surface px-3 py-2"
-                  />
-                </label>
+                </p>
+                <QuestionFigure figure={it.figure} />
+                <textarea
+                  name={`answer:${it.id}`}
+                  aria-labelledby={`q-${it.id}`}
+                  defaultValue={value(it)}
+                  maxLength={20000}
+                  rows={6}
+                  placeholder="Gõ bài làm tại đây, hoặc chụp ảnh bài làm trên giấy bên dưới."
+                  className="mt-3 block w-full rounded-control border border-line-strong bg-surface px-3 py-2"
+                />
                 <EssayPhotos assignmentId={assignmentId} questionId={it.id} photos={it.photos} />
               </div>
             )}

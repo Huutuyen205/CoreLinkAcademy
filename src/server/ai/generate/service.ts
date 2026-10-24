@@ -11,6 +11,7 @@ import { db } from "@/server/db";
 import { createDocument } from "@/server/documents/service";
 import { DomainError } from "@/server/errors";
 import { sanitizeFileName } from "@/server/files/rules";
+import { figureToSvg } from "@/server/figures/render";
 import type { ExamData } from "./render-docx";
 import { loadSessionContext, type SessionContext } from "./context";
 import { buildSystemPrompt, buildUserPrompt, resolveTopic, type Difficulty } from "./prompts";
@@ -35,7 +36,20 @@ export type GenerateResult = {
   model: string;
   /** Thông tin lớp/buổi để dựng bản xem trước slide. */
   meta: ReturnType<typeof metaOf>;
+  /** Hình của slide đã vẽ sẵn (SVG) cho bản xem trước, theo vị trí slide gốc. */
+  figures: Record<number, { svg: string; width: number; height: number }>;
 };
+
+/** Vẽ sẵn hình của bộ slide để trình duyệt xem trước (MathJax chỉ chạy phía server). */
+function slideFigures(content: GeneratedContent): GenerateResult["figures"] {
+  const out: GenerateResult["figures"] = {};
+  if (content.kind !== "slides") return out;
+  content.data.slides.forEach((s, i) => {
+    const drawn = s.figure ? figureToSvg(s.figure) : null;
+    if (drawn) out[i] = drawn;
+  });
+  return out;
+}
 
 export async function generateContent(actor: Actor, input: GenerateInput): Promise<GenerateResult> {
   const ctx = await loadSessionContext(actor, input.sessionId);
@@ -63,7 +77,7 @@ export async function generateContent(actor: Actor, input: GenerateInput): Promi
   );
   const content = normalizeContent(input.kind, result.data);
   await auditAiUse(actor, "ai.generate", "ClassSession", ctx.sessionId, { ...result, extra: { kind: input.kind } });
-  return { sessionId: ctx.sessionId, topic, content, mock: result.mock, provider: result.provider, model: result.model, meta: metaOf(ctx) };
+  return { sessionId: ctx.sessionId, topic, content, mock: result.mock, provider: result.provider, model: result.model, meta: metaOf(ctx), figures: slideFigures(content) };
 }
 
 /* ───────── Lưu kết quả ───────── */
@@ -131,6 +145,7 @@ async function saveAsPracticeSet(actor: Actor, ctx: SessionContext, content: Gen
         correctOption: q.type === "MCQ" ? q.correctOption : null,
         acceptedAnswers: q.type === "SHORT" ? q.acceptedAnswers : Prisma.DbNull,
         explanation: q.type === "ESSAY" ? null : q.explanation || null,
+        figure: q.figure ?? Prisma.DbNull,
       })),
     });
     await writeAudit({ actorId: actor.id, action: "ai.save_practice", entity: "PracticeSet", entityId: set.id, detail: { sessionId: ctx.sessionId, kind: content.kind, questions: exam.questions.length, mock: isMock } }, tx);
@@ -161,6 +176,7 @@ async function saveAsAssignment(actor: Actor, ctx: SessionContext, content: Gene
         options: q.type === "MCQ" ? q.options.map((o) => o.trim()) : Prisma.DbNull,
         correctOption: q.type === "MCQ" ? q.correctOption : null,
         acceptedAnswers: q.type === "SHORT" ? q.acceptedAnswers : Prisma.DbNull,
+        figure: q.figure ?? Prisma.DbNull,
       })),
     });
     await writeAudit({ actorId: actor.id, action: "ai.save_assignment", entity: "Assignment", entityId: a.id, detail: { sessionId: ctx.sessionId, kind: content.kind, questions: exam.questions.length, mock: isMock } }, tx);

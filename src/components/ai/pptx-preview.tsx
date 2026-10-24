@@ -4,7 +4,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@/lib/format";
 import type { SlideDeck } from "@/server/ai/generate/schemas";
-import { BODY, bulletHeight, BULLET_TEXT_W, coverSize, GAP, layoutDeck, SLIDE_H, SLIDE_W, titleSize, type LaidOutSlide, type SlideMeta } from "@/server/ai/generate/slide-layout";
+import { BODY, bulletHeight, containRect, coverSize, figureFrame, GAP, layoutDeck, SLIDE_H, SLIDE_W, titleSize, type LaidOutSlide, type SlideMeta } from "@/server/ai/generate/slide-layout";
+
+/** Hình đã vẽ sẵn phía server (SVG), theo vị trí slide gốc trong bộ slide. */
+export type PreviewFigures = Record<number, { svg: string; width: number; height: number }>;
 
 // Màu và vị trí lấy đúng từ render-pptx.ts (cùng bố cục `layoutDeck`) để bản xem trước giống file PowerPoint sẽ lưu.
 const C = { brand: "#1C2D95", brandDark: "#121C5E", accent: "#2F6BFF", soft: "#E6ECFF", paper: "#F5F7FE", line: "#DDE3F0", ink: "#0E1433", muted: "#4A5274" };
@@ -31,8 +34,26 @@ const circle = (x: number, y: number, d: number, color: string, opacity: number)
 // eslint-disable-next-line @next/next/no-img-element
 const logo = (x: number, y: number, size: number) => <img src={LOGO} alt="" className="absolute" style={{ left: px(x, SLIDE_W), top: px(y, SLIDE_H), width: px(size, SLIDE_W), height: px(size, SLIDE_H) }} />;
 
+/** Hình minh họa đặt đúng khung như file .pptx (SVG do server vẽ từ đặc tả, không chứa mã chạy được). */
+function SlideFigureBox({ slide, fig }: { slide: Extract<LaidOutSlide, { kind: "content" }>; fig: PreviewFigures[number] }) {
+  const frame = figureFrame(slide);
+  const img = containRect(frame.image, fig.width, fig.height);
+  return (
+    <>
+      <Box x={img.x} y={img.y} w={img.w} h={img.h}>
+        <div role="img" aria-label={slide.figure?.caption || "Hình minh họa"} className="size-full [&>svg]:size-full" dangerouslySetInnerHTML={{ __html: fig.svg }} />
+      </Box>
+      {frame.caption ? (
+        <Box x={frame.caption.x} y={frame.caption.y} w={frame.caption.w} h={frame.caption.h} style={{ textAlign: "center", fontStyle: "italic", color: C.muted, fontFamily: SANS, fontSize: pt(12) }}>
+          {slide.figure?.caption}
+        </Box>
+      ) : null}
+    </>
+  );
+}
+
 /** Một slide 16:9 dựng bằng HTML theo đúng bố cục file .pptx. */
-function SlideCanvas({ slide, footer, number }: { slide: LaidOutSlide; footer: string; number: number }) {
+function SlideCanvas({ slide, footer, number, figures }: { slide: LaidOutSlide; footer: string; number: number; figures: PreviewFigures }) {
   let inner: ReactNode;
   let bg: string = "#FFFFFF";
 
@@ -89,18 +110,19 @@ function SlideCanvas({ slide, footer, number }: { slide: LaidOutSlide; footer: s
           </Box>
           <Box x={0.5} y={1.4} w={SLIDE_W - 1} h={3.65} style={{ background: C.paper, border: `1px solid ${C.line}`, borderRadius: "1.2cqw" }} />
           {slide.bullets.map((b, i) => {
-            const h = bulletHeight(b, slide.size) - GAP;
+            const h = bulletHeight(b, slide.size, slide.textW) - GAP;
             const top = y;
             y += h + GAP;
             return (
               <div key={i}>
                 <Box x={BODY.x - 0.05} y={top + (slide.size * 1.22) / 144 - 0.07} w={0.14} h={0.14} style={{ background: C.accent, borderRadius: "50%" }} />
-                <Box x={BODY.x + 0.3} y={top} w={BULLET_TEXT_W} h={h} style={{ color: C.ink, fontFamily: SANS, fontSize: pt(slide.size), lineHeight: 1.22 }}>
+                <Box x={BODY.x + 0.3} y={top} w={slide.textW} h={h} style={{ color: C.ink, fontFamily: SANS, fontSize: pt(slide.size), lineHeight: 1.22 }}>
                   {b}
                 </Box>
               </div>
             );
           })}
+          {slide.figure && figures[slide.figure.source] ? <SlideFigureBox slide={slide} fig={figures[slide.figure.source]!} /> : null}
           <Box x={0.45} y={SLIDE_H - 0.42} w={SLIDE_W - 0.9} h={0.01} style={{ background: C.line }} />
           <Box x={0.45} y={SLIDE_H - 0.38} w={6.5} h={0.3} style={{ display: "flex", alignItems: "center", color: C.muted, fontFamily: SANS, fontSize: pt(10) }}>
             {footer}
@@ -139,7 +161,7 @@ function SlideCanvas({ slide, footer, number }: { slide: LaidOutSlide; footer: s
  * Xem trước bộ slide như trong PowerPoint: thanh tiêu đề, dải slide thu nhỏ bên trái, slide lớn ở giữa, ô ghi chú bên dưới.
  * Dựng từ cùng bố cục với file .pptx (`layoutDeck`) nên khớp với file sẽ lưu.
  */
-export function PptxPreview({ deck, meta, fileName }: { deck: SlideDeck; meta: SlideMeta; fileName: string }) {
+export function PptxPreview({ deck, meta, fileName, figures = {} }: { deck: SlideDeck; meta: SlideMeta; fileName: string; figures?: PreviewFigures }) {
   const slides = useMemo(() => layoutDeck(deck, meta), [deck, meta]);
   const [index, setIndex] = useState(0);
   const rail = useRef<HTMLOListElement>(null);
@@ -192,7 +214,7 @@ export function PptxPreview({ deck, meta, fileName }: { deck: SlideDeck; meta: S
                 aria-label={`Slide ${i + 1}`}
                 className={cn("block w-28 overflow-hidden rounded-sm border-2 md:w-full", i === index ? "border-[#B7472A]" : "border-transparent hover:border-line-strong")}
               >
-                <SlideCanvas slide={s} footer={footer} number={i + 1} />
+                <SlideCanvas slide={s} footer={footer} number={i + 1} figures={figures} />
               </button>
             </li>
           ))}
@@ -200,7 +222,7 @@ export function PptxPreview({ deck, meta, fileName }: { deck: SlideDeck; meta: S
 
         <div className="min-w-0 flex-1 p-3 md:p-4">
           <div className="mx-auto max-w-3xl shadow-md">
-            <SlideCanvas slide={current} footer={footer} number={index + 1} />
+            <SlideCanvas slide={current} footer={footer} number={index + 1} figures={figures} />
           </div>
           <div className="mt-3 flex items-center justify-center gap-3">
             <button type="button" onClick={() => go(index - 1)} disabled={index === 0} aria-label="Slide trước" className="inline-flex size-10 items-center justify-center rounded-full border border-line-strong bg-surface disabled:opacity-40">

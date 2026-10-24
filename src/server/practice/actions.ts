@@ -132,15 +132,21 @@ export async function savePracticeQuestionAction(_prev: ActionState, formData: F
   const correct = q.correctOption === "" ? null : Number(q.correctOption) - 1;
   const result = await runAction(
     () =>
-      savePracticeQuestion(actor, q.setId, q.questionId || null, {
-        type: q.type as QuestionType,
-        prompt: q.prompt,
-        points: q.points,
-        options: q.type === "MCQ" ? lines(q.options) : null,
-        correctOption: q.type === "MCQ" && Number.isInteger(correct) ? correct : null,
-        acceptedAnswers: q.type === "SHORT" ? lines(q.acceptedAnswers) : null,
-        explanation: q.explanation,
-      }),
+      savePracticeQuestion(
+        actor,
+        q.setId,
+        q.questionId || null,
+        {
+          type: q.type as QuestionType,
+          prompt: q.prompt,
+          points: q.points,
+          options: q.type === "MCQ" ? lines(q.options) : null,
+          correctOption: q.type === "MCQ" && Number.isInteger(correct) ? correct : null,
+          acceptedAnswers: q.type === "SHORT" ? lines(q.acceptedAnswers) : null,
+          explanation: q.explanation,
+        },
+        { removeFigure: formData.get("removeFigure") === "1" },
+      ),
     fields,
   );
   if (!result.ok) return result.state;

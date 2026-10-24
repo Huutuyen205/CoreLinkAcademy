@@ -23,6 +23,40 @@ describe("khuôn mẫu Word/PowerPoint", () => {
   }
 });
 
+describe("hình minh họa trong tệp (DECISION-D43)", () => {
+  const hasEntry = (data: Uint8Array, prefix: string) => Buffer.from(data).includes(Buffer.from(prefix, "latin1"));
+  const mock = async (kind: (typeof GENERATE_KINDS)[number], group: "math" | "english") => {
+    const { text } = await mockProvider().complete({ task: kind, system: "", user: "", mock: { kind, group, topic: "Phương trình bậc hai", courseTitle: "Toán 9", sessionIndex: 3, count: 5 } });
+    return normalizeContent(kind, extractJson(text));
+  };
+
+  it("Toán: slide, giáo trình, đề có ảnh PNG nhúng trong tệp", async () => {
+    expect(hasEntry((await render(await mock("slides", "math"), meta)).data, "ppt/media/")).toBe(true);
+    expect(hasEntry((await render(await mock("curriculum", "math"), meta)).data, "word/media/")).toBe(true);
+    expect(hasEntry((await render(await mock("exercises", "math"), meta)).data, "word/media/")).toBe(true);
+  });
+
+  it("Tiếng Anh (mẫu không có hình) → không có ảnh", async () => {
+    expect(hasEntry((await render(await mock("exercises", "english"), meta)).data, "word/media/")).toBe(false);
+  });
+
+  it("hình hỏng không làm hỏng cả bài: phần chữ giữ nguyên, hình bị bỏ", async () => {
+    const content = normalizeContent("quiz", {
+      title: "Đề",
+      questions: [{ type: "MCQ", prompt: "1 + 1 = ?", options: ["1", "2", "3", "4"], correctOption: 1, figure: { type: "function", expr: "rm -rf /" } }],
+    });
+    expect(content.kind === "quiz" && content.data.questions[0]!.figure).toBeUndefined();
+    expect((await render(content, meta)).data.byteLength).toBeGreaterThan(2_000);
+  });
+
+  it("tối đa 6 hình mỗi lần soạn, giữ các hình đầu", () => {
+    const fig = { type: "formula", latex: "x" };
+    const content = normalizeContent("slides", { title: "T", slides: Array.from({ length: 9 }, (_, i) => ({ title: `S${i}`, bullets: ["a"], figure: fig })) });
+    const withFig = content.kind === "slides" ? content.data.slides.map((s) => Boolean(s.figure)) : [];
+    expect(withFig).toEqual([true, true, true, true, true, true, false, false, false]);
+  });
+});
+
 describe("bố cục slide", () => {
   const long = (n: number, len: number) => Array.from({ length: n }, (_, i) => `Ý ${i + 1}: ${"nội dung dài ".repeat(Math.ceil(len / 13))}`.slice(0, len));
 

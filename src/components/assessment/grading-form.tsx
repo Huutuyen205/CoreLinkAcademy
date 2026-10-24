@@ -6,15 +6,19 @@ import { GradeAssist } from "@/components/ai/grade-assist";
 import { PhotoGrid, type PhotoItem } from "@/components/assessment/essay-photos";
 import { FormMessage } from "@/components/forms/config-form";
 import { TextareaField, TextField } from "@/components/ui/field";
+import { QuestionFigure } from "@/components/ui/question-figure";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { gradeSubmissionAction } from "@/server/assessment/actions";
 import { initialActionState } from "@/server/errors";
+import type { FigureView } from "@/server/figures/render";
 
 export type GradingItem = {
   answerId: string | null;
   order: number;
   type: QuestionType;
   prompt: string;
+  /** Hình minh họa của đề (đã vẽ sẵn phía server). */
+  figure?: FigureView | null;
   maxPoints: number;
   responseText: string;
   correctText: string | null;
@@ -59,6 +63,7 @@ export function GradingForm({ submissionId, items, comment, publishedWarning, ma
               {it.autoPoints !== null && ` · tự chấm: ${it.autoPoints}`}
             </p>
             <p className="mt-1 whitespace-pre-line font-medium">{it.prompt}</p>
+            <QuestionFigure figure={it.figure} />
             <div className="mt-3 rounded-control bg-paper p-3">
               <p className="text-sm text-muted">Bài làm</p>
               <p className="whitespace-pre-line">{it.responseText || (it.photos.length === 0 ? <span className="text-muted">(Bỏ trống)</span> : null)}</p>

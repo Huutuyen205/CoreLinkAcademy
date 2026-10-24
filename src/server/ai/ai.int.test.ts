@@ -18,8 +18,8 @@ const { askAssistant } = await import("./chat/service");
 const { runIntent } = await import("./chat/handlers");
 const { dayRange } = await import("./chat/dates");
 const { composeAndSave, generateContent, saveGenerated } = await import("./generate/service");
-const { suggestEssayGrades, readAnswerSheet, saveSheetResult, listSheetCandidates } = await import("./grading/service");
-const { listAssignmentsOfStudent } = await import("@/server/assessment/service");
+const { suggestEssayGrades, gradeUngradedWithAi, readAnswerSheet, saveSheetResult, listSheetCandidates } = await import("./grading/service");
+const { listAssignmentsOfStudent, getAssignmentForTeacher, gradeSubmission, openAssignmentForStudent, saveQuestion, setAssignmentStatus } = await import("@/server/assessment/service");
 
 const tag = makeTag();
 const TAG = tag.toUpperCase();
@@ -507,6 +507,38 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("AI — chatbot, soạn bài, ch
       expect(qs.every((q) => q.type === "ESSAY" && q.options === null && q.points > 0)).toBe(true);
       expect(await db.document.count({ where: { ownerId: t1.id } })).toBe(before + 1);
     });
+
+    it("hình minh họa (Toán, DECISION-D43): slide có SVG xem trước; câu hỏi lưu đặc tả, HS thấy hình không thấy đáp án; GV bỏ hình được", async () => {
+      const slides = await generateContent(t1, { ...input, kind: "slides", sessionId: sessions.A2! });
+      expect(Object.values(slides.figures).length).toBeGreaterThan(0);
+      expect(Object.values(slides.figures).every((f) => f.svg.startsWith("<svg"))).toBe(true);
+
+      const r = await generateContent(t1, { ...input, kind: "exercises", sessionId: sessions.A2!, count: 5 });
+      const saved = await saveGenerated(t1, { sessionId: sessions.A2!, kind: "exercises", data: r.content.data, mode: "assignment" });
+      const rows = await db.question.findMany({ where: { assignmentId: saved.id }, orderBy: { order: "asc" } });
+      const withFigure = rows.filter((q) => q.figure !== null);
+      expect(withFigure.length).toBeGreaterThan(0);
+      expect(withFigure[0]!.figure).toMatchObject({ type: "geometry" });
+
+      const teacherView = await getAssignmentForTeacher(t1, saved.id);
+      expect(teacherView.questions.find((q) => q.id === withFigure[0]!.id)!.figure?.svg).toMatch(/^<svg/);
+
+      await setAssignmentStatus(t1, saved.id, "PUBLISHED");
+      const opened = await openAssignmentForStudent(s1, saved.id);
+      const item = opened.items.find((i) => i.question.id === withFigure[0]!.id)!;
+      expect(item.figure?.svg).toMatch(/^<svg/);
+      expect(Object.keys(item.question)).not.toContain("acceptedAnswers");
+      expect(item.result).toBeNull();
+
+      // Sửa câu không đụng hình → giữ hình; tick "Bỏ hình" → xóa hình. (Đưa bài về nháp trực tiếp trong CSDL để sửa được câu.)
+      const q = withFigure[0]!;
+      await db.assignment.update({ where: { id: saved.id }, data: { status: "DRAFT" } });
+      const base = { type: q.type, prompt: `${q.prompt} (sửa)`, points: q.points, options: null, correctOption: null, acceptedAnswers: q.acceptedAnswers as string[] };
+      await saveQuestion(t1, saved.id, q.id, base);
+      expect((await db.question.findUniqueOrThrow({ where: { id: q.id } })).figure).not.toBeNull();
+      await saveQuestion(t1, saved.id, q.id, base, { removeFigure: true });
+      expect((await db.question.findUniqueOrThrow({ where: { id: q.id } })).figure).toBeNull();
+    });
   });
 
   /* ───────── Chấm bài ───────── */
@@ -530,6 +562,36 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)("AI — chatbot, soạn bài, ch
       for (const actor of [t2, t3, s1, p1]) await expect(suggestEssayGrades(actor, essaySubmissionId, "")).rejects.toBeInstanceOf(ForbiddenError);
       const inProgress = await db.submission.findFirstOrThrow({ where: { assignmentId: essayAssignmentId, studentId: s2.id } });
       await expect(suggestEssayGrades(t1, inProgress.id, "")).rejects.toMatchObject({ code: "NOT_SUBMITTED" });
+    });
+
+    it("AI chấm cả lớp: chấm mọi bài đã nộp chưa chấm, đánh dấu chờ duyệt; GV lưu điểm thì bỏ dấu", async () => {
+      // Bài thứ hai: học sinh bỏ trống câu tự luận (không chữ, không ảnh) → 0 điểm.
+      const essayQ = await db.question.findFirstOrThrow({ where: { assignmentId: essayAssignmentId, type: "ESSAY" }, select: { id: true } });
+      const blank = await db.submission.create({ data: { assignmentId: essayAssignmentId, studentId: s3.id, status: "SUBMITTED", submittedAt: at(0, "08:30") } });
+      const blankAnswer = await db.answer.create({ data: { submissionId: blank.id, questionId: essayQ.id, response: "" } });
+
+      for (const actor of [t2, t3, s1, p1]) await expect(gradeUngradedWithAi(actor, essayAssignmentId)).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(gradeUngradedWithAi(t1, sheetAssignmentId)).rejects.toMatchObject({ code: "NOTHING_TO_GRADE" });
+
+      const r = await gradeUngradedWithAi(t1, essayAssignmentId);
+      expect(r).toMatchObject({ graded: 2, needTeacher: 0, remaining: 0, stoppedReason: null, mock: true });
+      const graded = await db.submission.findMany({ where: { assignmentId: essayAssignmentId, status: "GRADED" }, include: { answers: true } });
+      expect(graded.map((g) => g.studentId).sort()).toEqual([s1.id, s3.id].sort());
+      for (const g of graded) {
+        expect(g.aiGradedAt).not.toBeNull();
+        expect(g.score).toBe(g.answers.reduce((t, a) => t + (a.teacherPoints ?? 0) + (a.autoPoints ?? 0), 0));
+      }
+      expect((await db.answer.findUniqueOrThrow({ where: { id: blankAnswer.id } })).teacherPoints).toBe(0);
+      // Học sinh chưa nộp không bị đụng tới; lần bấm sau không còn bài.
+      expect((await db.submission.findFirstOrThrow({ where: { assignmentId: essayAssignmentId, studentId: s2.id } })).status).toBe("IN_PROGRESS");
+      await expect(gradeUngradedWithAi(t1, essayAssignmentId)).rejects.toMatchObject({ code: "NOTHING_TO_GRADE" });
+      expect(await db.auditLog.count({ where: { actorId: t1.id, action: "ai.grade_batch", entityId: essayAssignmentId } })).toBe(1);
+
+      // Giáo viên duyệt (lưu điểm) → hết "chờ duyệt".
+      const mine = graded.find((g) => g.studentId === s1.id)!;
+      await gradeSubmission(t1, mine.id, mine.answers.filter((a) => a.teacherPoints !== null).map((a) => ({ answerId: a.id, teacherPoints: a.teacherPoints, feedback: a.feedback })), null);
+      expect((await db.submission.findUniqueOrThrow({ where: { id: mine.id } })).aiGradedAt).toBeNull();
+      await db.submission.delete({ where: { id: blank.id } });
     });
 
     const jpeg = () => ({ fileName: "phieu.jpg", mimeType: "image/jpeg", size: 4, data: new Uint8Array([0xff, 0xd8, 0xff, 0xd9]) });

@@ -5,6 +5,7 @@ import { ConfigForm } from "@/components/forms/config-form";
 import { Flash } from "@/components/layout/flash";
 import { PracticeForm } from "@/components/practice/practice-form";
 import { Alert, Badge, Card, EmptyState, PageHeader } from "@/components/ui/feedback";
+import { QuestionFigure, withFigureFlag } from "@/components/ui/question-figure";
 import { ActionButton, RowActions } from "@/components/ui/row-actions";
 import { requireActor } from "@/server/auth/guard";
 import { requireLearner } from "@/server/auth/learner";
@@ -113,6 +114,7 @@ async function AuthorView({ id, actor, thongbao }: { id: string; actor: Actor; t
                       Câu {q.order} · {QUESTION_TYPE[q.type]} · {q.points} điểm
                     </p>
                     <p className="mt-1 whitespace-pre-line">{q.prompt}</p>
+                    <QuestionFigure figure={q.figure} />
                     {q.type === "MCQ" && (
                       <ol className="mt-2 list-decimal space-y-0.5 pl-6 text-sm">
                         {q.options?.map((o, i) => (
@@ -129,7 +131,7 @@ async function AuthorView({ id, actor, thongbao }: { id: string; actor: Actor; t
                       <details className="mt-3">
                         <summary className="cursor-pointer py-2.5 text-sm text-primary">Sửa hoặc xóa</summary>
                         <div className="mt-3 space-y-4">
-                          <QuestionForm assignmentId={set.id} initial={q} practice={{ action: savePracticeQuestionAction, parentName: "setId" }} />
+                          <QuestionForm assignmentId={set.id} initial={withFigureFlag(q)} practice={{ action: savePracticeQuestionAction, parentName: "setId" }} />
                           <ConfigForm action={deletePracticeQuestionAction} hidden={{ setId: set.id, questionId: q.id }} submitLabel="Xóa câu này" submitVariant="danger" confirm="Xóa câu hỏi này?" fields={[]} />
                         </div>
                       </details>

@@ -7,6 +7,7 @@ import { isManager } from "@/server/auth/scope";
 import type { Actor } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { DomainError, ForbiddenError } from "@/server/errors";
+import { figureView } from "@/server/figures/render";
 import { notifyUsers } from "@/server/notifications/service";
 import { autoGrade, jsonStrings, round2, validateQuestion, type QuestionData } from "@/lib/grading";
 
@@ -153,7 +154,7 @@ export type PracticeQuestionInput = {
 };
 
 /** Thêm/sửa câu: chỉ trắc nghiệm và trả lời ngắn (chấm tự động). Sửa được cả khi đề đang mở (lượt cũ giữ điểm đã chấm). */
-export async function savePracticeQuestion(actor: Actor, setId: string, questionId: string | null, input: PracticeQuestionInput): Promise<void> {
+export async function savePracticeQuestion(actor: Actor, setId: string, questionId: string | null, input: PracticeQuestionInput, opts: { removeFigure?: boolean } = {}): Promise<void> {
   await editableSet(actor, setId);
   if (input.type === "ESSAY") throw new DomainError("INVALID_TYPE", "Đề luyện tập chỉ gồm câu trắc nghiệm hoặc trả lời ngắn (chấm tự động).", { type: "Chọn trắc nghiệm hoặc trả lời ngắn." });
   const errors = validateQuestion(input);
@@ -168,7 +169,7 @@ export async function savePracticeQuestion(actor: Actor, setId: string, question
     acceptedAnswers: input.type === "SHORT" ? (input.acceptedAnswers ?? []).map((a) => a.trim()).filter(Boolean) : Prisma.DbNull,
   };
   if (questionId) {
-    const { count } = await db.practiceQuestion.updateMany({ where: { id: questionId, setId }, data });
+    const { count } = await db.practiceQuestion.updateMany({ where: { id: questionId, setId }, data: opts.removeFigure ? { ...data, figure: Prisma.DbNull } : data });
     if (count === 0) throw new ForbiddenError();
   } else {
     const count = await db.practiceQuestion.count({ where: { setId } });
@@ -212,7 +213,7 @@ export async function getPracticeSetForAuthor(actor: Actor, setId: string) {
   return {
     ...set,
     canEdit,
-    questions: set.questions.map((q) => ({ ...toData(q), explanation: q.explanation })),
+    questions: set.questions.map((q) => ({ ...toData(q), explanation: q.explanation, figure: figureView(q.figure) })),
     avgPercent: avg._avg.maxScore ? round2(((avg._avg.score ?? 0) / avg._avg.maxScore) * 100) : null,
   };
 }
@@ -228,7 +229,7 @@ export async function openPracticeSet(actor: Actor, setId: string) {
   const attempts = await db.practiceAttempt.findMany({ where: { setId, studentId: actor.id }, orderBy: { submittedAt: "desc" }, take: 20, select: { id: true, score: true, maxScore: true, correctCount: true, total: true, submittedAt: true } });
   return {
     set: { id: set.id, title: set.title, description: set.description, topic: set.topic, format: set.format, difficulty: set.difficulty, subject: set.subject, level: set.level },
-    questions: set.questions.map((q) => ({ id: q.id, order: q.order, type: q.type, prompt: q.prompt, options: jsonStrings(q.options), points: q.points })),
+    questions: set.questions.map((q) => ({ id: q.id, order: q.order, type: q.type, prompt: q.prompt, options: jsonStrings(q.options), points: q.points, figure: figureView(q.figure) })),
     attempts,
   };
 }
@@ -277,7 +278,7 @@ export async function getPracticeAttempt(actor: Actor, attemptId: string) {
       const data = toData(q);
       const response = given[q.id] ?? "";
       const points = autoGrade(data, response || null) ?? 0;
-      return { question: data, explanation: q.explanation, response, correct: points >= data.points && points > 0 };
+      return { question: data, figure: figureView(q.figure), explanation: q.explanation, response, correct: points >= data.points && points > 0 };
     }),
   };
 }

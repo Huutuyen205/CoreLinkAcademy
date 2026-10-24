@@ -48,12 +48,12 @@ Tên*, Hướng dẫn, Hạn nộp (giờ VN, mặc định +7 ngày 21:00), Cho
 ### SCREEN-030 Soạn / giao / công bố `/giao-vien/bai-tap/[id]`
 | Khối | Nháp | Đã giao / Đã đóng |
 |---|---|---|
-| Câu hỏi | Danh sách (đáp án đúng in đậm "(đúng)"), "Sửa hoặc xóa", "Thêm câu hỏi" | Chỉ xem + "Bài đã giao nên không sửa được câu hỏi." |
-| Giao bài | "Giao bài cho lớp" (xác nhận) | "Đóng bài" / "Mở lại bài"; "Bài nộp (n)"; "Công bố kết quả" (xác nhận) + "Còn N bài chưa chấm…" |
-| Thông tin bài | Sửa tên, hướng dẫn, hạn, nộp muộn | Như trên (hạn mới phải ở tương lai) |
+| Câu hỏi | Danh sách (đáp án đúng in đậm "(đúng)"), "Sửa hoặc xóa" (MCQ: ô tròn tích đáp án đúng), "Thêm câu hỏi" | Chỉ xem + "Bài đã giao nên không sửa được câu hỏi." |
+| Nút "Quản lý bài" (đầu trang) → hộp thoại | Tab "Quản lý bài": "Giao bài cho lớp" (xác nhận) | Tab "Quản lý bài": 4 nút cùng cỡ — "Chấm bài" (→ Bài nộp), "AI chấm" (chấm mọi bài đã nộp chưa chấm, D44), công tắc mở/đóng bài, "Nhắc nộp bài"; "Công bố kết quả" (xác nhận) + "Còn N bài chưa chấm…" |
+| Hộp thoại, tab "Chi tiết" | Sửa tên, hướng dẫn, hạn, nộp muộn, bài chữa; "Xóa bài" khi chưa có bài nộp | Như trên (hạn mới phải ở tương lai) |
 
 ### SCREEN-031 Bài nộp
-Bảng HS: trạng thái ("Chưa mở bài", "Đang làm", "Chờ chấm", "Đã chấm", "Nộp muộn"), nộp lúc, điểm, "Chấm bài"/"Xem / sửa điểm".
+Bảng HS: trạng thái ("Chưa mở bài", "Đang làm", "Chờ chấm", "Đã chấm", "Nộp muộn", "AI chấm · chờ duyệt"), nộp lúc, điểm, "Chấm bài"/"Duyệt điểm AI"/"Xem / sửa điểm". Đầu trang có "Nhập phiếu giấy (AI đọc)" cho bài toàn trắc nghiệm.
 
 ### SCREEN-032 Chấm bài `/giao-vien/bai-nop/[id]`
 Từng câu: tối đa, tự chấm, nội dung, bài làm, đáp án; ô điểm (tự luận bắt buộc; khách quan tùy chọn, bước 0,25, nhận "7,5"), nhận xét câu; nhận xét chung → "Lưu điểm". Đã công bố → cảnh báo "Mọi thay đổi điểm sẽ được ghi vào nhật ký."

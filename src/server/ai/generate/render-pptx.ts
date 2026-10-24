@@ -1,10 +1,12 @@
 // Khuôn mẫu PowerPoint cố định (16:9, màu + logo thương hiệu): AI chỉ cung cấp tiêu đề/ý chính từng slide.
 // Chữ được tính kích cỡ theo độ dài và tự tách sang slide "(tiếp)" khi quá nhiều, để không tràn khung.
+// Hình minh họa (DECISION-D43) vẽ thành PNG 2× rồi đặt bên phải danh sách ý (hoặc giữa slide nếu slide chỉ có hình).
 import PptxGenJS from "pptxgenjs";
+import { figureToPng, type Png } from "@/server/figures/render";
 import { LOGO_DATA } from "./brand-logo";
 import type { DocMeta } from "./render-docx";
 import type { SlideDeck } from "./schemas";
-import { BODY, bulletHeight, coverSize, fitSize, GAP, layoutDeck, paginate, SLIDE_H, SLIDE_W, titleSize, BULLET_TEXT_W } from "./slide-layout";
+import { BODY, bulletHeight, containRect, coverSize, figureFrame, fitSize, GAP, layoutDeck, paginate, SLIDE_H, SLIDE_W, titleSize } from "./slide-layout";
 
 // BRAND trùng màu nền của logo (#1C2D95) để ô logo hòa vào nền xanh.
 const BRAND = "1C2D95";
@@ -31,6 +33,12 @@ export async function renderSlidesPptx(deck: SlideDeck, meta: DocMeta): Promise<
   pptx.company = "Core Link Academy";
   pptx.author = "Core Link Academy";
   const footer = `Core Link Academy · ${meta.classCode} · Buổi ${meta.sessionIndex}`;
+  // Vẽ trước mọi hình; hình nào vẽ không được thì slide vẫn có chữ.
+  const pngs = new Map<number, Png>();
+  deck.slides.forEach((s, i) => {
+    const png = s.figure ? figureToPng(s.figure) : null;
+    if (png) pngs.set(i, png);
+  });
 
   // Nội dung: nền trắng, logo + thanh nhận diện ở đầu, chân trang có vạch, tên lớp và số trang.
   pptx.defineSlideMaster({
@@ -81,10 +89,17 @@ export async function renderSlidesPptx(deck: SlideDeck, meta: DocMeta): Promise<
         c.addShape(pptx.ShapeType.roundRect, { x: 0.5, y: 1.4, w: W - 1.0, h: 3.65, rectRadius: 0.12, fill: { color: PAPER }, line: { color: LINE, width: 0.75 } });
         let y = BODY.y;
         for (const b of slide.bullets) {
-          const h = bulletHeight(b, slide.size) - GAP;
+          const h = bulletHeight(b, slide.size, slide.textW) - GAP;
           c.addShape(pptx.ShapeType.ellipse, { x: BODY.x - 0.05, y: y + (slide.size * 1.22) / 144 - 0.07, w: 0.14, h: 0.14, fill: { color: ACCENT }, line: { color: ACCENT, transparency: 100 } });
-          c.addText(b, { x: BODY.x + 0.3, y, w: BULLET_TEXT_W, h, fontSize: slide.size, color: INK, fontFace: SANS, valign: "top", margin: 0, fit: "none" });
+          c.addText(b, { x: BODY.x + 0.3, y, w: slide.textW, h, fontSize: slide.size, color: INK, fontFace: SANS, valign: "top", margin: 0, fit: "none" });
           y += h + GAP;
+        }
+        const png = slide.figure ? pngs.get(slide.figure.source) : undefined;
+        if (slide.figure && png) {
+          const frameRect = figureFrame(slide);
+          const img = containRect(frameRect.image, png.width, png.height);
+          c.addImage({ data: `image/png;base64,${Buffer.from(png.data).toString("base64")}`, ...img });
+          if (frameRect.caption) c.addText(slide.figure.caption, { ...frameRect.caption, fontSize: 12, italic: true, color: MUTED, fontFace: SANS, align: "center", valign: "top", margin: 0 });
         }
         if (slide.notes) c.addNotes(slide.notes);
         break;

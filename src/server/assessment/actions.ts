@@ -170,14 +170,20 @@ export async function saveQuestionAction(_prev: ActionState, formData: FormData)
   const correct = q.correctOption === "" ? null : Number(q.correctOption) - 1;
   const result = await runAction(
     () =>
-      saveQuestion(actor, q.assignmentId, q.questionId || null, {
-        type: q.type as QuestionType,
-        prompt: q.prompt,
-        points: q.points,
-        options: q.type === "MCQ" ? lines(q.options) : null,
-        correctOption: q.type === "MCQ" && Number.isInteger(correct) ? correct : null,
-        acceptedAnswers: q.type === "SHORT" ? lines(q.acceptedAnswers) : null,
-      }),
+      saveQuestion(
+        actor,
+        q.assignmentId,
+        q.questionId || null,
+        {
+          type: q.type as QuestionType,
+          prompt: q.prompt,
+          points: q.points,
+          options: q.type === "MCQ" ? lines(q.options) : null,
+          correctOption: q.type === "MCQ" && Number.isInteger(correct) ? correct : null,
+          acceptedAnswers: q.type === "SHORT" ? lines(q.acceptedAnswers) : null,
+        },
+        { removeFigure: formData.get("removeFigure") === "1" },
+      ),
     fields,
   );
   if (!result.ok) return result.state;

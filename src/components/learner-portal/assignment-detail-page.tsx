@@ -4,6 +4,7 @@ import { PhotoGrid } from "@/components/assessment/essay-photos";
 import { FileList } from "@/components/files/file-list";
 import { ConfigForm } from "@/components/forms/config-form";
 import { Alert, Badge, Card, PageHeader } from "@/components/ui/feedback";
+import { QuestionFigure } from "@/components/ui/question-figure";
 import { deleteSubmissionFileAction, uploadSubmissionFilesAction } from "@/server/assessment/actions";
 import { askAboutAssignmentAction } from "@/server/messaging/actions";
 import { openAssignmentForStudent } from "@/server/assessment/service";
@@ -75,7 +76,7 @@ export async function LearnerAssignmentPage({ params }: { params: Promise<{ id: 
       {canWork ? (
         <AnswerForm
           assignmentId={a.id}
-          items={items.map((i) => ({ id: i.question.id, order: i.question.order, type: i.question.type, prompt: i.question.prompt, options: i.question.options, points: i.question.points, response: i.response, photos: i.photos }))}
+          items={items.map((i) => ({ id: i.question.id, order: i.question.order, type: i.question.type, prompt: i.question.prompt, options: i.question.options, points: i.question.points, figure: i.figure, response: i.response, photos: i.photos }))}
         />
       ) : (
         <>
@@ -104,6 +105,7 @@ export async function LearnerAssignmentPage({ params }: { params: Promise<{ id: 
                     Câu {q.order} · {r ? `${r.points}/${q.points}` : q.points} điểm
                   </p>
                   <p className="mt-1 whitespace-pre-line font-medium">{q.prompt}</p>
+                  <QuestionFigure figure={i.figure} />
                   <p className="mt-2 whitespace-pre-line">
                     <span className="text-sm text-muted">Bài làm: </span>
                     {shown || (i.photos.length === 0 && <span className="text-muted">(Bỏ trống)</span>)}

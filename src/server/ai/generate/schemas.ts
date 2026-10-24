@@ -1,5 +1,7 @@
 // Khuôn dữ liệu AI phải trả về (Zod). Mọi đầu ra — kể cả bản mock — đều qua các schema này trước khi dùng.
+// `figure` (không bắt buộc): đặc tả hình minh họa do hệ thống tự vẽ (DECISION-D43); hình sai khuôn bị bỏ, phần chữ vẫn dùng.
 import { z } from "zod";
+import { optionalFigure } from "@/server/figures/schema";
 
 const line = (max: number) => z.string().trim().min(1).max(max);
 const lines = (max: number, maxItems: number) => z.array(line(max)).max(maxItems);
@@ -34,6 +36,7 @@ export const slidesSchema = z.object({
         title: line(160),
         bullets: lines(300, 8).default([]),
         notes: z.string().trim().max(1000).default(""),
+        figure: optionalFigure,
       }),
     )
     .min(2)
@@ -46,7 +49,7 @@ export const curriculumSchema = z.object({
   summary: line(1200),
   outcomes: lines(300, 10).min(1),
   sections: z
-    .array(z.object({ heading: line(160), content: line(2500), keyPoints: lines(300, 10).default([]) }))
+    .array(z.object({ heading: line(160), content: line(2500), keyPoints: lines(300, 10).default([]), figure: optionalFigure }))
     .min(1)
     .max(12),
 });
@@ -59,6 +62,7 @@ const mcqItem = z.object({
   options: lines(400, 6).min(2),
   correctOption: z.coerce.number().int().min(0),
   explanation: z.string().trim().max(1000).default(""),
+  figure: optionalFigure,
 });
 
 const shortItem = z.object({
@@ -66,6 +70,7 @@ const shortItem = z.object({
   prompt: line(1500),
   acceptedAnswers: lines(200, 8).min(1),
   explanation: z.string().trim().max(1000).default(""),
+  figure: optionalFigure,
 });
 
 const essayItem = z.object({
@@ -74,6 +79,7 @@ const essayItem = z.object({
   sampleAnswer: line(3000),
   rubric: z.array(z.object({ criterion: line(300), points: z.coerce.number().min(0).max(100) })).max(8).default([]),
   points: z.coerce.number().min(0.25).max(100).default(2),
+  figure: optionalFigure,
 });
 
 /** Đề trắc nghiệm: chỉ MCQ. */

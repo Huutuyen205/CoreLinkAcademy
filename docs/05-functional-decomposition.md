@@ -2,7 +2,7 @@
 
 | Mục | Giá trị |
 |---|---|
-| Phiên bản | 3.1 (2026-10-21) — thêm FEAT ID, trạng thái thực tế đã đối chiếu code, mục Pha 2 mở rộng |
+| Phiên bản | 3.2 (2026-10-24) — FEAT-048 hình minh họa Toán (FR-067, D43), P2-52 làm một phần, thêm P2-57, P2-58; 3.1 (2026-10-21) — thêm FEAT ID, trạng thái thực tế đã đối chiếu code, mục Pha 2 mở rộng |
 | Owner | Trợ lý (Functional Analyst) · Phê duyệt: chủ dự án |
 
 ## 1. Nguyên tắc phân rã
@@ -128,6 +128,7 @@ CoreLink Academy v3
 | FEAT-045 | Trợ lý AI | Chatbot hỏi đáp dữ liệu thật theo vai trò (nút gợi ý, luật từ khóa, AI chọn ý định khi cần), chế độ mẫu | Mọi người đăng nhập | Cổng | BR-046, BR-047 | audit_logs, rate_limit_buckets | Nút nổi `ChatWidget` | — | FR-054 | P2 | Code; Unit; Integration (DB thật) |
 | FEAT-046 | Trợ lý AI | Soạn giáo án, slide, giáo trình, đề trắc nghiệm, bài tập, tự luận Toán/Anh cho một buổi → khuôn Word/PowerPoint hoặc bài tập nháp | GV | GV | BR-040..045 | assignments, questions, documents, stored_files | `/giao-vien/soan-bai`, `/giao-vien/soan-bai/[loai]` (mỗi loại một form, tự lưu nháp — D40) | — | FR-055 | P2 | Code; Unit; Integration; HTTP |
 | FEAT-047 | Trợ lý AI | Gợi ý điểm tự luận (kể cả ảnh viết tay); chấm phiếu trắc nghiệm giấy (AI đọc, GV xác nhận) | GV | GV | BR-042, BR-043, BR-046 | submissions, answers, stored_files | Trang chấm bài, `/giao-vien/bai-tap/[id]/phieu-giay` | — | FR-056 | P2 | Code; Unit; Integration; HTTP |
+| FEAT-048 | Trợ lý AI | Hình minh họa Toán do hệ thống vẽ từ đặc tả JSON của AI (đồ thị, hình học phẳng/không gian, bảng biến thiên, trục số, Ven, công thức LaTeX) → SVG trên web, PNG trong `.pptx`/`.docx`; GV bỏ được hình khi sửa câu (D43) | GV (soạn), HS/PH (xem khi làm bài) | GV, Cổng | BR-040, BR-046 | questions.figure, practice_questions.figure | Bản xem trước slide, trang bài tập GV, làm bài, chấm bài, đề luyện + kết quả | — | FR-067 | P1 | Code; Unit; Integration (DB thật) |
 
 ## 4. Ngoài phạm vi và trùng lặp
 
@@ -190,11 +191,14 @@ CoreLink Academy v3
 | P2-49 | **Đã làm (D37, FR-061)**: lộ trình theo từng buổi (nội dung, mục tiêu, kiến thức, ví dụ), số buổi = số buổi khóa, hiện cho GV ở trang buổi và là đầu vào chuẩn của AI | AI / Đào tạo | DECISION-D37 | — |
 | P2-50 | Lưu đáp án mẫu/thang điểm câu tự luận cùng câu hỏi (cột mới) để AI chấm sát và GV dùng lại; hiện đáp án tự luận chỉ nằm trong tệp Word | AI / Khảo thí | DECISION-D34 | Migration |
 | P2-51 | Chấm gợi ý hàng loạt cả lớp bằng hàng đợi nền, so sánh điểm AI với điểm GV để đo chất lượng | AI | DECISION-D34 | P2-29 |
-| P2-52 | Công thức Toán dạng LaTeX/KaTeX trong đề, slide, Word | AI / Khảo thí | DECISION-D34 | P2-06 |
+| P2-52 | Công thức Toán dạng LaTeX/KaTeX trong đề, slide, Word — **một phần đã làm (FR-067, D43)**: công thức đứng riêng thành hình `formula` (MathJax). Còn lại: công thức xen giữa dòng chữ của câu hỏi/đáp án và giáo viên tự gõ LaTeX | AI / Khảo thí | DECISION-D34, D43 | P2-06 |
 | P2-53 | Chatbot nhớ ngữ cảnh hội thoại, lưu lịch sử, hỏi tiếp ("còn bé kia?"), thêm ý định học phí cá nhân | AI | DECISION-D34 | P2-01 |
 | P2-54 | Trang theo dõi lượt dùng/chi phí AI (token theo người, theo ngày) cho Admin | AI / Vận hành | DECISION-D34 | — |
 | P2-55 | Chấm/soạn tự luận Ngữ văn (cần rubric của trung tâm và đánh giá chất lượng riêng) | AI | DECISION-D34 | Rubric từ PO |
 | P2-56 | GV nhập hộ bài tự luận làm trên giấy của HS (mở rộng phiếu trắc nghiệm giấy đã làm — D34) | AI / Bài tập | P2-36 | — |
+| P2-57 | Hình minh họa cho môn khác (Lý: mạch điện, lực; Hóa: công thức cấu tạo…) và cho giáo viên tự nhập/sửa đặc tả hình khi soạn câu bằng tay | AI / Khảo thí | DECISION-D43 | FR-067 |
+| P2-59 | AI chấm cả bài chỉ nộp tệp/ảnh (không có câu hỏi) và ảnh HEIC/PDF; thống kê tỉ lệ GV sửa điểm AI | AI / Bài tập | DECISION-D44 | P2-51 |
+| P2-58 | Ảnh minh họa trang trí (bìa slide, tranh từ vựng Tiếng Anh) bằng API sinh ảnh trả phí theo lượt — không dùng cho hình Toán | AI | DECISION-D43 | Ngân sách API |
 
 ## 6. Coverage check
 

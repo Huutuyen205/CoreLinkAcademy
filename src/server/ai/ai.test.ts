@@ -140,6 +140,11 @@ describe("dữ liệu mẫu (mock) qua đúng schema như AI thật", () => {
     // Δ của x² − 4x + 3 = 0 là 4; tổng hai nghiệm x² − 7x + 10 = 0 là 7.
     expect(quiz.questions[1]!.options[quiz.questions[1]!.correctOption]).toBe("4");
     expect(quiz.questions[3]!.options[quiz.questions[3]!.correctOption]).toBe("7");
+    // Câu đọc đồ thị y = x² − 4x + 3 (có hình): 2 nghiệm.
+    const full = SCHEMAS.quiz.parse(extractJson((await mockProvider().complete({ task: "quiz", system: "", user: "", mock: { kind: "quiz", group: "math", topic: "", courseTitle: "", sessionIndex: 1, count: 10 } })).text));
+    const graph = full.questions.find((q) => q.figure)!;
+    expect(graph.figure).toMatchObject({ type: "function", expr: "x^2-4x+3" });
+    expect(graph.options[graph.correctOption]).toBe("2");
   });
 
   it("mock nhận diện ý định trả unknown; chấm tự luận/đọc phiếu qua đúng schema", async () => {
@@ -197,5 +202,13 @@ describe("prompt gửi AI không chứa dữ liệu học sinh", () => {
     const system = buildSystemPrompt("quiz", ctx);
     expect(system).toContain("correctOption");
     expect(system).toContain("TỪ 0");
+  });
+
+  it("hướng dẫn hình minh họa: chỉ môn Toán, không cho giáo án; đề nhắc không lộ đáp án (DECISION-D43)", () => {
+    expect(buildSystemPrompt("slides", ctx)).toContain('"figure"');
+    expect(buildSystemPrompt("quiz", ctx)).toContain("KHÔNG được lộ đáp án");
+    expect(buildSystemPrompt("lesson_plan", ctx)).not.toContain('"figure"');
+    expect(buildSystemPrompt("slides", { ...ctx, group: "english" })).not.toContain('"figure"');
+    expect(buildSystemPrompt("slides", { ...ctx, group: "other" })).not.toContain('"figure"');
   });
 });

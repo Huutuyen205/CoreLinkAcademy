@@ -6,6 +6,7 @@ import {
   Footer,
   Header,
   HeadingLevel,
+  ImageRun,
   PageBreak,
   Packer,
   Paragraph,
@@ -15,15 +16,17 @@ import {
   TextRun,
   WidthType,
 } from "docx";
+import { figureToPng } from "@/server/figures/render";
+import type { Figure } from "@/server/figures/schema";
 import { LETTERS } from "./rules";
 import type { CurriculumOutline, LessonPlan } from "./schemas";
 
 export type DocMeta = { classCode: string; courseTitle: string; subjectName: string; sessionIndex: number; dateLabel: string };
 
 export type ExamQuestion =
-  | { type: "MCQ"; prompt: string; options: string[]; correctOption: number; explanation: string; points: number }
-  | { type: "SHORT"; prompt: string; acceptedAnswers: string[]; explanation: string; points: number }
-  | { type: "ESSAY"; prompt: string; sampleAnswer: string; rubric: { criterion: string; points: number }[]; points: number };
+  | { type: "MCQ"; prompt: string; options: string[]; correctOption: number; explanation: string; points: number; figure?: Figure }
+  | { type: "SHORT"; prompt: string; acceptedAnswers: string[]; explanation: string; points: number; figure?: Figure }
+  | { type: "ESSAY"; prompt: string; sampleAnswer: string; rubric: { criterion: string; points: number }[]; points: number; figure?: Figure };
 
 export type ExamData = { title: string; instructions: string; questions: ExamQuestion[] };
 
@@ -64,6 +67,18 @@ const cell = (children: Paragraph[], widthPct: number, shade?: string) =>
 const headCell = (text: string, widthPct: number) => cell([para(text, { bold: true, after: 0 })], widthPct, "E6ECFF");
 
 const toBytes = async (doc: Document) => new Uint8Array(await Packer.toBuffer(doc));
+
+/** Hình minh họa (DECISION-D43): ảnh PNG canh giữa, rộng tối đa `maxWidth` px, kèm chú thích nghiêng. Vẽ lỗi → bỏ hình. */
+function figureParagraphs(figure: Figure | undefined, maxWidth = 420): Paragraph[] {
+  if (!figure) return [];
+  const png = figureToPng(figure);
+  if (!png) return [];
+  const width = Math.min(maxWidth, png.width);
+  const height = Math.round((png.height * width) / png.width);
+  const out = [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 80, after: figure.caption ? 40 : 120 }, children: [new ImageRun({ type: "png", data: png.data, transformation: { width, height } })] })];
+  if (figure.caption) out.push(para(figure.caption, { italics: true, color: MUTED, align: AlignmentType.CENTER, size: 20 }));
+  return out;
+}
 
 export async function renderLessonPlanDocx(plan: LessonPlan, meta: DocMeta): Promise<Uint8Array<ArrayBuffer>> {
   const body: (Paragraph | Table)[] = [
@@ -107,7 +122,7 @@ export async function renderCurriculumDocx(c: CurriculumOutline, meta: DocMeta):
     ...c.outcomes.map(bullet),
   ];
   for (const s of c.sections) {
-    body.push(heading(s.heading), para(s.content), ...s.keyPoints.map(bullet));
+    body.push(heading(s.heading), para(s.content), ...figureParagraphs(s.figure, 460), ...s.keyPoints.map(bullet));
   }
   return toBytes(frame(c.title, "Giáo trình", body));
 }
@@ -130,6 +145,7 @@ export async function renderExamDocx(exam: ExamData, meta: DocMeta, kindLabel: s
 
   exam.questions.forEach((q, i) => {
     body.push(new Paragraph({ children: [run(`Câu ${i + 1} `, { bold: true }), run(`(${pointsLabel(q.points)}) `, { color: MUTED }), run(q.prompt)], spacing: { before: 160, after: 80 } }));
+    body.push(...figureParagraphs(q.figure, 360));
     if (q.type === "MCQ") body.push(...optionLines(q));
     else if (q.type === "SHORT") body.push(para("Trả lời: ................................................................", { after: 60 }));
     else for (let k = 0; k < 6; k++) body.push(new Paragraph({ children: [run(" ")], border: { bottom: { style: BorderStyle.DOTTED, size: 4, color: "9AA0B5", space: 4 } }, spacing: { after: 100 } }));

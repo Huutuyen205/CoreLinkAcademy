@@ -62,6 +62,19 @@ export function essayPoints(q: EssaySet["questions"][number]): number {
   return Math.min(100, Math.max(0.25, Math.round(raw * 4) / 4));
 }
 
+/** Giữ tối đa `max` hình minh họa đầu tiên (theo thứ tự xuất hiện), bỏ hình ở các mục sau. */
+export function capFigures<T extends { figure?: unknown }>(items: T[], max: number): T[] {
+  let used = 0;
+  return items.map((it) => {
+    if (it.figure === undefined) return it;
+    if (used < max) {
+      used++;
+      return it;
+    }
+    return { ...it, figure: undefined };
+  });
+}
+
 /** Số câu mong muốn: ép về [1, max]. */
 export function clampCount(value: number | null | undefined, fallback: number, max: number): number {
   if (value === null || value === undefined || !Number.isFinite(value)) return fallback;

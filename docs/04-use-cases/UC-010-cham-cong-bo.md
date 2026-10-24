@@ -23,7 +23,7 @@ Bài ≠ DRAFT; có bài nộp SUBMITTED/GRADED.
 
 ## 5. Alternate flows
 ### A1 — Còn bài chưa chấm khi công bố (DECISION-D15)
-1. Thẻ "Giao bài" hiện "Còn N bài chưa chấm. Các bài này hiện 'Đang chờ chấm' với học sinh cho tới khi bạn chấm xong."; vẫn cho công bố.
+1. Hộp thoại "Quản lý bài" (tab "Quản lý bài") hiện "Còn N bài chưa chấm. Các bài này hiện 'Đang chờ chấm' với học sinh cho tới khi bạn chấm xong."; vẫn cho công bố.
 2. Sau công bố, chấm thêm bài → bài đó hiện điểm ngay cho HS/PH (đã công bố) và ghi audit (sửa sau công bố).
 ### A2 — Sửa điểm sau công bố
 1. Màn chấm hiện cảnh báo "Kết quả đã công bố. Mọi thay đổi điểm sẽ được ghi vào nhật ký."; lưu → audit `grade.update_after_publish` {before{score, answers[]}, after{score, grades[]}}.

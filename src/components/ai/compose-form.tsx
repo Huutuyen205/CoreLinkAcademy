@@ -125,7 +125,7 @@ export function ComposeForm({ spec, sessions, initialSessionId, studentsByClass 
               Chưa kết nối AI thật nên đây là nội dung <strong>mẫu cố định</strong> để thử luồng. Đừng dùng giảng dạy.
             </Alert>
           )}
-          <PptxPreview deck={result.content.data} meta={result.meta} fileName={`Slide-${result.meta.classCode}-buoi${result.meta.sessionIndex}.pptx`} />
+          <PptxPreview deck={result.content.data} meta={result.meta} figures={result.figures} fileName={`Slide-${result.meta.classCode}-buoi${result.meta.sessionIndex}.pptx`} />
           <form action={saveAction} className="space-y-3">
             <FormMessage state={saveState} />
             <input type="hidden" name="sessionId" value={result.sessionId} />
